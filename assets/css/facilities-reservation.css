@@ -321,13 +321,20 @@
             color: var(--accent);
             font-size: 1.5rem;
         }
+        
+        /* Custom styles para sa mga image icon sa dashboard */
+        .stat-icon img {
+            border-radius: 8px; /* Para tugma sa border-radius ng stat-icon container */
+        }
 
         /* Facilities Grid */
         .facilities-grid {
+            /* Tiniyak na pantay ang taas ng card gamit ang grid */
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
+            align-items: stretch; /* Tinitiyak na pantay ang taas ng bawat grid item */
         }
 
         .facility-card {
@@ -336,6 +343,8 @@
             box-shadow: var(--shadow);
             overflow: hidden;
             transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; /* Ginawang flex container */
+            flex-direction: column; /* Para maging column ang content */
         }
 
         .facility-card:hover {
@@ -373,13 +382,16 @@
 
         .facility-content {
             padding: 1.5rem;
+            flex-grow: 1; /* Tinitiyak na mapuno ng content ang natitirang espasyo */
+            display: flex;
+            flex-direction: column;
         }
 
         .facility-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem; /* Binawasan ang margin */
         }
 
         .facility-name {
@@ -389,20 +401,39 @@
             margin-bottom: 0.5rem;
         }
 
+        /* IYONG BAGONG BUTTON STYLE PARA SA FACILITY TYPE (ASUL) */
         .facility-type {
-            background: var(--light);
-            color: var(--accent);
-            padding: 0.25rem 0.75rem;
+            background: var(--accent); /* Inasul base sa request */
+            color: white;
+            padding: 0.4rem 0.8rem; /* Mas malaking padding */
             border-radius: 20px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem; /* Nagdagdag ng bottom margin */
         }
+        
+        .facility-type:hover {
+            background: #2563eb; /* Bahagyang mas matingkad na asul sa hover */
+            box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .facility-type:active {
+            transform: translateY(0);
+        }
+        /* WAKAS NG BAGONG BUTTON STYLE */
+
 
         .facility-details {
             color: #718096;
             margin-bottom: 1rem;
             font-size: 0.875rem;
+            flex-grow: 1; /* Tinitiyak na lalaki ito para maging pantay ang taas */
         }
 
         .facility-meta {
@@ -493,6 +524,9 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             overflow: hidden;
+            /* Added for table scrolling */
+            max-height: 600px; 
+            overflow-y: auto;
         }
 
         .table {
@@ -502,11 +536,12 @@
 
         .table th,
         .table td {
-            padding: 1rem;
-            text-align: left;
+            padding: 0.8rem; /* Binawasan ang padding */
+            /* Default text-align: left; */
             border-bottom: 1px solid var(--border);
         }
-
+        
+        /* IYONG HULING PAGBABAGO: Black Border at Centering Headers */
         .table th {
             background: var(--light);
             font-weight: 600;
@@ -514,7 +549,19 @@
             font-size: 0.875rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            
+            /* Pinilit na center ang lahat ng TH */
+            text-align: center !important; 
+            
+            /* Black border */
+            border-bottom: 2px solid #000;
         }
+        
+        /* Override para sa mga TH na dapat naka-left align (kung ginamit ang class na ito sa PHP) */
+        .table th.align-left {
+            text-align: left !important;
+        }
+
 
         .table tr:hover {
             background: #f8fafc;
@@ -663,6 +710,12 @@
             border-bottom: 1px solid var(--border);
         }
 
+        .calendar-events {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
         .calendar-event {
             background: var(--light);
             padding: 0.75rem;
@@ -770,7 +823,7 @@
         .justify-between { justify-content: space-between; }
         .align-center { align-items: center; }
         .gap-1 { gap: 1rem; }
-
+        
         /* Mobile Sidebar Responsiveness */
         @media (max-width: 768px) {
             .mobile-menu-btn {

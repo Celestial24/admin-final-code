@@ -1,4 +1,6 @@
-<!-- Dashboard Tab -->
+<?php
+// Dashboard Tab
+?>
 <div id="dashboard" class="tab-content active">
     <!-- Stats Overview -->
     <div class="stats-grid">
@@ -8,7 +10,10 @@
                     <h3>Total Facilities</h3>
                     <div class="stat-number"><?= $dashboard_data['total_facilities'] ?></div>
                 </div>
-                <div class="stat-icon"><i class="fas fa-building"></i></div>
+                <div class="stat-icon">
+                    <!-- Ibinabalik sa simpleng icon/emoji, umaasa sa CSS styling ng .stat-icon -->
+                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">🏢</span>
+                </div>
             </div>
         </div>
         
@@ -18,7 +23,10 @@
                     <h3>Today's Reservations</h3>
                     <div class="stat-number"><?= $dashboard_data['today_reservations'] ?></div>
                 </div>
-                <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-icon">
+                    <!-- Ibinabalik sa simpleng icon/emoji -->
+                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">📅</span>
+                </div>
             </div>
         </div>
         
@@ -28,7 +36,10 @@
                     <h3>Pending Approvals</h3>
                     <div class="stat-number"><?= $dashboard_data['pending_approvals'] ?></div>
                 </div>
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-icon">
+                    <!-- Ibinabalik sa simpleng icon/emoji -->
+                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">⏳</span>
+                </div>
             </div>
         </div>
         
@@ -38,7 +49,10 @@
                     <h3>Monthly Revenue</h3>
                     <div class="stat-number">₱<?= number_format($dashboard_data['monthly_revenue'], 2) ?></div>
                 </div>
-                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-icon">
+                    <!-- Ibinabalik sa simpleng icon/emoji -->
+                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">💰</span>
+                </div>
             </div>
         </div>
     </div>
@@ -46,7 +60,7 @@
     <!-- Today's Schedule -->
     <div class="card mb-2">
         <div class="card-header">
-            <h3><i class="fas fa-calendar-day"></i> Today's Schedule</h3>
+            <h3><span class="icon-img-placeholder">🗓️</span> Today's Schedule</h3>
         </div>
         <div class="card-content">
             <?php if (!empty($dashboard_data['today_schedule'])): ?>
@@ -65,7 +79,7 @@
                 </div>
             <?php else: ?>
                 <p class="text-center" style="color: #718096; padding: 2rem;">
-                    <i class="fas fa-calendar-times"></i> No reservations scheduled for today.
+                    <span class="icon-img-placeholder">🚫</span> No reservations scheduled for today.
                 </p>
             <?php endif; ?>
         </div>
@@ -74,9 +88,9 @@
     <!-- Quick Facilities Overview -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-building"></i> Available Facilities</h3>
+            <h3><span class="icon-img-placeholder">🏢</span> Available Facilities</h3>
             <button class="btn btn-outline" onclick="switchTab('facilities')">
-                <i class="fas fa-eye"></i> View All
+                <span class="icon-img-placeholder">👁️</span> View All
             </button>
         </div>
         <div class="card-content">
@@ -84,39 +98,70 @@
                 <?php foreach (array_slice($dashboard_data['facilities'], 0, 3) as $facility): ?>
                     <div class="facility-card">
                         <div class="facility-image">
-                            <?php if (!empty($facility['image_url']) && file_exists('../images/' . $facility['image_url'])): ?>
-                                <img src="../images/<?= htmlspecialchars($facility['image_url']) ?>" alt="<?= htmlspecialchars($facility['name']) ?>">
-                            <?php else: ?>
-                                <i class="<?= 
-                                    match($facility['type']) {
-                                        'banquet' => 'fas fa-glass-cheers',
-                                        'meeting' => 'fas fa-briefcase',
-                                        'outdoor' => 'fas fa-umbrella-beach',
-                                        'conference' => 'fas fa-users',
-                                        'dining' => 'fas fa-utensils',
-                                        'lounge' => 'fas fa-cocktail',
-                                        default => 'fas fa-building'
-                                    }
-                                ?>"></i>
-                            <?php endif; ?>
+                            <?php 
+                                // Clean the facility name for file lookup
+                                $facility_name_clean = strtolower(trim(htmlspecialchars($facility['name'])));
+                                $base_path = '../assets/image/';
+                                $image_url = null;
+
+                                // 1. Check for specific hardcoded filenames based on user's file list
+                                if ($facility_name_clean === 'executive boardroom') {
+                                    $image_url = $base_path . 'executive_boardroom.jpg';
+                                } elseif ($facility_name_clean === 'grand ballroom') {
+                                    // Use .jpeg extension as per user's file list
+                                    $image_url = $base_path . 'Grand Ballroom.jpeg';
+                                } elseif ($facility_name_clean === 'harbor view dining room') {
+                                    // Use .jpeg extension as per user's file list
+                                    $image_url = $base_path . 'Harbor View Dining Room.jpeg';
+                                }
+
+                                // 2. Fallback to image_url from database if set (less reliable, but kept for completeness)
+                                if (!$image_url && !empty($facility['image_url'])) {
+                                    $image_url = $base_path . htmlspecialchars($facility['image_url']);
+                                }
+
+                                // 3. Set URL for file existence check, or placeholder URL
+                                if ($image_url && file_exists($image_url)) {
+                                    $final_image_url = $image_url;
+                                } else {
+                                    // Piliin ang tamang fallback placeholder image
+                                    $fallback_text = strtoupper(htmlspecialchars($facility['name']));
+                                    $color = match(strtolower($facility['type'])) {
+                                        'banquet' => '764ba2', // Purple for Banquet
+                                        'dining' => '207e7e', // Teal for Dining
+                                        'meeting' => '4F46E5', // Indigo for Meeting
+                                        default => '4F46E5' 
+                                    };
+                                    $final_image_url = "https://placehold.co/400x200/{$color}/FFFFFF?text=" . $fallback_text;
+                                }
+
+                                $onerror = "this.onerror=null;this.src='https://placehold.co/400x200/4F46E5/FFFFFF?text=FACILITY';";
+                            ?>
+                            <img src="<?= htmlspecialchars($final_image_url) ?>" alt="<?= htmlspecialchars($facility['name']) ?>" onerror="<?= htmlspecialchars($onerror) ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         <div class="facility-content">
                             <div class="facility-header">
                                 <div>
                                     <div class="facility-name"><?= htmlspecialchars($facility['name']) ?></div>
-                                    <span class="facility-type"><?= strtoupper(htmlspecialchars($facility['type'])) ?></span>
+                                    <button class="facility-type" onclick="filterByType('<?= htmlspecialchars($facility['type']) ?>')">
+                                        <?= strtoupper(htmlspecialchars($facility['type'])) ?>
+                                    </button>
                                 </div>
                             </div>
+                            <!-- BAGONG BUTTON: View Details -->
+                            <button class="btn btn-outline btn-sm mb-1" onclick="viewFacilityDetails(<?= $facility['id'] ?>)" style="padding: 0.4rem 0.8rem;">
+                                <span class="icon-img-placeholder" style="font-size: 0.9rem;">🔎</span> View Details
+                            </button>
                             <div class="facility-details">
                                 <?= htmlspecialchars($facility['description']) ?>
                             </div>
                             <div class="facility-meta">
-                                <div class="meta-item"><i class="fas fa-users"></i> Capacity: <?= $facility['capacity'] ?></div>
-                                <div class="meta-item"><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($facility['location']) ?></div>
+                                <div class="meta-item"><span class="icon-img-placeholder">👤</span> Capacity: <?= $facility['capacity'] ?></div>
+                                <div class="meta-item"><span class="icon-img-placeholder">📍</span> <?= htmlspecialchars($facility['location']) ?></div>
                             </div>
                             <div class="facility-price">₱<?= number_format($facility['hourly_rate'], 2) ?>/hour</div>
                             <button class="btn btn-primary btn-block" onclick="openReservationModal(<?= $facility['id'] ?>)">
-                                <i class="fas fa-calendar-plus"></i> Book Now
+                                <span class="icon-img-placeholder">➕</span> Book Now
                             </button>
                         </div>
                     </div>
@@ -125,4 +170,3 @@
         </div>
     </div>
 </div>
-
