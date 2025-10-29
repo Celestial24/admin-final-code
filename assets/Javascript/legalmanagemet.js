@@ -132,7 +132,11 @@
             // Contracts table uses the mock data
             populateTable('contractsTableBody', MOCK_CONTRACTS_DATA, 'contract');
 
-
+// Find the logout button handler and update it:
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    // Redirect to facilities reservation dashboard
+    window.location.href = 'facilities-reservation.php';
+});
             // Initialize risk analysis chart
             initializeRiskChart();
 

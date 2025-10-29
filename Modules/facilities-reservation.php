@@ -644,11 +644,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- Management Tab -->
                     <div id="management" class="tab-content">
-                        <h2 class="mb-2"><span class="icon-img-placeholder">⚙️</span> System Management</h2>
+                        <div class="management-header">
+                            <h2><span class="icon-img-placeholder">⚙️</span> Facilities Management</h2>
+                            <div class="management-buttons">
+                                <button id="show-facilities-card" class="btn btn-outline management-btn">
+                                    <span class="icon-img-placeholder">🏢</span> Facility Card
+                                </button>
+                                <button id="show-reports-card" class="btn btn-outline management-btn">
+                                    <span class="icon-img-placeholder">📊</span> Reports Card
+                                </button>
+                            </div>
+                        </div>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                            <!-- Facility Management -->
-                            <div class="card">
+                        <div class="management-cards">
+                            <!-- Facility Management Card -->
+                            <div class="card management-card management-facilities" data-open-tab="facilities">
                                 <div class="card-header">
                                     <h3><span class="icon-img-placeholder">🏢</span> Facility Management</h3>
                                 </div>
@@ -656,14 +666,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <button class="btn btn-primary mb-1" onclick="openModal('facility-modal')">
                                         <span class="icon-img-placeholder">➕</span> Add New Facility
                                     </button>
-                                    <div style="max-height: 400px; overflow-y: auto;">
-                                        <table class="table">
+                                    <div class="table-wrapper">
+                                        <table class="table management-table">
                                             <thead>
                                                 <tr>
-                                                    <th><span class="icon-img-placeholder">🏷️</span> Name</th>
-                                                    <th><span class="icon-img-placeholder">🗂️</span> Type</th>
-                                                    <th><span class="icon-img-placeholder">₱</span> Rate</th>
-                                                    <th><span class="icon-img-placeholder">🟢</span> Status</th>
+                                                    <th>Name</th>
+                                                    <th>Type</th>
+                                                    <th>Rate</th>
+                                                    <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -685,29 +695,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
 
-                            <!-- System Reports -->
-                            <div class="card">
+                            <!-- Reports Card -->
+                            <div class="card management-card management-reports" data-open-tab="reports">
                                 <div class="card-header">
-                                    <h3><span class="icon-img-placeholder">📈</span> Quick Reports</h3>
+                                    <h3><span class="icon-img-placeholder">📊</span> Quick Reports</h3>
                                 </div>
                                 <div class="card-content">
-                                    <div class="d-flex flex-column gap-1">
-                                        <div style="padding: 1rem; background: var(--light); border-radius: 8px;">
-                                            <strong>Revenue This Month</strong>
-                                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);">
-                                                ₱<?= number_format($dashboard_data['monthly_revenue'], 2) ?>
-                                            </div>
+                                    <div class="stats-row">
+                                        <div class="stat-item">
+                                            <label>Revenue This Month</label>
+                                            <div class="stat-value">₱<?= number_format($dashboard_data['monthly_revenue'], 2) ?></div>
                                         </div>
-                                        <div style="padding: 1rem; background: var(--light); border-radius: 8px;">
-                                            <strong>Pending Approvals</strong>
-                                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--warning);">
-                                                <?= $dashboard_data['pending_approvals'] ?>
-                                            </div>
+                                        <div class="stat-item">
+                                            <label>Pending Approvals</label>
+                                            <div class="stat-value"><?= $dashboard_data['pending_approvals'] ?></div>
                                         </div>
-                                        <button class="btn btn-outline mt-1" onclick="generateReport()">
+                                    </div>
+                                    <div class="report-actions">
+                                        <button class="btn btn-outline mt-2" onclick="generateReport()">
                                             <span class="icon-img-placeholder">📄</span> Generate Full Report
                                         </button>
-                                        <button class="btn btn-outline" onclick="exportData()">
+                                        <button class="btn btn-outline mt-2" onclick="exportData()">
                                             <span class="icon-img-placeholder">📥</span> Export Data
                                         </button>
                                     </div>
@@ -895,5 +903,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
         <script src="../assets/Javascript/facilities-reservation.js"></script>
+
+        <script>
+          
+        </script>
     </body>
     </html>

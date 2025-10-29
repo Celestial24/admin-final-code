@@ -902,3 +902,198 @@
                 display: block !important;
             }
         }
+
+        /* --- Management header & button repositioning --- */
+        /* Target only the Management tab header so ibang headers hindi maaapektuhan */
+        #management > .d-flex.justify-between.align-center.mb-2 {
+            display: flex;
+            flex-direction: column;    /* Buttons move below the title by default */
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        /* Make the controls align to the right under the title */
+        #management .management-controls {
+            align-self: flex-end;
+            margin-top: 0.25rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Restore horizontal layout on wider screens (desktop) */
+        @media (min-width: 992px) {
+            #management > .d-flex.justify-between.align-center.mb-2 {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            #management .management-controls {
+                align-self: center;
+                margin-top: 0;
+            }
+        }
+
+        /* --- Table width / layout fixes for management cards --- */
+        /* Ensure table fills available card width and remains responsive */
+        .management-card .card-content {
+            /* allow horizontal scrolling when needed without breaking layout */
+            overflow-x: auto;
+            padding: 1rem;
+        }
+
+        .management-card .card-content .table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            /* let columns size naturally but keep table inside container */
+            table-layout: auto;
+            white-space: nowrap;
+        }
+
+        /* Make table cells wrap more nicely on smaller screens */
+        .management-card .card-content .table th,
+        .management-card .card-content .table td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+
+        /* Optional: reduce excessive right-side whitespace by constraining card max-width */
+        #management .card {
+            max-width: 900px; /* increase/decrease to taste */
+            width: 100%;
+        }
+
+        /* Center the visible card inside the management area */
+        #management > div[style] /* fallback if your markup uses inline wrapper */ ,
+        #management .card {
+            margin-left: 0;
+        }
+
+        /* Active button visual hint */
+        #show-facilities-card.active,
+        #show-reports-card.active {
+            background: var(--primary, #2b6cb0);
+            color: #fff;
+            border-color: rgba(0,0,0,0.04);
+        }
+
+        /* Management Section Styling */
+        .management-header {
+    margin-bottom: 2rem;
+}
+
+.management-buttons {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.management-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 200px;
+}
+
+.management-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: var(--primary);
+    color: white;
+}
+
+.management-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: transparent;
+}
+
+/* Table Improvements */
+.management-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px; /* Ensure minimum width for content */
+}
+
+/* Table wrapper with horizontal scroll */
+.table-wrapper {
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    max-width: 100%; /* Ensure wrapper doesn't overflow */
+}
+
+/* Update management cards and table styling */
+.management-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+    width: 100%;
+}
+
+/* Make cards extend full width */
+.management-card {
+    width: 100%;
+    max-width: 100% !important; /* Override previous max-width */
+}
+
+/* Ensure tables take full width */
+.management-table,
+.management-card .table {
+    width: 100%;
+    min-width: 100%;
+}
+
+/* Quick Reports card styling to match full width */
+.management-card.management-reports .card-content {
+    min-width: 100%;
+    width: 100%;
+    padding: 1.5rem;
+}
+
+/* Stats row in reports to fill width */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+/* Remove max-width constraint */
+#management .card {
+    max-width: none;
+    width: 100%;
+}
+
+/* Ensure consistent padding */
+.management-card .card-content {
+    padding: 1.5rem;
+    width: 100%;
+}
+
+/* Table column widths */
+.management-table th:nth-child(1),
+.management-table td:nth-child(1) { width: 30%; }
+
+.management-table th:nth-child(2),
+.management-table td:nth-child(2) { width: 20%; }
+
+.management-table th:nth-child(3),
+.management-table td:nth-child(3) { width: 25%; }
+
+.management-table th:nth-child(4),
+.management-table td:nth-child(4) { width: 25%; }
+
+/* Center only tbody text in management tables */
+#management .management-card .table-wrapper .table tbody td,
+#management .management-table tbody td,
+.management-card .table tbody td {
+    text-align: center;
+    vertical-align: middle;
+}
+

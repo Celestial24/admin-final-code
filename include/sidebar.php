@@ -35,7 +35,7 @@
             <li><a href="document management(archiving).php">
                 <span class="icon-img-placeholder">🗄️</span> Document archiving
             </a></li>
-            <li><a href="visitorslog.php">
+            <li><a href="../Modules/Visitor-logs.php">
                 <span class="icon-img-placeholder">🚶</span> visitors Log
             </a></li>
         </ul>
