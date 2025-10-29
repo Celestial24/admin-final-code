@@ -1097,3 +1097,12 @@
     vertical-align: middle;
 }
 
+/* Align first column (Name) left, keep other tbody cells centered */
+#management .management-card .table thead th:first-child,
+#management .management-card .table tbody td:first-child,
+.management-table thead th:first-child,
+.management-table tbody td:first-child {
+    text-align: left !important;
+    padding-left: 1.25rem; /* optional spacing */
+}
+

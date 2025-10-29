@@ -1,4 +1,4 @@
-    // Mock Contracts Data (Fix for PHP dependency)
+// Mock Contracts Data (Fix for PHP dependency)
     // IMPORTANT: This object contains nested JSON strings for 'risk_factors' and 'recommendations' 
     // to simulate complex data from an an AI analysis service.
     const MOCK_CONTRACTS_DATA = [
@@ -630,3 +630,77 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
             document.getElementById('analysisPreviewText')?.remove();
         }
     });
+
+/* --- START: PIN modal & sensitive view handlers (moved to external JS) --- */
+document.addEventListener('DOMContentLoaded', function () {
+    const pinModal = document.getElementById('pinModal');
+    const unlockPin = document.getElementById('unlockPin');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const closePinModal = document.getElementById('closePinModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const sensitiveResult = document.getElementById('sensitiveResult');
+    let currentTarget = { id: 0, type: '' };
+
+    // Open PIN modal for sensitive view buttons
+    document.querySelectorAll('.view-sensitive').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentTarget.id = this.dataset.id || 0;
+            currentTarget.type = this.dataset.type || '';
+            if (unlockPin) unlockPin.value = '';
+            if (modalMessage) modalMessage.textContent = '';
+            if (sensitiveResult) { sensitiveResult.style.display = 'none'; sensitiveResult.textContent = ''; }
+            if (pinModal) pinModal.style.display = 'block';
+            if (unlockPin) unlockPin.focus();
+        });
+    });
+
+    // Close PIN modal
+    if (closePinModal) {
+        closePinModal.addEventListener('click', function () {
+            if (pinModal) pinModal.style.display = 'none';
+        });
+    }
+
+    // Unlock and fetch sensitive data (POST to same PHP page expecting action=unlock)
+    if (unlockBtn) {
+        unlockBtn.addEventListener('click', function () {
+            if (!currentTarget.type || !currentTarget.id) return;
+            if (modalMessage) modalMessage.textContent = '';
+            const pin = unlockPin ? unlockPin.value : '';
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action: 'unlock',
+                    type: currentTarget.type,
+                    id: currentTarget.id,
+                    pin: pin
+                })
+            }).then(r => r.json()).then(resp => {
+                if (!resp.success) {
+                    if (modalMessage) modalMessage.textContent = resp.message || 'Unable to unlock';
+                    if (sensitiveResult) sensitiveResult.style.display = 'none';
+                } else {
+                    if (modalMessage) modalMessage.textContent = '';
+                    if (sensitiveResult) {
+                        sensitiveResult.style.display = 'block';
+                        sensitiveResult.textContent = JSON.stringify(resp.data, null, 2);
+                    }
+                }
+            }).catch(() => {
+                if (modalMessage) modalMessage.textContent = 'Request error';
+            });
+        });
+    }
+
+    // Ensure logout button redirects to facilities-reservation.php (if present)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = '../Modules/facilities-reservation.php';
+        });
+    }
+});
+/* --- END: PIN modal & sensitive view handlers --- */

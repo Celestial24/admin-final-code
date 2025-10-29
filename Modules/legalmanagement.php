@@ -2,7 +2,7 @@
     // config.php
     class Database {
         private $host = "localhost";
-        private $db_name = "legal_management_system";
+        private $db_name = "legalmanagement";
         private $username = "root";
         private $password = "";
         public $conn;
@@ -310,6 +310,47 @@
     } catch(PDOException $exception) {
         $error_message = "Error fetching contracts: " . $exception->getMessage();
     }
+
+    // NEW: Fetch documents and billing (with fallbacks) and build risk summary
+    $documents = [];
+    try {
+        $query = "SELECT id, name, case_id, file_path, uploaded_at, risk_level, risk_score, analysis_date, ai_analysis FROM documents ORDER BY uploaded_at DESC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // fallback demo data if query fails
+        $documents = [
+            ['id'=>1,'name'=>'Employment Contract.pdf','case_id'=>'C-001','file_path'=>'uploads/documents/Employment Contract.pdf','uploaded_at'=>'2023-05-20 12:00:00','risk_level'=>'unknown','risk_score'=>null,'analysis_date'=>null,'ai_analysis'=>null],
+            ['id'=>2,'name'=>'Supplier Agreement.docx','case_id'=>'C-002','file_path'=>'uploads/documents/Supplier Agreement.docx','uploaded_at'=>'2023-06-25 12:00:00','risk_level'=>'unknown','risk_score'=>null,'analysis_date'=>null,'ai_analysis'=>null]
+        ];
+    }
+
+    $billing = [];
+    try {
+        $query = "SELECT id, invoice_number, client, amount, due_date, status FROM invoices ORDER BY due_date DESC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $billing = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // fallback demo data
+        $billing = [
+            ['invoice_number'=>'INV-001','client'=>'Hotel Management','amount'=>2500,'due_date'=>'2023-07-15','status'=>'paid'],
+            ['invoice_number'=>'INV-002','client'=>'Restaurant Owner','amount'=>1800,'due_date'=>'2023-08-05','status'=>'pending']
+        ];
+    }
+
+    // Risk summary
+    $riskCounts = ['High'=>0, 'Medium'=>0, 'Low'=>0];
+    foreach ($contracts as $c) {
+        $lvl = $c['risk_level'] ?? 'Low';
+        if (!isset($riskCounts[$lvl])) $lvl = 'Low';
+        $riskCounts[$lvl]++;
+    }
+    $totalContracts = count($contracts);
+    $highPct = $totalContracts ? round(($riskCounts['High'] / $totalContracts) * 100, 1) : 0;
+    $mediumPct = $totalContracts ? round(($riskCounts['Medium'] / $totalContracts) * 100, 1) : 0;
+    $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 1) : 0;
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -346,7 +387,7 @@
                         <div class="user-info">
                             <span>Welcome, Admin</span>
                             <button type="button" class="logout-btn" id="backDashboardBtn" onclick="window.location.href='../Modules/facilities-reservation.php'">
-                                <span class="icon-img-placeholder">🏠</span> Back to Dashboard
+                                <span class="icon-img-placeholder">🏠</span> logout
                             </button>
                         </div>
                     </div>
@@ -454,7 +495,23 @@
                                 <th>Date Uploaded</th>
                                
                         <tbody id="documentsTableBody">
-                            <!-- Documents will be populated here -->
+                            <?php if (!empty($documents)): ?>
+                                <?php foreach ($documents as $doc): ?>
+                                    <tr>
+                                        <td>
+                                            <?php if (!empty($doc['file_path'])): ?>
+                                                <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($doc['name']); ?></a>
+                                            <?php else: ?>
+                                                <?php echo htmlspecialchars($doc['name']); ?>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($doc['case_id'] ?? 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($doc['uploaded_at'] ?? 'now'))); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="3" style="text-align:center;color:#666;padding:20px;">No documents found.</td></tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -478,7 +535,23 @@
                             </tr>
                         </thead>
                         <tbody id="billingTableBody">
-                            <!-- Billing records will be populated here -->
+                            <?php if (!empty($billing)): ?>
+                                <?php foreach ($billing as $b): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($b['invoice_number'] ?? $b['id']); ?></td>
+                                        <td><?php echo htmlspecialchars($b['client'] ?? 'N/A'); ?></td>
+                                        <td>₱<?php echo number_format($b['amount'] ?? 0, 2); ?></td>
+                                        <td><?php echo htmlspecialchars(!empty($b['due_date']) ? date('Y-m-d', strtotime($b['due_date'])) : 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars(ucfirst($b['status'] ?? 'unknown')); ?></td>
+                                        <td>
+                                            <button class="action-btn view-btn" data-id="<?php echo $b['id'] ?? ''; ?>">View</button>
+                                            <button class="action-btn">Pay</button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="6" style="text-align:center;color:#666;padding:20px;">No billing records found.</td></tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -591,6 +664,22 @@
                     </div>
                     <div id="analysisResults">
                         <!-- Analysis results will be displayed here -->
+                        <div class="risk-summary" style="padding:12px;">
+                            <p><strong>Total contracts:</strong> <?php echo $totalContracts; ?></p>
+                            <p><strong>High:</strong> <?php echo $riskCounts['High']; ?> (<?php echo $highPct; ?>%)</p>
+                            <p><strong>Medium:</strong> <?php echo $riskCounts['Medium']; ?> (<?php echo $mediumPct; ?>%)</p>
+                            <p><strong>Low:</strong> <?php echo $riskCounts['Low']; ?> (<?php echo $lowPct; ?>%)</p>
+                        </div>
+                        <?php
+                        $highContracts = array_filter($contracts, function($c){ return (isset($c['risk_level']) && strtolower($c['risk_level']) === 'high'); });
+                        if (!empty($highContracts)): ?>
+                            <h4 style="margin-top:12px;">Top High-Risk Contracts</h4>
+                            <ul>
+                                <?php foreach (array_slice($highContracts, 0, 5) as $hc): ?>
+                                    <li><?php echo htmlspecialchars($hc['contract_name'] ?? 'Untitled'); ?> — <?php echo htmlspecialchars($hc['risk_score'] ?? 'N/A'); ?>/100</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
                 </div>
 
