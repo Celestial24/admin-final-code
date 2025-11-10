@@ -380,7 +380,7 @@ function formatFileSize($bytes) {
                         <li><a href="#" class="active">Dashboard</a></li>
                         <li><a href="#">Settings</a></li>
                         <li><a href="#">Help</a></li>
-                        <li><a href="#">Logout</a></li>
+                        <li><a href="http://localhost/admin-final-code/Modules/facilities-reservation.php">Back</a></li>
                     </ul>
                 </nav>
             </div>
