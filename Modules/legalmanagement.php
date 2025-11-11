@@ -191,6 +191,134 @@
             }
         }
         
+        if (isset($_POST['update_employee'])) {
+            $empId = intval($_POST['employee_id'] ?? 0);
+            $name = $_POST['employee_name'] ?? '';
+            $position = $_POST['employee_position'] ?? '';
+            $email = $_POST['employee_email'] ?? '';
+            $phone = $_POST['employee_phone'] ?? '';
+            if ($empId > 0) {
+                $query = "UPDATE employees SET name = ?, position = ?, email = ?, phone = ? WHERE id = ?";
+                $stmt = $db->prepare($query);
+                if ($stmt->execute([$name, $position, $email, $phone, $empId])) {
+                    $success_message = "Employee updated successfully!";
+                } else {
+                    $error_message = "Failed to update employee.";
+                }
+            } else {
+                $error_message = "Invalid employee ID.";
+            }
+        }
+        // Unified create/update handler
+        if (isset($_POST['save_employee'])) {
+            $empId = intval($_POST['employee_id'] ?? 0);
+            $name = $_POST['employee_name'] ?? '';
+            $position = $_POST['employee_position'] ?? '';
+            $email = $_POST['employee_email'] ?? '';
+            $phone = $_POST['employee_phone'] ?? '';
+            if ($empId > 0) {
+                $q = "UPDATE employees SET name=?, position=?, email=?, phone=? WHERE id=?";
+                $s = $db->prepare($q);
+                if ($s->execute([$name,$position,$email,$phone,$empId])) {
+                    $success_message = "Employee updated successfully!";
+                } else {
+                    $error_message = "Failed to update employee.";
+                }
+            } else {
+                $q = "INSERT INTO employees (name, position, email, phone) VALUES (?, ?, ?, ?)";
+                $s = $db->prepare($q);
+                if ($s->execute([$name,$position,$email,$phone])) {
+                    $success_message = "Employee added successfully!";
+                } else {
+                    $error_message = "Failed to add employee.";
+                }
+            }
+        }
+        
+        // Add Document
+        if (isset($_POST['add_document'])) {
+            $doc_name = $_POST['doc_name'] ?? '';
+            $doc_case = $_POST['doc_case'] ?? '';
+            $file_path = '';
+            if (isset($_FILES['doc_file']) && $_FILES['doc_file']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = 'uploads/documents/';
+                if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+                $tmp = $_FILES['doc_file']['tmp_name'];
+                $orig = $_FILES['doc_file']['name'];
+                $ext = pathinfo($orig, PATHINFO_EXTENSION);
+                $fname = uniqid('doc_') . '.' . $ext;
+                $dest = $upload_dir . $fname;
+                if (move_uploaded_file($tmp, $dest)) $file_path = $dest;
+            }
+            $q = "INSERT INTO documents (name, case_id, file_path, uploaded_at) VALUES (?, ?, ?, NOW())";
+            $s = $db->prepare($q);
+            if ($s->execute([$doc_name, $doc_case, $file_path])) {
+                $success_message = "Document uploaded successfully!";
+            } else {
+                $error_message = "Failed to upload document.";
+            }
+        }
+        // Update Document
+        if (isset($_POST['update_document'])) {
+            $doc_id = intval($_POST['document_id'] ?? 0);
+            $doc_name = $_POST['doc_name'] ?? '';
+            $doc_case = $_POST['doc_case'] ?? '';
+            if ($doc_id > 0) {
+                $q = "UPDATE documents SET name = ?, case_id = ? WHERE id = ?";
+                $s = $db->prepare($q);
+                if ($s->execute([$doc_name, $doc_case, $doc_id])) {
+                    $success_message = "Document updated successfully!";
+                } else {
+                    $error_message = "Failed to update document.";
+                }
+            } else {
+                $error_message = "Invalid document ID.";
+            }
+        }
+        // Delete Document
+        if (isset($_POST['delete_document'])) {
+            $doc_id = intval($_POST['document_id'] ?? 0);
+            if ($doc_id > 0) {
+                $q = "DELETE FROM documents WHERE id = ?";
+                $s = $db->prepare($q);
+                if ($s->execute([$doc_id])) {
+                    $success_message = "Document deleted.";
+                } else {
+                    $error_message = "Failed to delete document.";
+                }
+            }
+        }
+        // Add Invoice
+        if (isset($_POST['add_invoice'])) {
+            $inv_number = $_POST['invoice_number'] ?? '';
+            $client = $_POST['client'] ?? '';
+            $amount = floatval($_POST['amount'] ?? 0);
+            $due_date = $_POST['due_date'] ?? date('Y-m-d');
+            $status = $_POST['status'] ?? 'pending';
+            $q = "INSERT INTO invoices (invoice_number, client, amount, due_date, status) VALUES (?, ?, ?, ?, ?)";
+            $s = $db->prepare($q);
+            if ($s->execute([$inv_number, $client, $amount, $due_date, $status])) {
+                $success_message = "Invoice created successfully!";
+            } else {
+                $error_message = "Failed to create invoice.";
+            }
+        }
+        // Pay invoice (set to paid)
+        if (isset($_POST['pay_invoice'])) {
+            $invoice_id = intval($_POST['invoice_id'] ?? 0);
+            if ($invoice_id > 0) {
+                $q = "UPDATE invoices SET status = 'paid' WHERE id = ?";
+                $s = $db->prepare($q);
+                if ($s->execute([$invoice_id])) {
+                    $success_message = "Invoice has been marked as PAID.";
+                } else {
+                    $error_message = "Payment failed. Try again.";
+                }
+            } else {
+                $error_message = "Invalid invoice ID.";
+            }
+        }
+        
         // Handle contract upload with AI analysis
         if (isset($_POST['add_contract'])) {
             $contract_name = $_POST['contract_name'];
@@ -226,6 +354,20 @@
                     $error_message = "Failed to upload file.";
                 }
             }
+            // Optional cover image upload -> saved as related document
+            $image_path = '';
+            if (isset($_FILES['contract_image']) && $_FILES['contract_image']['error'] === UPLOAD_ERR_OK) {
+                $img_dir = 'uploads/contracts/images/';
+                if (!is_dir($img_dir)) { mkdir($img_dir, 0777, true); }
+                $img_tmp = $_FILES['contract_image']['tmp_name'];
+                $img_name = $_FILES['contract_image']['name'];
+                $img_ext = pathinfo($img_name, PATHINFO_EXTENSION);
+                $img_file = uniqid('cimg_') . '.' . $img_ext;
+                $img_dest = $img_dir . $img_file;
+                if (move_uploaded_file($img_tmp, $img_dest)) {
+                    $image_path = $img_dest;
+                }
+            }
             
             $query = "INSERT INTO contracts (contract_name, case_id, description, file_path, risk_level, risk_score, risk_factors, recommendations, analysis_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($query);
@@ -245,6 +387,14 @@
                 $riskAnalysis['analysis_summary']
             ])) {
                 $success_message = "Contract uploaded successfully! AI Risk Analysis Completed.";
+                if (!empty($image_path)) {
+                    try {
+                        $dq = $db->prepare("INSERT INTO documents (name, case_id, file_path, uploaded_at) VALUES (?, ?, ?, NOW())");
+                        $dq->execute(['Contract Image: ' . $contract_name, $case_id, $image_path]);
+                    } catch (PDOException $e) {
+                        // ignore
+                    }
+                }
             } else {
                 $error_message = "Failed to upload contract.";
             }
@@ -283,6 +433,40 @@
             }
             
             exit;
+        }
+        // Add supporting document for a contract (saves into documents table using contract's case_id)
+        if (isset($_POST['add_contract_document'])) {
+            $contractId = intval($_POST['contract_id'] ?? 0);
+            $docName = $_POST['doc_name'] ?? '';
+            if ($contractId > 0 && $docName !== '') {
+                // Fetch case_id for linking
+                $stmt = $db->prepare("SELECT case_id FROM contracts WHERE id = ? LIMIT 1");
+                $stmt->execute([$contractId]);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $caseId = $row['case_id'] ?? '';
+
+                $file_path = '';
+                if (isset($_FILES['doc_file']) && $_FILES['doc_file']['error'] === UPLOAD_ERR_OK) {
+                    $upload_dir = 'uploads/contracts/docs/';
+                    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0777, true); }
+                    $tmp = $_FILES['doc_file']['tmp_name'];
+                    $orig = $_FILES['doc_file']['name'];
+                    $ext = pathinfo($orig, PATHINFO_EXTENSION);
+                    $fname = uniqid('cdoc_') . '.' . $ext;
+                    $dest = $upload_dir . $fname;
+                    if (move_uploaded_file($tmp, $dest)) $file_path = $dest;
+                }
+
+                $q = "INSERT INTO documents (name, case_id, file_path, uploaded_at) VALUES (?, ?, ?, NOW())";
+                $s = $db->prepare($q);
+                if ($s->execute([$docName, $caseId, $file_path])) {
+                    $success_message = "Contract document uploaded successfully!";
+                } else {
+                    $error_message = "Failed to upload contract document.";
+                }
+            } else {
+                $error_message = "Invalid contract or missing document name.";
+            }
         }
     }
 
@@ -360,6 +544,14 @@
         <title>Legal Management System - Hotel & Restaurant</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
          <link rel="stylesheet" href="../assets/css/legalmanagement.css">
+        <style>
+            /* Center all table header and cell content within this module */
+            .data-table th,
+            .data-table td {
+                text-align: center !important;
+                vertical-align: middle;
+            }
+        </style>
     </head>
     <body>
         <!-- Login Screen -->
@@ -377,6 +569,37 @@
                 <div class="error-message" id="errorMessage">Invalid PIN. Please try again.</div>
             </div>
         </div>
+        <!-- Employee Information Modal (Create/Update) -->
+        <div id="employeeInfoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1250;">
+            <div style="background:white; width:92%; max-width:600px; border-radius:12px; padding:20px; position:relative;">
+                <button type="button" id="closeEmployeeInfo" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <h3 id="employeeInfoTitle" style="margin-top:0;">Employee Information</h3>
+                <form method="POST" id="employeeInfoForm">
+                    <input type="hidden" name="save_employee" value="1">
+                    <input type="hidden" name="employee_id" id="info_emp_id" value="">
+                    <div class="form-group">
+                        <label for="info_emp_name">Name</label>
+                        <input type="text" id="info_emp_name" name="employee_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="info_emp_position">Position</label>
+                        <input type="text" id="info_emp_position" name="employee_position" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="info_emp_email">Email</label>
+                        <input type="email" id="info_emp_email" name="employee_email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="info_emp_phone">Phone</label>
+                        <input type="text" id="info_emp_phone" name="employee_phone" class="form-control" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancelEmployeeInfo">Cancel</button>
+                        <button type="submit" class="save-btn" id="saveEmployeeInfoBtn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Dashboard -->
         <div class="dashboard" id="dashboard">
@@ -387,7 +610,7 @@
                         <div class="user-info">
                             <span>Welcome, Admin</span>
                             <button type="button" class="logout-btn" id="backDashboardBtn" onclick="window.location.href='../Modules/facilities-reservation.php'">
-                                <span class="icon-img-placeholder">🏠</span> logout
+                                <span class="icon-img-placeholder">⏻</span> logout
                             </button>
                         </div>
                     </div>
@@ -470,8 +693,12 @@
                                     <td><?php echo htmlspecialchars($employee['email']); ?></td>
                                     <td><?php echo htmlspecialchars($employee['phone']); ?></td>
                                     <td>
-                                        <button class="action-btn view-btn">View</button>
-                                        <button class="action-btn">Edit</button>
+                                        <button class="action-btn view-btn" 
+                                                data-type="employee-view" 
+                                                data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>View</button>
+                                        <button class="action-btn" 
+                                                data-type="employee-edit" 
+                                                data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>Edit</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -493,7 +720,8 @@
                                 <th>Document Name</th>
                                 <th>Case</th>
                                 <th>Date Uploaded</th>
-                               
+                                <th>Actions</th>
+                            </tr>
                         <tbody id="documentsTableBody">
                             <?php if (!empty($documents)): ?>
                                 <?php foreach ($documents as $doc): ?>
@@ -507,10 +735,14 @@
                                         </td>
                                         <td><?php echo htmlspecialchars($doc['case_id'] ?? 'N/A'); ?></td>
                                         <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($doc['uploaded_at'] ?? 'now'))); ?></td>
+                                        <td>
+                                            <button class="action-btn view-btn" data-type="doc-edit" data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Edit</button>
+                                            <button class="action-btn" data-type="doc-delete" data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Delete</button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="3" style="text-align:center;color:#666;padding:20px;">No documents found.</td></tr>
+                                <tr><td colspan="4" style="text-align:center;color:#666;padding:20px;">No documents found.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -544,8 +776,8 @@
                                         <td><?php echo htmlspecialchars(!empty($b['due_date']) ? date('Y-m-d', strtotime($b['due_date'])) : 'N/A'); ?></td>
                                         <td><?php echo htmlspecialchars(ucfirst($b['status'] ?? 'unknown')); ?></td>
                                         <td>
-                                            <button class="action-btn view-btn" data-id="<?php echo $b['id'] ?? ''; ?>">View</button>
-                                            <button class="action-btn">Pay</button>
+                                            <button class="action-btn view-btn" data-type="invoice-view" data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>View</button>
+                                            <button class="action-btn" style="background:#16a34a;color:#fff;border-radius:8px;padding:6px 10px;" data-type="invoice-pay" data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>Pay</button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -570,6 +802,10 @@
                             </button>
                         </div>
                     </div>
+                    <!-- Hidden form to trigger secured PDF generation via POST -->
+                    <form id="exportPdfForm" method="POST" style="display:none">
+                        <input type="hidden" name="action" value="export_pdf">
+                    </form>
 
                     <!-- Add Contract Form -->
                     <div class="form-container" id="contractForm">
@@ -593,6 +829,11 @@
                                 <input type="file" id="contractFile" name="contract_file" class="form-control" accept=".pdf,.doc,.docx" required>
                                 <div class="file-info">Accepted formats: PDF, DOC, DOCX (Max: 10MB)</div>
                             </div>
+                            <div class="form-group">
+                                <label for="contractImage">Cover Image (optional)</label>
+                                <input type="file" id="contractImage" name="contract_image" class="form-control" accept="image/*">
+                                <div class="file-info">Accepted formats: JPG, PNG, JPEG (Max: 5MB)</div>
+                            </div>
                             
                             <div class="ai-analysis-section">
                                 <h4>､AI Risk Assessment</h4>
@@ -609,7 +850,7 @@
                             <div class="form-actions">
                                 <button type="button" class="cancel-btn" id="cancelContractBtn">Cancel</button>
                                 <button type="submit" class="save-btn" name="add_contract" id="saveContractBtn">
-                                    <i>､/i> Upload & Analyze Contract
+                                    <i>+</i> Upload & Analyze Contract
                                 </button>
                             </div>
                         </form>
@@ -643,8 +884,12 @@
                                     <td><?php echo htmlspecialchars($contract['risk_score']); ?>/100</td>
                                     <td><?php echo date('Y-m-d', strtotime($contract['created_at'])); ?></td>
                                     <td>
-                                        <button class="action-btn view-btn">View</button>
-                                        <button class="action-btn analyze-btn" data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
+                                        <button class="action-btn view-btn" 
+                                                data-type="contract-view"
+                                                data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
+                                        <button class="action-btn analyze-btn" 
+                                                data-type="contract-analyze"
+                                                data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
                                         <?php if (!empty($contract['file_path'])): ?>
                                             <button class="action-btn download-btn" data-file="<?php echo htmlspecialchars($contract['file_path']); ?>">Download</button>
                                         <?php endif; ?>
@@ -717,9 +962,619 @@
                 <button id="closeDetails" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
                 <h3 id="detailsTitle">Details</h3>
                 <div id="detailsBody">
-                    <!-- dynamic content -->
+                    <!-- Fallback content shown if no dynamic content is provided -->
+                    <form id="genericModalForm" style="display:block">
+                        <div style="padding:12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; margin-bottom:10px;">
+                            <h4 style="margin:0 0 6px;">Quick Note</h4>
+                            <p style="margin:0 0 8px; color:#475569;">Enter an optional note then submit. This is a default content view that appears when no specific details are loaded.</p>
+                            <textarea name="note" rows="3" class="form-control" placeholder="Type your note here…" style="width:100%;"></textarea>
+                        </div>
+                        <div style="display:flex; gap:10px; justify-content:flex-end;">
+                            <button type="submit" class="save-btn">Submit</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+        <!-- Password Gate Modal -->
+        <div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,.55); backdrop-filter: blur(2px); align-items:center; justify-content:center; z-index:2000;">
+            <div style="background:linear-gradient(180deg,#ffffff,#f8fafc); width:92%; max-width:420px; border-radius:14px; padding:22px 18px; position:relative; box-shadow:0 16px 48px rgba(2,6,23,.25); border:1px solid #e2e8f0;">
+                <h3 style="margin:0 0 8px; font-weight:800; color:#0f172a;">Security Check</h3>
+                <p style="margin:0 0 10px; color:#475569;">Enter password to continue. Hint: <strong>123</strong></p>
+                <form id="passwordForm">
+                    <input type="password" id="pwdInput" class="form-control" placeholder="Enter password (123)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                    <div style="display:flex; gap:10px; margin-top:14px; justify-content:flex-end;">
+                        <button type="button" class="cancel-btn" id="pwdCancel">Cancel</button>
+                        <button type="submit" class="save-btn">Continue</button>
+                    </div>
+                </form>
+                <div id="pwdError" style="color:#e11d48; font-size:.9rem; margin-top:8px; display:none;">Incorrect password.</div>
+            </div>
+        </div>
+
+        <!-- Edit Employee Modal -->
+        <div id="editEmployeeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1200;">
+            <div style="background:white; width:92%; max-width:560px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeEditEmployee" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <h3 style="margin-top:0;">Edit Employee</h3>
+                <form method="POST" id="editEmployeeForm">
+                    <input type="hidden" name="update_employee" value="1">
+                    <input type="hidden" name="employee_id" id="edit_emp_id">
+                    <div class="form-group">
+                        <label for="edit_emp_name">Name</label>
+                        <input type="text" id="edit_emp_name" name="employee_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_emp_position">Position</label>
+                        <input type="text" id="edit_emp_position" name="employee_position" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_emp_email">Email</label>
+                        <input type="email" id="edit_emp_email" name="employee_email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_emp_phone">Phone</label>
+                        <input type="text" id="edit_emp_phone" name="employee_phone" class="form-control" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancelEditEmployee">Cancel</button>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contract Form Modal wrapper -->
+        <div id="contractFormModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
+            <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeContractFormModal" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <div id="contractFormContainer">
+                    <!-- The existing contract form will be moved here dynamically -->
+                </div>
+            </div>
+        </div>
+        <!-- Employee Form Modal wrapper -->
+        <div id="employeeFormModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
+            <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeEmployeeFormModal" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <div id="employeeFormContainer"></div>
+            </div>
+        </div>
+        <!-- Document Form Modal wrapper -->
+        <div id="documentFormModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
+            <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeDocumentFormModal" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <div id="documentFormContainer">
+                    <h3>Upload Document</h3>
+                    <form method="POST" enctype="multipart/form-data" id="documentFormData">
+                        <input type="hidden" name="add_document" value="1">
+                        <div class="form-group">
+                            <label for="doc_name">Document Name</label>
+                            <input type="text" id="doc_name" name="doc_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="doc_case">Case ID</label>
+                            <input type="text" id="doc_case" name="doc_case" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="doc_file">File</label>
+                            <input type="file" id="doc_file" name="doc_file" class="form-control" accept=".pdf,.doc,.docx" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="cancel-btn" id="cancelDocumentBtn">Cancel</button>
+                            <button type="submit" class="save-btn">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Edit Document Modal -->
+        <div id="editDocumentModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1200;">
+            <div style="background:white; width:92%; max-width:560px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeEditDocument" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <h3 style="margin-top:0;">Edit Document</h3>
+                <form method="POST" id="editDocumentForm">
+                    <input type="hidden" name="update_document" value="1">
+                    <input type="hidden" name="document_id" id="edit_doc_id">
+                    <div class="form-group">
+                        <label for="edit_doc_name">Document Name</label>
+                        <input type="text" id="edit_doc_name" name="doc_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_doc_case">Case ID</label>
+                        <input type="text" id="edit_doc_case" name="doc_case" class="form-control" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancelEditDocument">Cancel</button>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Invoice Form Modal wrapper -->
+        <div id="invoiceFormModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
+            <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+                <button type="button" id="closeInvoiceFormModal" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <div id="invoiceFormContainer">
+                    <h3>Create Invoice</h3>
+                    <form method="POST" id="invoiceFormData">
+                        <input type="hidden" name="add_invoice" value="1">
+                        <div class="form-group">
+                            <label for="inv_number">Invoice #</label>
+                            <input type="text" id="inv_number" name="invoice_number" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inv_client">Client</label>
+                            <input type="text" id="inv_client" name="client" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inv_amount">Amount</label>
+                            <input type="number" step="0.01" id="inv_amount" name="amount" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inv_due">Due Date</label>
+                            <input type="date" id="inv_due" name="due_date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inv_status">Status</label>
+                            <select id="inv_status" name="status" class="form-control" required>
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="cancel-btn" id="cancelInvoiceBtn">Cancel</button>
+                            <button type="submit" class="save-btn">Save Invoice</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Pay confirmation modal -->
+        <div id="payConfirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1600;">
+            <div style="background:white; width:92%; max-width:420px; border-radius:14px; padding:20px; position:relative; box-shadow:0 16px 48px rgba(2,6,23,.25); border:1px solid #e2e8f0;">
+                <h3 style="margin:0 0 8px;">Confirm Payment</h3>
+                <p id="payConfirmText" style="margin:0 0 14px; color:#475569;">Do you want to pay this invoice?</p>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="cancel-btn" id="cancelPayBtn">No</button>
+                    <form method="POST" id="payInvoiceForm" style="margin:0;">
+                        <input type="hidden" name="pay_invoice" value="1">
+                        <input type="hidden" name="invoice_id" id="pay_invoice_id" value="">
+                        <button type="submit" class="save-btn" style="background:#16a34a;">Yes, Pay</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Contract: Upload Supporting Document Modal -->
+        <div id="contractDocsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1500;">
+            <div style="background:white; width:94%; max-width:640px; border-radius:12px; padding:20px; position:relative;">
+                <button type="button" id="closeContractDocsModal" style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
+                <h3 style="margin-top:0;">Upload Contract Document</h3>
+                <form method="POST" enctype="multipart/form-data" id="contractDocsForm">
+                    <input type="hidden" name="add_contract_document" value="1">
+                    <input type="hidden" name="contract_id" id="contract_docs_contract_id" value="">
+                    <div class="form-group">
+                        <label for="contract_doc_name">Document Name</label>
+                        <input type="text" id="contract_doc_name" name="doc_name" class="form-control" placeholder="e.g., Annex A, Addendum, Scanned Signature" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contract_doc_file">File</label>
+                        <input type="file" id="contract_doc_file" name="doc_file" class="form-control" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancelContractDocsBtn">Cancel</button>
+                        <button type="submit" class="save-btn">Upload Document</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        (function(){
+            const detailsModal = document.getElementById('detailsModal');
+            const detailsTitle = document.getElementById('detailsTitle');
+            const detailsBody  = document.getElementById('detailsBody');
+            const closeDetails = document.getElementById('closeDetails');
+            const pwdModal     = document.getElementById('passwordModal');
+            const pwdForm      = document.getElementById('passwordForm');
+            const pwdInput     = document.getElementById('pwdInput');
+            const pwdError     = document.getElementById('pwdError');
+            const pwdCancel    = document.getElementById('pwdCancel');
+            const PASSWORD     = '123';
+
+            const editModal    = document.getElementById('editEmployeeModal');
+            const closeEdit    = document.getElementById('closeEditEmployee');
+            const cancelEdit   = document.getElementById('cancelEditEmployee');
+            const editForm     = document.getElementById('editEmployeeForm');
+            const fId = document.getElementById('edit_emp_id');
+            const fName = document.getElementById('edit_emp_name');
+            const fPos = document.getElementById('edit_emp_position');
+            const fEmail = document.getElementById('edit_emp_email');
+            const fPhone = document.getElementById('edit_emp_phone');
+
+            // Employee info modal (unified create/update)
+            const empInfoModal = document.getElementById('employeeInfoModal');
+            const closeEmpInfo = document.getElementById('closeEmployeeInfo');
+            const cancelEmpInfo = document.getElementById('cancelEmployeeInfo');
+            const empInfoForm = document.getElementById('employeeInfoForm');
+            const infoId = document.getElementById('info_emp_id');
+            const infoName = document.getElementById('info_emp_name');
+            const infoPos = document.getElementById('info_emp_position');
+            const infoEmail = document.getElementById('info_emp_email');
+            const infoPhone = document.getElementById('info_emp_phone');
+            const employeeInfoTitle = document.getElementById('employeeInfoTitle');
+            const contractForm = document.getElementById('contractForm');
+            const contractFormModal = document.getElementById('contractFormModal');
+            const contractFormContainer = document.getElementById('contractFormContainer');
+            const addContractBtn = document.getElementById('addContractBtn');
+            const cancelContractBtn = document.getElementById('cancelContractBtn');
+            const closeContractFormModal = document.getElementById('closeContractFormModal');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const exportPdfForm = document.getElementById('exportPdfForm');
+            // Employee form modal
+            const employeeForm = document.getElementById('employeeForm');
+            const employeeFormModal = document.getElementById('employeeFormModal');
+            const employeeFormContainer = document.getElementById('employeeFormContainer');
+            const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+            const closeEmployeeFormModal = document.getElementById('closeEmployeeFormModal');
+            // Document form modal
+            const documentFormModal = document.getElementById('documentFormModal');
+            const documentFormContainer = document.getElementById('documentFormContainer');
+            const addDocumentBtn = document.getElementById('addDocumentBtn');
+            const cancelDocumentBtn = document.getElementById('cancelDocumentBtn');
+            const closeDocumentFormModal = document.getElementById('closeDocumentFormModal');
+            // Edit document modal
+            const editDocModal = document.getElementById('editDocumentModal');
+            const closeEditDoc = document.getElementById('closeEditDocument');
+            const cancelEditDoc = document.getElementById('cancelEditDocument');
+            const editDocForm = document.getElementById('editDocumentForm');
+            const editDocId = document.getElementById('edit_doc_id');
+            const editDocName = document.getElementById('edit_doc_name');
+            const editDocCase = document.getElementById('edit_doc_case');
+            // Invoice form modal
+            const invoiceFormModal = document.getElementById('invoiceFormModal');
+            const addInvoiceBtn = document.getElementById('addInvoiceBtn');
+            const closeInvoiceFormModal = document.getElementById('closeInvoiceFormModal');
+            const cancelInvoiceBtn = document.getElementById('cancelInvoiceBtn');
+            // Pay modal
+            const payConfirmModal = document.getElementById('payConfirmModal');
+            const cancelPayBtn = document.getElementById('cancelPayBtn');
+            const payInvoiceId = document.getElementById('pay_invoice_id');
+            const payConfirmText = document.getElementById('payConfirmText');
+            // Contract docs modal
+            const contractDocsModal = document.getElementById('contractDocsModal');
+            const closeContractDocsModal = document.getElementById('closeContractDocsModal');
+            const cancelContractDocsBtn = document.getElementById('cancelContractDocsBtn');
+            const contractDocsContractId = document.getElementById('contract_docs_contract_id');
+
+            function openModal(el){ el.style.display = 'flex'; }
+            function closeModal(el){ el.style.display = 'none'; }
+
+            closeDetails.addEventListener('click', () => closeModal(detailsModal));
+            // Default submit handler for generic modal content
+            document.addEventListener('submit', (e)=>{
+                const t = e.target;
+                if (t && t.id === 'genericModalForm'){
+                    e.preventDefault();
+                    // Simple acknowledgement and close
+                    detailsBody.innerHTML = `<div style="padding:10px; color:#16a34a;">Submitted. Thank you!</div>`;
+                    setTimeout(()=> closeModal(detailsModal), 800);
+                }
+            });
+            pwdCancel.addEventListener('click', () => closeModal(pwdModal));
+            [closeEdit, cancelEdit].forEach(b => b.addEventListener('click', ()=> closeModal(editModal)));
+            [closeContractFormModal].forEach(b => b.addEventListener('click', ()=> closeModal(contractFormModal)));
+            cancelContractBtn?.addEventListener('click', ()=> closeModal(contractFormModal));
+            [closeEmployeeFormModal].forEach(b => b.addEventListener('click', ()=> closeModal(employeeFormModal)));
+            [closeDocumentFormModal].forEach(b => b.addEventListener('click', ()=> closeModal(documentFormModal)));
+            cancelDocumentBtn?.addEventListener('click', ()=> closeModal(documentFormModal));
+            [closeEditDoc, cancelEditDoc].forEach(b => b.addEventListener('click', ()=> closeModal(editDocModal)));
+            [closeInvoiceFormModal].forEach(b => b.addEventListener('click', ()=> closeModal(invoiceFormModal)));
+            cancelInvoiceBtn?.addEventListener('click', ()=> closeModal(invoiceFormModal));
+            cancelPayBtn?.addEventListener('click', ()=> closeModal(payConfirmModal));
+            [closeEmpInfo, cancelEmpInfo].forEach(b => b.addEventListener('click', ()=> closeModal(empInfoModal)));
+            [closeContractDocsModal, cancelContractDocsBtn].forEach(b => b.addEventListener('click', ()=> closeModal(contractDocsModal)));
+
+            // Password gate utility
+            function withPasswordGate(onSuccess){
+                openModal(pwdModal);
+                pwdError.style.display = 'none';
+                pwdInput.value = '';
+                pwdInput.focus();
+                const handler = (e)=>{
+                    e.preventDefault();
+                    if (pwdInput.value === PASSWORD){
+                        pwdForm.removeEventListener('submit', handler);
+                        closeModal(pwdModal);
+                        onSuccess();
+                    } else {
+                        pwdError.style.display = 'block';
+                    }
+                };
+                pwdForm.addEventListener('submit', handler);
+            }
+
+            // Wire employee action buttons
+            document.querySelectorAll('[data-type="employee-view"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const emp = JSON.parse(btn.getAttribute('data-emp') || '{}');
+                    withPasswordGate(()=>{
+                        employeeInfoTitle.textContent = 'Employee Information';
+                        infoId.value = emp.id || '';
+                        infoName.value = emp.name || '';
+                        infoPos.value = emp.position || '';
+                        infoEmail.value = emp.email || '';
+                        infoPhone.value = emp.phone || '';
+                        openModal(empInfoModal);
+                    });
+                });
+            });
+            document.querySelectorAll('[data-type="employee-edit"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const emp = JSON.parse(btn.getAttribute('data-emp') || '{}');
+                    withPasswordGate(()=>{
+                        employeeInfoTitle.textContent = 'Edit Employee';
+                        infoId.value = emp.id || '';
+                        infoName.value = emp.name || '';
+                        infoPos.value = emp.position || '';
+                        infoEmail.value = emp.email || '';
+                        infoPhone.value = emp.phone || '';
+                        openModal(empInfoModal);
+                    });
+                });
+            });
+
+            // Render the contract form into the modal (fallback-safe)
+            function renderContractFormInModal(){
+                // If the original form exists and hasn't been moved yet, clone its inner fields
+                if (contractForm && contractForm.querySelector('form')){
+                    // Build a fresh form to avoid duplicate IDs
+                    contractFormContainer.innerHTML = `
+                        <h3>Upload Contract <span class="ai-badge">AI Risk Analysis</span></h3>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="add_contract" value="1">
+                            <div class="form-group">
+                                <label for="contractNameModal">Contract Name</label>
+                                <input type="text" id="contractNameModal" name="contract_name" class="form-control" placeholder="Enter contract name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contractCaseModal">Case ID</label>
+                                <input type="text" id="contractCaseModal" name="contract_case" class="form-control" placeholder="Enter case ID (e.g., C-001)" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contractDescriptionModal">Contract Description</label>
+                                <textarea id="contractDescriptionModal" name="contract_description" class="form-control" placeholder="Describe the contract terms, key clauses, and important details for AI analysis" rows="4"></textarea>
+                                <div class="file-info">AI will analyze this description to detect risk factors</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="contractFileModal">Contract File</label>
+                                <input type="file" id="contractFileModal" name="contract_file" class="form-control" accept=".pdf,.doc,.docx" required>
+                                <div class="file-info">Accepted formats: PDF, DOC, DOCX (Max: 10MB)</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="contractImageModal">Cover Image (optional)</label>
+                                <input type="file" id="contractImageModal" name="contract_image" class="form-control" accept="image/*">
+                                <div class="file-info">Accepted formats: JPG, PNG, JPEG (Max: 5MB)</div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" id="cancelContractBtnModal">Cancel</button>
+                                <button type="submit" class="save-btn">
+                                    <i>+</i> Upload & Analyze Contract
+                                </button>
+                            </div>
+                        </form>
+                    `;
+                    // Hook up cancel inside modal
+                    const cancelBtnLocal = contractFormContainer.querySelector('#cancelContractBtnModal');
+                    cancelBtnLocal?.addEventListener('click', ()=> closeModal(contractFormModal));
+                } else {
+                    // Absolute fallback (shouldn't happen) - minimal info
+                    contractFormContainer.innerHTML = `
+                        <h3>Upload Contract</h3>
+                        <div class="alert alert-error">Original form not found. Using fallback form.</div>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="add_contract" value="1">
+                            <div class="form-group">
+                                <label>Contract Name</label>
+                                <input type="text" name="contract_name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Case ID</label>
+                                <input type="text" name="contract_case" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contract File</label>
+                                <input type="file" name="contract_file" class="form-control" accept=".pdf,.doc,.docx" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" id="cancelContractBtnModal">Cancel</button>
+                                <button type="submit" class="save-btn">Upload</button>
+                            </div>
+                        </form>
+                    `;
+                    const cancelBtnLocal = contractFormContainer.querySelector('#cancelContractBtnModal');
+                    cancelBtnLocal?.addEventListener('click', ()=> closeModal(contractFormModal));
+                }
+            }
+
+            // Open the contract modal with content
+            if (addContractBtn && contractForm && contractFormContainer){
+                addContractBtn.addEventListener('click', ()=>{
+                    // Always render fresh content so it's never empty
+                    renderContractFormInModal();
+                    openModal(contractFormModal);
+                });
+            }
+
+            // Move employee form into modal container when opening
+            if (addEmployeeBtn && employeeForm && employeeFormContainer){
+                addEmployeeBtn.addEventListener('click', ()=>{
+                    // Use unified modal for adding
+                    employeeInfoTitle.textContent = 'Add Employee';
+                    infoId.value = '';
+                    infoName.value = '';
+                    infoPos.value = '';
+                    infoEmail.value = '';
+                    infoPhone.value = '';
+                    openModal(empInfoModal);
+                });
+            }
+
+            // Open Document upload modal
+            addDocumentBtn?.addEventListener('click', ()=> openModal(documentFormModal));
+
+            // Document edit/delete buttons
+            document.querySelectorAll('[data-type="doc-edit"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const d = JSON.parse(btn.getAttribute('data-doc') || '{}');
+                    withPasswordGate(()=>{
+                        editDocId.value = d.id || '';
+                        editDocName.value = d.name || '';
+                        editDocCase.value = d.case_id || '';
+                        openModal(editDocModal);
+                    });
+                });
+            });
+            document.querySelectorAll('[data-type="doc-delete"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const d = JSON.parse(btn.getAttribute('data-doc') || '{}');
+                    withPasswordGate(()=>{
+                        if (confirm('Delete document "' + (d.name||'') + '"?')){
+                            const f = document.createElement('form');
+                            f.method = 'POST';
+                            f.innerHTML = '<input type="hidden" name="delete_document" value="1"><input type="hidden" name="document_id" value="'+ (d.id||'') +'">';
+                            document.body.appendChild(f); f.submit();
+                        }
+                    });
+                });
+            });
+
+            // Open invoice form modal
+            addInvoiceBtn?.addEventListener('click', ()=> openModal(invoiceFormModal));
+
+            // Billing actions: view + pay with password, then confirmation for pay
+            document.querySelectorAll('[data-type="invoice-view"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const inv = JSON.parse(btn.getAttribute('data-invoice') || '{}');
+                    withPasswordGate(()=>{
+                        detailsTitle.textContent = 'Invoice Details';
+                        detailsBody.innerHTML = `
+                          <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; line-height:1.8;">
+                            <div><strong>Invoice #</strong></div><div>${inv.invoice_number || inv.id || ''}</div>
+                            <div><strong>Client</strong></div><div>${inv.client || ''}</div>
+                            <div><strong>Amount</strong></div><div>₱${Number(inv.amount||0).toFixed(2)}</div>
+                            <div><strong>Due Date</strong></div><div>${inv.due_date || ''}</div>
+                            <div><strong>Status</strong></div><div>${(inv.status||'').toString().toUpperCase()}</div>
+                          </div>`;
+                        openModal(detailsModal);
+                    });
+                });
+            });
+            document.querySelectorAll('[data-type="invoice-pay"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const inv = JSON.parse(btn.getAttribute('data-invoice') || '{}');
+                    withPasswordGate(()=>{
+                        payInvoiceId.value = inv.id || '';
+                        payConfirmText.textContent = `Do you want to pay invoice ${inv.invoice_number || inv.id || ''} for ₱${Number(inv.amount||0).toFixed(2)}?`;
+                        openModal(payConfirmModal);
+                    });
+                });
+            });
+
+            // Contract row actions
+            document.querySelectorAll('[data-type="contract-view"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
+                    withPasswordGate(()=>{
+                        detailsTitle.textContent = 'Contract Details';
+                        detailsBody.innerHTML = `<div style="padding:10px;color:#64748b;">Loading details…</div>`;
+                        openModal(detailsModal);
+                        try {
+                            const rf = (()=>{ try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
+                            const rec = (()=>{ try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
+                            const uploaded = (c.created_at ? new Date(c.created_at).toLocaleDateString() : '');
+                            detailsBody.innerHTML = `
+                                <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; line-height:1.8;">
+                                    <div><strong>Contract</strong></div><div>${c.contract_name || ''}</div>
+                                    <div><strong>Case</strong></div><div>${c.case_id || ''}</div>
+                                    <div><strong>Risk</strong></div><div>${(c.risk_level || 'N/A')} — ${c.risk_score || 'N/A'}/100</div>
+                                    <div><strong>Uploaded</strong></div><div>${uploaded}</div>
+                                    <div style="grid-column:1/-1"><strong>Risk Factors</strong><ul style="margin:.4rem 0 0 1rem;">${rf.map(r=>`<li>${(r.factor||'')}</li>`).join('') || '<li>None</li>'}</ul></div>
+                                    <div style="grid-column:1/-1"><strong>Recommendations</strong><ul style="margin:.4rem 0 0 1rem;">${rec.map(x=>`<li>${x}</li>`).join('') || '<li>None</li>'}</ul></div>
+                                </div>`;
+                        } catch (err) {
+                            detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load details. Please try again.</div>`;
+                        }
+                    });
+                });
+            });
+            document.querySelectorAll('[data-type="contract-analyze"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
+                    withPasswordGate(()=>{
+                        detailsTitle.textContent = 'AI Risk Analysis';
+                        detailsBody.innerHTML = `<div style="padding:10px;color:#64748b;">Loading analysis…</div>`;
+                        openModal(detailsModal);
+                        try {
+                            const score = c.risk_score ?? 'N/A';
+                            const level = c.risk_level ?? 'Unknown';
+                            detailsBody.innerHTML = `
+                                <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+                                    <div style="width:64px; height:64px; border-radius:50%; background:#eef2ff; display:grid; place-items:center; color:#4338ca;">
+                                        <span style="font-size:20px; font-weight:700;">${score}</span>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:700;">Risk Score</div>
+                                        <div style="color:#64748b;">Level: ${level}</div>
+                                    </div>
+                                </div>
+                                <div style="height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden;">
+                                    <div style="height:100%; width:${Number(score)||0}%; background:${level==='High'?'#ef4444':(level==='Medium'?'#f59e0b':'#22c55e')};"></div>
+                                </div>
+                                <p style="margin-top:10px; color:#64748b;">Password protected analysis view.</p>`;
+                        } catch (err) {
+                            detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load analysis. Please try again.</div>`;
+                        }
+                    });
+                });
+            });
+            // Contract: upload supporting document
+            document.querySelectorAll('[data-type="contract-upload-doc"]').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
+                    withPasswordGate(()=>{
+                        contractDocsContractId.value = c.id || '';
+                        openModal(contractDocsModal);
+                    });
+                });
+            });
+
+            // Risk chart init (avoid loop/double init)
+            let riskChartRef = null;
+            function initRiskChart(){
+                const ctx = document.getElementById('riskChart');
+                if (!ctx) return;
+                const data = {
+                    labels: ['High','Medium','Low'],
+                    datasets: [{
+                        label: 'Contracts',
+                        data: [<?php echo $riskCounts['High']; ?>, <?php echo $riskCounts['Medium']; ?>, <?php echo $riskCounts['Low']; ?>],
+                        backgroundColor: ['#ef4444','#f59e0b','#22c55e']
+                    }]
+                };
+                if (riskChartRef){ riskChartRef.destroy(); }
+                riskChartRef = new Chart(ctx, { type:'bar', data, options:{ responsive:true, plugins:{ legend:{ display:false } } } });
+            }
+            document.addEventListener('DOMContentLoaded', initRiskChart);
+
+            // Generate Secured PDF (password-gated)
+            exportPdfBtn?.addEventListener('click', ()=>{
+                withPasswordGate(()=>{
+                    exportPdfForm?.submit();
+                });
+            });
+        })();
+        </script>
     </body>
     </html>

@@ -39,6 +39,13 @@ if (isset($_SESSION['user_id'])) {
 
 $error_message = '';
 $success_message = '';
+$prefill_email = '';
+$show_verify_modal = false;
+
+// Surface success after verification
+if (isset($_GET['verified']) && $_GET['verified'] === '1') {
+    $success_message = 'Email verified. You can now sign in.';
+}
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
@@ -74,7 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                     $error_message = 'Invalid password.';
                 }
             } else {
-                $error_message = 'Invalid email/username or account is inactive.';
+                if ($user) {
+                    $error_message = 'Your account is inactive. Please verify your email.';
+                    $prefill_email = $user['email'];
+                    $show_verify_modal = true;
+                } else {
+                    $error_message = 'Invalid email/username or account is inactive.';
+                }
             }
         } catch (Exception $e) {
             $error_message = 'Database error. Please try again.';
@@ -290,6 +303,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         </button>
 
         <p class="text-xs text-center text-slate-500 dark:text-slate-400">© 2025 ATIERA BSIT 4101 CLUSTER 1</p>
+        <p class="text-xs text-center mt-2 text-slate-500 dark:text-slate-400">
+          No account? <a class="underline" href="register.php">Register</a>
+          • <button type="button" id="openVerify" class="underline">Verify email</button>
+        </p>
       </form>
     </div>
   </main>
@@ -314,6 +331,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     </div>
   </div>
 
+  <!-- ===== Verify Email Modal ===== -->
+  <div id="verifyBackdrop" class="hidden fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px]"></div>
+  <div id="verifyModal" class="hidden fixed inset-0 z-[71] grid place-items-center">
+    <div class="w-[92%] max-w-md card p-6">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="text-lg font-bold">Verify your email</h4>
+        <button id="closeVerify" class="px-2 py-1 rounded border text-sm">✕</button>
+      </div>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Enter the 6-digit code sent to your email.</p>
+      <form id="verifyForm" method="POST" action="verify.php" class="space-y-3">
+        <div>
+          <label for="vemail" class="block text-sm font-medium mb-1">Email</label>
+          <input id="vemail" name="email" type="email" required class="input" placeholder="you@example.com" value="<?php echo htmlspecialchars($prefill_email); ?>">
+        </div>
+        <div>
+          <label for="vcode" class="block text-sm font-medium mb-1">Verification code</label>
+          <input id="vcode" name="code" type="text" inputmode="numeric" pattern="\\d{6}" maxlength="6" required class="input" placeholder="123456">
+        </div>
+        <div id="verifyMsg" class="text-xs text-slate-500"></div>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="btn !w-auto px-4">Verify</button>
+          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm">Resend code</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <script>
   const $ = (s, r=document)=>r.querySelector(s);
 
@@ -333,6 +377,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
   const pwLabel   = $('#pwLabel');
   const modeBtn   = $('#modeBtn');
   const wmImg     = $('#wm');
+  // Verify modal elements
+  const verifyModal   = $('#verifyModal');
+  const verifyBackdrop= $('#verifyBackdrop');
+  const openVerifyBtn = $('#openVerify');
+  const closeVerifyBtn= $('#closeVerify');
+  const verifyForm    = $('#verifyForm');
+  const resendBtn     = $('#resendBtn');
+  const vemail        = $('#vemail');
+  const vcode         = $('#vcode');
+  const verifyMsg     = $('#verifyMsg');
 
   /* ---------- Dark mode toggle ---------- */
   modeBtn.addEventListener('click', ()=>{
@@ -530,6 +584,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
 
   // Resume countdown if locked
   checkLock();
+
+  /* ---------- Verify Modal ---------- */
+  function openVerify(){
+    verifyModal.classList.remove('hidden');
+    verifyBackdrop.classList.remove('hidden');
+    setTimeout(()=> vcode?.focus(), 50);
+  }
+  function closeVerify(){
+    verifyModal.classList.add('hidden');
+    verifyBackdrop.classList.add('hidden');
+    verifyMsg.textContent = '';
+  }
+  openVerifyBtn?.addEventListener('click', openVerify);
+  closeVerifyBtn?.addEventListener('click', closeVerify);
+  verifyBackdrop?.addEventListener('click', closeVerify);
+  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeVerify(); });
+
+  // Auto-open from server flag or query (when coming from register)
+  const serverShowVerify = <?php echo $show_verify_modal ? 'true' : 'false'; ?>;
+  const urlParams = new URLSearchParams(location.search);
+  if (serverShowVerify || urlParams.get('verify') === '1') {
+    const pre = '<?php echo htmlspecialchars($prefill_email, ENT_QUOTES); ?>' || urlParams.get('email') || '';
+    if (pre) vemail.value = pre;
+    openVerify();
+  }
+
+  // Resend verification code
+  resendBtn?.addEventListener('click', async ()=>{
+    verifyMsg.textContent = 'Sending...';
+    const email = vemail.value.trim();
+    if (!email) { verifyMsg.textContent = 'Enter your email first.'; return; }
+    try{
+      const res = await fetch('verify.php', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action:'resend', email })
+      });
+      const data = await res.json();
+      verifyMsg.textContent = data?.message || (data?.ok ? 'Sent.' : 'Failed to send.');
+    }catch{
+      verifyMsg.textContent = 'Network error. Please try again.';
+    }
+  });
 </script>
 
 

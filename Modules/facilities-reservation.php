@@ -275,6 +275,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <title>Facilities Reservation System - Hotel Management</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="../assets/css/facilities-reservation.css">
+        <style>
+            /* Center all table headers and cells in this module only */
+            .table th,
+            .table td {
+                text-align: center !important;
+                vertical-align: middle;
+            }
+            /* Icon-only action buttons */
+            .btn.btn-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.45rem 0.55rem;
+                min-width: 38px;
+                height: 34px;
+                border-radius: 10px;
+                font-size: 0; /* hide any accidental text spacing */
+                line-height: 0;
+                gap: 0;
+            }
+            .btn.btn-icon i {
+                font-size: 14px;
+                line-height: 1;
+            }
+            /* Reports filters - improved visual and centered layout */
+            #reports .filters {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                flex-wrap: wrap;
+                background: #ffffff;
+                border: 1px solid var(--border, #e2e8f0);
+                padding: 12px 14px;
+                border-radius: 10px;
+                box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+                margin: 8px auto 14px;
+                max-width: 920px;
+            }
+            #reports .filters input[type="date"],
+            #reports .filters select {
+                height: 36px;
+                padding: 6px 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                background: #fff;
+                color: #0f172a;
+            }
+            #reports .filters button.btn {
+                height: 36px;
+                padding: 0 14px;
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            /* Export button centered under filters */
+            #reports form[action=""][method="post"] button.btn,
+            #reports form[method="post"] button.btn {
+                display: inline-flex;
+                margin: 6px auto 14px;
+                padding: 8px 14px;
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            /* Small labels spacing */
+            #reports .filters label,
+            #reports .filters span {
+                font-weight: 600;
+                color: #334155;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -471,10 +541,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <!-- INAYOS NA DATE & TIME STRUCTURE -->
                                             <td style="text-align: center;">
                                                 <div style="font-size: 0.85rem; font-weight: 500; line-height: 1.2;">
-                                                    <?= date('M d, Y', strtotime($reservation['event_date'])) ?>
+                                                    <?= date('m/d/Y', strtotime($reservation['event_date'])) ?>
                                                 </div>
                                                 <small style="color: #718096; font-size: 0.7rem; display: block;">
-                                                    <?= date('g:i A', strtotime($reservation['start_time'])) ?> - <?= date('g:i A', strtotime($reservation['end_time'])) ?>
+                                                    <?= date('g:i a', strtotime($reservation['start_time'])) ?> - <?= date('g:i a', strtotime($reservation['end_time'])) ?>
                                                 </small>
                                             </td>
                                             <td style="text-align: center;"><?= $reservation['guests_count'] ?></td>
@@ -487,19 +557,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <td>
                                                 <div class="d-flex gap-1" style="flex-wrap: nowrap; justify-content: center;">
                                                     <?php if ($reservation['status'] == 'pending'): ?>
-                                                        <button class="btn btn-success btn-sm" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')" title="Confirm Reservation">
-                                                            <span class="icon-img-placeholder">✔️</span>
+                                                        <button class="btn btn-success btn-sm btn-icon" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')" title="Confirm" aria-label="Confirm">
+                                                            <i class="fa-solid fa-check"></i>
                                                         </button>
-                                                        <button class="btn btn-danger btn-sm" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')" title="Cancel Reservation">
-                                                            <span class="icon-img-placeholder">✖️</span>
+                                                        <button class="btn btn-danger btn-sm btn-icon" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')" title="Cancel" aria-label="Cancel">
+                                                            <i class="fa-solid fa-xmark"></i>
                                                         </button>
                                                     <?php elseif ($reservation['status'] == 'confirmed'): ?>
-                                                        <button class="btn btn-warning btn-sm" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')" title="Mark as Completed">
-                                                            <span class="icon-img-placeholder">🏁</span>
+                                                        <button class="btn btn-warning btn-sm btn-icon" onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')" title="Complete" aria-label="Complete">
+                                                            <i class="fa-solid fa-flag-checkered"></i>
                                                         </button>
                                                     <?php endif; ?>
-                                                    <button class="btn btn-outline btn-sm" onclick="viewReservationDetails(<?= $reservation['id'] ?>)" title="View Details">
-                                                        <span class="icon-img-placeholder">👁️</span>
+                                                    <button class="btn btn-outline btn-sm btn-icon" onclick="viewReservationDetails(<?= $reservation['id'] ?>)" title="View Details" aria-label="View Details">
+                                                        <i class="fa-solid fa-eye"></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -579,7 +649,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <td><?= htmlspecialchars($rr['facility_name']) ?></td>
                                             <td><?= htmlspecialchars($rr['customer_name']) ?><br><small><?= htmlspecialchars($rr['customer_email']) ?></small></td>
                                             <td><?= htmlspecialchars($rr['event_date']) ?></td>
-                                            <td><?= htmlspecialchars($rr['start_time']) ?> - <?= htmlspecialchars($rr['end_time']) ?></td>
+                                            <td><?= date('g:i a', strtotime($rr['start_time'])) ?> - <?= date('g:i a', strtotime($rr['end_time'])) ?></td>
                                             <td><?= $rr['guests_count'] ?></td>
                                             <td>₱<?= number_format($rr['total_amount'] ?? 0, 2) ?></td>
                                             <td><?= htmlspecialchars($rr['status']) ?></td>
@@ -588,13 +658,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="reservation_id" value="<?= $rr['id'] ?>">
                                                     <?php if ($rr['status'] !== 'confirmed'): ?>
-                                                        <button class="btn" name="status" value="confirmed">Confirm</button>
+                                                        <button class="btn btn-icon" name="status" value="confirmed" title="Confirm" aria-label="Confirm">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </button>
                                                     <?php endif; ?>
                                                     <?php if ($rr['status'] !== 'cancelled'): ?>
-                                                        <button class="btn btn-danger" name="status" value="cancelled">Cancel</button>
+                                                        <button class="btn btn-danger btn-icon" name="status" value="cancelled" title="Cancel" aria-label="Cancel">
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
                                                     <?php endif; ?>
                                                     <?php if ($rr['status'] !== 'completed'): ?>
-                                                        <button class="btn" name="status" value="completed">Complete</button>
+                                                        <button class="btn btn-icon" name="status" value="completed" title="Complete" aria-label="Complete">
+                                                            <i class="fa-solid fa-flag-checkered"></i>
+                                                        </button>
                                                     <?php endif; ?>
                                                 </form>
                                             </td>
@@ -623,7 +699,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <?php foreach ($day_events as $event): ?>
                                     <div class="calendar-event">
                                         <div class="event-time">
-                                            <?= date('g:i A', strtotime($event['start_time'])) ?> - <?= date('g:i A', strtotime($event['end_time'])) ?>
+                                            <?= date('g:i a', strtotime($event['start_time'])) ?> - <?= date('g:i a', strtotime($event['end_time'])) ?>
                                         </div>
                                         <div class="event-title"><?= htmlspecialchars($event['facility_name']) ?></div>
                                         <div class="event-details">
