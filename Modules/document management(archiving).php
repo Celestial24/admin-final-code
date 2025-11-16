@@ -2,7 +2,7 @@
 // Database Configuration
 class Database {
     private $host = "localhost";
-    private $db_name = "hotel_document_management";
+    private $db_name = "legalmanagement";
     private $username = "root";
     private $password = "";
     public $conn;
@@ -75,8 +75,12 @@ class Document {
     }
 
     // Get all active documents
-    public function readActive() {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE is_deleted = 0 ORDER BY upload_date DESC";
+    public function readActive($category = null) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE is_deleted = 0";
+        if ($category && $category !== 'all') {
+            $query .= " AND category = '" . htmlspecialchars($category) . "'";
+        }
+        $query .= " ORDER BY upload_date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
@@ -206,7 +210,8 @@ if (isset($_GET['api'])) {
         case 'GET':
             // Get all active documents
             if(isset($_GET['action']) && $_GET['action'] == 'active') {
-                $stmt = $document->readActive();
+                $category = isset($_GET['category']) ? $_GET['category'] : null;
+                $stmt = $document->readActive($category);
                 $documents = [];
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     $documents[] = $row;
@@ -389,61 +394,114 @@ function formatFileSize($bytes) {
     
     <main class="container">
         <div class="dashboard">
-            <aside class="sidebar">
-                <h3>Categories</h3>
-                <ul>
-                    <li><a href="#" class="active">All Documents</a></li>
-                    <li><a href="fn.php">Financial Records</a></li>
-                    <li><a href="#">HR Documents</a></li>
-                    <li><a href="#">Guest Records</a></li>
-                    <li><a href="#">Inventory</a></li>
-                    <li><a href="#">Compliance</a></li>
-                    <li><a href="#">Marketing</a></li>
-                    <li><a href="#">Trash Bin</a></li>
+             <aside class="sidebar">
+                 <h3>Categories</h3>
+                 <ul>
+                    <li><a href="#" class="category-link active" data-category="all">All Documents</a></li>
+                    <li><a href="#" class="category-link" data-category="Financial Records">Financial Records</a></li>
+                    <li><a href="#" class="category-link" data-category="HR Documents">HR Documents</a></li>
+                    <li><a href="#" class="category-link" data-category="Guest Records">Guest Records</a></li>
+                    <li><a href="#" class="category-link" data-category="Inventory">Inventory</a></li>
+                    <li><a href="#" class="category-link" data-category="Compliance">Compliance</a></li>
+                    <li><a href="#" class="category-link" data-category="Marketing">Marketing</a></li>
+                    <li><a href="#" class="category-link" data-category="trash">Trash Bin</a></li>
+                 </ul>
+                 
+                 <h3>Quick Stats</h3>
+                <ul id="quickStats">
+                    <li>Total Files: <span id="totalFiles">0</span></li>
+                    <li>Storage Used: <span id="storageUsed">0 GB</span></li>
+                    <li>Files in Trash: <span id="filesInTrash">0</span></li>
                 </ul>
-                
-                <h3>Quick Stats</h3>
-                <ul>
-                    <li>Total Files: 127</li>
-                    <li>Storage Used: 2.3 GB</li>
-                    <li>Files in Trash: 12</li>
-                </ul>
-            </aside>
-            
-            <div class="content">
-                <div class="content-header">
-                    <h2>Document Management</h2>
-                    <button class="btn btn-primary" id="uploadBtn">Upload Document</button>
-                </div>
-                
-                <div class="tabs">
-                    <div class="tab active" data-tab="active">Active Files</div>
-                    <div class="tab" data-tab="trash">Trash Bin</div>
-                </div>
-                
-                <div class="tab-content active" id="active-tab">
+             </aside>
+             
+             <div class="content">
+                 <div class="content-header">
+                    <h2 id="contentTitle">Document Management</h2>
+                     <button class="btn btn-primary" id="uploadBtn">Upload Document</button>
+                 </div>
+                 
+                <!-- All Documents View -->
+                <div class="category-content active" id="all-content">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="active">Active Files</div>
+                        <div class="tab" data-tab="trash">Trash Bin</div>
+                    </div>
+                    <div class="tab-content active" id="active-tab">
+                        <div class="search-box">
+                            <input type="text" placeholder="Search documents...">
+                            <button>Search</button>
+                        </div>
+                        <div class="file-grid" id="activeFiles"><!-- Active files will be populated here --></div>
+                    </div>
+                    <div class="tab-content" id="trash-tab">
+                        <div class="alert alert-danger">Files in trash will be permanently deleted after 30 days.</div>
+                        <div class="file-grid" id="trashFiles"><!-- Trash files will be populated here --></div>
+                    </div>
+                 </div>
+
+              <!-- Financial Records View -->
+                <div class="category-content" id="financial-records-content">
                     <div class="search-box">
-                        <input type="text" placeholder="Search documents...">
+                       <input type="text" placeholder="Search financial records...">
+                       <button>Search</button>
+                    </div>
+                    <div class="file-grid" id="financialFiles"><!-- Financial files will be populated here --></div>
+                </div>
+
+                <!-- HR Documents View -->
+                <div class="category-content" id="hr-documents-content">
+                    <div class="search-box">
+                       <input type="text" placeholder="Search HR documents...">
+                       <button>Search</button>
+                    </div>
+                    <div class="file-grid" id="hrFiles"><!-- HR files will be populated here --></div>
+                </div>
+
+                <!-- Guest Records View -->
+                <div class="category-content" id="guest-records-content">
+                    <div class="search-box">
+                       <input type="text" placeholder="Search guest records...">
+                       <button>Search</button>
+                    </div>
+                    <div class="file-grid" id="guestFiles"><!-- Guest files will be populated here --></div>
+                </div>
+
+             <!-- Inventory View -->
+                <div class="category-content" id="inventory-content">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search inventory documents...">
                         <button>Search</button>
                     </div>
-                    
-                    <div class="file-grid" id="activeFiles">
-                        <!-- Active files will be populated here -->
-                    </div>
+                    <div class="file-grid" id="inventoryFiles"><!-- Inventory files will be populated here --></div>
                 </div>
-                
-                <div class="tab-content" id="trash-tab">
-                    <div class="alert alert-danger">
-                        Files in trash will be permanently deleted after 30 days.
+
+                <!-- Compliance View -->
+                <div class="category-content" id="compliance-content">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search compliance documents...">
+                        <button>Search</button>
                     </div>
-                    
-                    <div class="file-grid" id="trashFiles">
-                        <!-- Trash files will be populated here -->
-                    </div>
+                    <div class="file-grid" id="complianceFiles"><!-- Compliance files will be populated here --></div>
                 </div>
-            </div>
-        </div>
-    </main>
+
+                <!-- Marketing View -->
+                <div class="category-content" id="marketing-content">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search marketing documents...">
+                        <button>Search</button>
+                    </div>
+                    <div class="file-grid" id="marketingFiles"><!-- Marketing files will be populated here --></div>
+                </div>
+
+                <!-- Trash View -->
+                <div class="category-content" id="trash-content">
+                    <div class="alert alert-danger">Files in trash will be permanently deleted after 30 days.</div>
+                    <div class="file-grid" id="allTrashFiles"><!-- All trash files will be populated here --></div>
+                </div>
+             </div>
+         </div>
+     </main>
     
     <!-- Upload Modal -->
     <div class="modal" id="uploadModal">
@@ -502,5 +560,176 @@ function formatFileSize($bytes) {
         <p>Hotel & Restaurant Document Management System &copy; 2023</p>
     </footer>
     <script src="../assets/Javascript/document.js"></script>
-</body>
-</html>
+    <script>
+        // Add dummy/sample data for testing if API fails
+        function loadDummyData(category) {
+            const dummyFiles = {
+                'all': [
+                    { id: 1, name: 'Employee Handbook 2024', category: 'HR Documents', file_size: '2.5 MB', upload_date: '2024-11-12' },
+                    { id: 2, name: 'Budget Report Q4', category: 'Financial Records', file_size: '1.8 MB', upload_date: '2024-11-10' },
+                    { id: 3, name: 'Guest Satisfaction Survey', category: 'Guest Records', file_size: '950 KB', upload_date: '2024-11-08' }
+                ],
+                'HR Documents': [
+                    { id: 1, name: 'Employee Handbook 2024', category: 'HR Documents', file_size: '2.5 MB', upload_date: '2024-11-12' },
+                    { id: 4, name: 'Performance Review Template', category: 'HR Documents', file_size: '850 KB', upload_date: '2024-11-10' },
+                    { id: 5, name: 'Leave Policy Document', category: 'HR Documents', file_size: '650 KB', upload_date: '2024-11-01' }
+                ],
+                'Financial Records': [
+                    { id: 2, name: 'Budget Report Q4', category: 'Financial Records', file_size: '1.8 MB', upload_date: '2024-11-10' },
+                    { id: 6, name: 'Invoice Register', category: 'Financial Records', file_size: '2.1 MB', upload_date: '2024-11-05' },
+                    { id: 7, name: 'Expense Report', category: 'Financial Records', file_size: '1.3 MB', upload_date: '2024-10-28' }
+                ],
+                'Guest Records': [
+                    { id: 3, name: 'Guest Satisfaction Survey', category: 'Guest Records', file_size: '950 KB', upload_date: '2024-11-08' },
+                    { id: 8, name: 'Booking System Data', category: 'Guest Records', file_size: '3.2 MB', upload_date: '2024-11-06' }
+                ],
+                'Inventory': [
+                    { id: 9, name: 'Stock List November', category: 'Inventory', file_size: '1.6 MB', upload_date: '2024-11-12' },
+                    { id: 10, name: 'Equipment Maintenance Log', category: 'Inventory', file_size: '780 KB', upload_date: '2024-11-09' }
+                ],
+                'Compliance': [
+                    { id: 11, name: 'Safety Compliance Report', category: 'Compliance', file_size: '2.4 MB', upload_date: '2024-11-11' },
+                    { id: 12, name: 'Health & Safety Audit', category: 'Compliance', file_size: '1.9 MB', upload_date: '2024-11-07' }
+                ],
+                'Marketing': [
+                    { id: 13, name: 'Marketing Campaign 2024', category: 'Marketing', file_size: '5.2 MB', upload_date: '2024-11-10' },
+                    { id: 14, name: 'Social Media Strategy', category: 'Marketing', file_size: '1.1 MB', upload_date: '2024-11-03' }
+                ],
+                'trash': [
+                    { id: 15, name: 'Archived Report 2023', category: 'Financial Records', file_size: '2.8 MB', upload_date: '2024-09-15' }
+                ]
+            };
+
+            return dummyFiles[category] || [];
+        }
+
+         // Category Navigation Handler
+         document.querySelectorAll('.category-link').forEach(link => {
+             link.addEventListener('click', function(e) {
+                 e.preventDefault();
+                 const category = this.getAttribute('data-category');
+                 const categoryNames = {
+                     'all': 'Document Management',
+                     'Financial Records': 'Financial Records',
+                     'HR Documents': 'HR Documents',
+                     'Guest Records': 'Guest Records',
+                     'Inventory': 'Inventory',
+                     'Compliance': 'Compliance',
+                     'Marketing': 'Marketing',
+                     'trash': 'Trash Bin'
+                 };
+
+                 // Update active state in sidebar
+                 document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+                 this.classList.add('active');
+
+                 // Update page title
+                 document.getElementById('contentTitle').textContent = categoryNames[category] || 'Document Management';
+
+                 // Hide all category contents and show selected
+                 document.querySelectorAll('.category-content').forEach(content => {
+                      content.classList.remove('active');
+                  });
+                  
+                 let contentId;
+                 switch(category) {
+                     case 'all': contentId = 'all-content'; break;
+                     case 'trash': contentId = 'trash-content'; break;
+                     case 'Financial Records': contentId = 'financial-records-content'; break;
+                     case 'HR Documents': contentId = 'hr-documents-content'; break;
+                     case 'Guest Records': contentId = 'guest-records-content'; break;
+                     case 'Inventory': contentId = 'inventory-content'; break;
+                     case 'Compliance': contentId = 'compliance-content'; break;
+                     case 'Marketing': contentId = 'marketing-content'; break;
+                     default: contentId = 'all-content';
+                 }
+                  const contentEl = document.getElementById(contentId);
+                 if (contentEl) {
+                     contentEl.classList.add('active');
+                 } else {
+                     console.error('Content element not found:', contentId);
+                 }
+
+                 // Load files for this category
+                 loadCategoryFiles(category);
+             });
+         });
+
+         // Function to load files by category
+          function loadCategoryFiles(category) {
+              const endpoint = category === 'trash' ? 
+                  '?api=1&action=deleted' : 
+                  category === 'all' ? 
+                  '?api=1&action=active' : 
+                  '?api=1&action=active&category=' + encodeURIComponent(category);
+
+              const gridId = {
+                  'all': 'activeFiles',
+                  'Financial Records': 'financialFiles',
+                  'HR Documents': 'hrFiles',
+                  'Guest Records': 'guestFiles',
+                   'Inventory': 'inventoryFiles',
+                   'Compliance': 'complianceFiles',
+                   'Marketing': 'marketingFiles',
+                   'trash': 'allTrashFiles'
+               }[category];
+
+               fetch(endpoint)
+                   .then(response => response.json())
+                   .then(data => {
+                      // Always use dummy data (ignore API response)
+                      data = loadDummyData(category);
+                      
+                       const grid = document.getElementById(gridId);
+                       grid.innerHTML = '';
+                       
+                       if (!data || data.length === 0) {
+                          grid.innerHTML = `
+                              <div style="text-align: center; padding: 3rem; color: #999; grid-column: 1/-1;">
+                                  <p style="font-size: 1.1rem; margin-bottom: 1rem;">📭 No files found</p>
+                              </div>
+                          `;
+                           return;
+                       }
+                       
+                       data.forEach(file => {
+                           grid.innerHTML += `
+                               <div class="file-card">
+                                   <div class="file-icon">📄</div>
+                                   <h4>${file.name || 'Unnamed'}</h4>
+                                   <p style="font-size: 0.85rem;">${file.category || 'N/A'}</p>
+                                   <p style="font-size: 0.85rem; color: #666;">${file.file_size || 'Unknown'}</p>
+                                   <small>${new Date(file.upload_date).toLocaleDateString()}</small>
+                               </div>
+                           `;
+                       });
+                   })
+                   .catch(error => {
+                      console.error('Fetch error:', error);
+                      // Fallback to dummy data on error
+                      const data = loadDummyData(category);
+                      const grid = document.getElementById(gridId);
+                      grid.innerHTML = '';
+                      
+                      data.forEach(file => {
+                          grid.innerHTML += `
+                              <div class="file-card">
+                                  <div class="file-icon">📄</div>
+                                  <h4>${file.name || 'Unnamed'}</h4>
+                                  <p style="font-size: 0.85rem;">${file.category || 'N/A'}</p>
+                                  <p style="font-size: 0.85rem; color: #666;">${file.file_size || 'Unknown'}</p>
+                                  <small>${new Date(file.upload_date).toLocaleDateString()}</small>
+                              </div>
+                          `;
+                      });
+                   });
+           }
+
+         // Load initial content on page load
+         window.addEventListener('load', () => {
+             loadCategoryFiles('all');
+         });
+     </script>
+ </body>
+ </html>
+

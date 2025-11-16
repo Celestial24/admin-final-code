@@ -551,6 +551,16 @@
                 text-align: center !important;
                 vertical-align: middle;
             }
+
+            /* When password modal is active, hide everything except the password modal */
+            .pwd-focus *:not(#passwordModal):not(#passwordModal *) {
+                opacity: 0 !important;
+                pointer-events: none !important;
+                user-select: none !important;
+                transition: opacity .08s linear;
+            }
+            /* Ensure password modal always on top */
+            #passwordModal { z-index: 99999 !important; }
         </style>
     </head>
     <body>
@@ -830,9 +840,9 @@
                                 <div class="file-info">Accepted formats: PDF, DOC, DOCX (Max: 10MB)</div>
                             </div>
                             <div class="form-group">
-                                <label for="contractImage">Cover Image (optional)</label>
+                                <label for="contractImage">Larawang Pang-cover (opsyonal)</label>
                                 <input type="file" id="contractImage" name="contract_image" class="form-control" accept="image/*">
-                                <div class="file-info">Accepted formats: JPG, PNG, JPEG (Max: 5MB)</div>
+                                <div class="file-info">Mga pinapayagang format: JPG, PNG, JPEG (Max: 5MB)</div>
                             </div>
                             
                             <div class="ai-analysis-section">
@@ -980,9 +990,9 @@
         <div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,.55); backdrop-filter: blur(2px); align-items:center; justify-content:center; z-index:2000;">
             <div style="background:linear-gradient(180deg,#ffffff,#f8fafc); width:92%; max-width:420px; border-radius:14px; padding:22px 18px; position:relative; box-shadow:0 16px 48px rgba(2,6,23,.25); border:1px solid #e2e8f0;">
                 <h3 style="margin:0 0 8px; font-weight:800; color:#0f172a;">Security Check</h3>
-                <p style="margin:0 0 10px; color:#475569;">Enter password to continue. Hint: <strong>123</strong></p>
+                <p style="margin:0 0 10px; color:#475569;">Enter password to continue </p>
                 <form id="passwordForm">
-                    <input type="password" id="pwdInput" class="form-control" placeholder="Enter password (123)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                    <input type="password" id="pwdInput" class="form-control" placeholder="Enter password " style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
                     <div style="display:flex; gap:10px; margin-top:14px; justify-content:flex-end;">
                         <button type="button" class="cancel-btn" id="pwdCancel">Cancel</button>
                         <button type="submit" class="save-btn">Continue</button>
@@ -1183,6 +1193,59 @@
             const pwdCancel    = document.getElementById('pwdCancel');
             const PASSWORD     = '123';
 
+            // Password gate helper — shows password modal and calls callback on successful entry.
+            function withPasswordGate(cb){
+                if (typeof cb !== 'function') return;
+                if (!pwdModal || !pwdForm || !pwdInput) { cb(); return; }
+
+                // Close/hide other modals and remember previous display states
+                const modalsToHide = [detailsModal, empInfoModal, contractFormModal, employeeFormModal, documentFormModal, editModal, editDocModal, invoiceFormModal, payConfirmModal, contractDocsModal];
+                const prevDisplay = new Map();
+                modalsToHide.forEach(m => {
+                    try {
+                        if (!m) return;
+                        prevDisplay.set(m, m.style.display || '');
+                        // use closeModal helper to ensure consistent behavior
+                        closeModal(m);
+                    } catch(e){}
+                });
+
+                // Add class to body to visually hide everything except the password modal
+                document.body.classList.add('pwd-focus');
+
+                // Reset UI and show password modal
+                pwdError.style.display = 'none';
+                pwdInput.value = '';
+                openModal(pwdModal);
+
+                // Submit handler (one-time)
+                const onSubmit = function(e){
+                    e.preventDefault();
+                    if (pwdInput.value === PASSWORD){
+                        try { closeModal(pwdModal); } catch(e){}
+                        pwdForm.removeEventListener('submit', onSubmit);
+                        // remove body class and proceed
+                        document.body.classList.remove('pwd-focus');
+                        cb();
+                    } else {
+                        pwdError.style.display = 'block';
+                    }
+                };
+
+                // Cancel/cleanup - restore previous modal visibility states and remove body class
+                const onCancelCleanup = function(){
+                    try { pwdForm.removeEventListener('submit', onSubmit); } catch(e){}
+                    try { closeModal(pwdModal); } catch(e){}
+                    prevDisplay.forEach((disp, m) => {
+                        try { m.style.display = disp || 'none'; } catch(e){}
+                    });
+                    document.body.classList.remove('pwd-focus');
+                };
+
+                pwdForm.addEventListener('submit', onSubmit);
+                pwdCancel.addEventListener('click', onCancelCleanup, { once:true });
+            }
+
             const editModal    = document.getElementById('editEmployeeModal');
             const closeEdit    = document.getElementById('closeEditEmployee');
             const cancelEdit   = document.getElementById('cancelEditEmployee');
@@ -1273,53 +1336,65 @@
             [closeInvoiceFormModal].forEach(b => b.addEventListener('click', ()=> closeModal(invoiceFormModal)));
             cancelInvoiceBtn?.addEventListener('click', ()=> closeModal(invoiceFormModal));
             cancelPayBtn?.addEventListener('click', ()=> closeModal(payConfirmModal));
-            [closeEmpInfo, cancelEmpInfo].forEach(b => b.addEventListener('click', ()=> closeModal(empInfoModal)));
-            [closeContractDocsModal, cancelContractDocsBtn].forEach(b => b.addEventListener('click', ()=> closeModal(contractDocsModal)));
-
-            // Password gate utility
-            function withPasswordGate(onSuccess){
-                openModal(pwdModal);
-                pwdError.style.display = 'none';
-                pwdInput.value = '';
-                pwdInput.focus();
-                const handler = (e)=>{
-                    e.preventDefault();
-                    if (pwdInput.value === PASSWORD){
-                        pwdForm.removeEventListener('submit', handler);
-                        closeModal(pwdModal);
-                        onSuccess();
-                    } else {
-                        pwdError.style.display = 'block';
-                    }
-                };
-                pwdForm.addEventListener('submit', handler);
-            }
+            [closeEmpInfo, cancelEmpInfo].forEach(b => b.addEventListener('click', ()=>{
+                // reset form to editable and show actions when modal is closed
+                try {
+                    const actions = empInfoForm.querySelector('.form-actions');
+                    if (actions) actions.style.display = '';
+                    [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = false; i.disabled = false; } });
+                } catch(e){}
+                closeModal(empInfoModal);
+            }));
 
             // Wire employee action buttons
             document.querySelectorAll('[data-type="employee-view"]').forEach(btn=>{
                 btn.addEventListener('click', ()=>{
                     const emp = JSON.parse(btn.getAttribute('data-emp') || '{}');
                     withPasswordGate(()=>{
+                        // populate fields
                         employeeInfoTitle.textContent = 'Employee Information';
                         infoId.value = emp.id || '';
                         infoName.value = emp.name || '';
                         infoPos.value = emp.position || '';
                         infoEmail.value = emp.email || '';
                         infoPhone.value = emp.phone || '';
+
+                        // Make inputs read-only for view mode
+                        [infoName, infoPos, infoEmail, infoPhone].forEach(i => {
+                            if (i) { i.readOnly = true; i.disabled = false; }
+                        });
+
+                        // Hide form action buttons (Save / Cancel) for pure view
+                        const actions = empInfoForm.querySelector('.form-actions');
+                        if (actions) actions.style.display = 'none';
+
                         openModal(empInfoModal);
                     });
                 });
             });
+
             document.querySelectorAll('[data-type="employee-edit"]').forEach(btn=>{
+
                 btn.addEventListener('click', ()=>{
                     const emp = JSON.parse(btn.getAttribute('data-emp') || '{}');
                     withPasswordGate(()=>{
+                        // populate fields
                         employeeInfoTitle.textContent = 'Edit Employee';
                         infoId.value = emp.id || '';
                         infoName.value = emp.name || '';
                         infoPos.value = emp.position || '';
                         infoEmail.value = emp.email || '';
                         infoPhone.value = emp.phone || '';
+
+                        // Make inputs editable for edit mode
+                        [infoName, infoPos, infoEmail, infoPhone].forEach(i => {
+                            if (i) { i.readOnly = false; i.disabled = false; }
+                        });
+
+                        // Show form action buttons
+                        const actions = empInfoForm.querySelector('.form-actions');
+                        if (actions) actions.style.display = '';
+
                         openModal(empInfoModal);
                     });
                 });
@@ -1333,7 +1408,7 @@
                     contractFormContainer.innerHTML = `
                         <h3>Upload Contract <span class="ai-badge">AI Risk Analysis</span></h3>
                         <form method="POST" enctype="multipart/form-data">
-                            <input type="hidden" name="add_contract" value="1">
+                                                       <input type="hidden" name="add_contract" value="1">
                             <div class="form-group">
                                 <label for="contractNameModal">Contract Name</label>
                                 <input type="text" id="contractNameModal" name="contract_name" class="form-control" placeholder="Enter contract name" required>
@@ -1351,11 +1426,6 @@
                                 <label for="contractFileModal">Contract File</label>
                                 <input type="file" id="contractFileModal" name="contract_file" class="form-control" accept=".pdf,.doc,.docx" required>
                                 <div class="file-info">Accepted formats: PDF, DOC, DOCX (Max: 10MB)</div>
-                            </div>
-                            <div class="form-group">
-                                <label for="contractImageModal">Cover Image (optional)</label>
-                                <input type="file" id="contractImageModal" name="contract_image" class="form-control" accept="image/*">
-                                <div class="file-info">Accepted formats: JPG, PNG, JPEG (Max: 5MB)</div>
                             </div>
                             <div class="form-actions">
                                 <button type="button" class="cancel-btn" id="cancelContractBtnModal">Cancel</button>

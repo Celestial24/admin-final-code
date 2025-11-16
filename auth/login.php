@@ -1,25 +1,13 @@
 <?php
-// Database connection function
-function get_pdo() {
-    static $pdo = null;
-    if ($pdo instanceof PDO) return $pdo;
+// Load shared database connection
+require_once __DIR__ . '/../db/db.php';
 
-    $host = '127.0.0.1';
-    $db   = 'admin';
-    $user = 'root';
-    $pass = '';
-    $charset = 'utf8mb4';
-
-    $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    return $pdo;
-}
+// Load PHPMailer classes (needed for email verification)
+require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 // Start session
 session_start();
@@ -47,6 +35,11 @@ if (isset($_GET['verified']) && $_GET['verified'] === '1') {
     $success_message = 'Email verified. You can now sign in.';
 }
 
+// Show warning if email failed to send
+if (isset($_GET['email_failed']) && $_GET['email_failed'] === '1') {
+    $error_message = 'Email could not be sent, but your verification code was saved. Please use the "Resend code" button in the verification modal.';
+}
+
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
     $username = trim($_POST['username']);
@@ -61,35 +54,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
             $stmt->execute([':email' => $username, ':username' => $username]);
             $user = $stmt->fetch();
             
-            if ($user && $user['status'] === 'active') {
+            if ($user) {
                 // Verify password
                 $stored_password = $user['password_hash'];
                 $is_hash = str_starts_with($stored_password, '$2y$') || str_starts_with($stored_password, '$argon2');
                 $valid = $is_hash ? password_verify($password, $stored_password) : hash_equals($stored_password, $password);
                 
                 if ($valid) {
-                    // Login successful
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
-                    $_SESSION['name'] = $user['full_name'];
-                    $_SESSION['email'] = $user['email'];
-                    $_SESSION['role'] = $user['role'];
+                    // Password is correct - show verification modal for all users
+                    // Store user info in session temporarily (will be set after verification)
+                    $_SESSION['temp_user_id'] = $user['id'];
+                    $_SESSION['temp_username'] = $user['username'];
+                    $_SESSION['temp_name'] = $user['full_name'];
+                    $_SESSION['temp_email'] = $user['email'];
+                    $_SESSION['temp_role'] = $user['role'];
                     
-                    header('Location: ../Modules/facilities-reservation.php');
-                    exit;
+                    // Ensure email_verifications table exists
+                    try {
+                        $pdo->exec("
+                            CREATE TABLE IF NOT EXISTS email_verifications (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                user_id INT NOT NULL,
+                                code VARCHAR(16) NOT NULL,
+                                expires_at DATETIME NOT NULL,
+                                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                INDEX (user_id),
+                                INDEX (code),
+                                CONSTRAINT fk_ev_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                        ");
+                    } catch (\Exception $e) {
+                        // Table might already exist, ignore
+                    }
+                    
+                    // Generate and send verification code
+                    try {
+                        $code = (string)random_int(100000, 999999);
+                        $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
+                        $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
+                        $stmt->execute([':user_id' => $user['id'], ':code' => $code, ':expires_at' => $expiresAt]);
+                        
+                        // Send email
+                        $mail = new PHPMailer(true);
+                        try {
+                            $mail->SMTPDebug = 0; // 0 = off, 2 = debug
+                            $mail->isSMTP();
+                            $mail->Host = 'smtp.gmail.com';
+                            $mail->SMTPAuth = true;
+                            $mail->Username = 'atiera41001@gmail.com';
+                            $mail->Password = 'shmv lrod aueu ehdn'; // Update with app-specific password
+                            $mail->Port = 587;
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            $mail->Timeout = 10;
+                            $mail->setFrom('atiera41001@gmail.com', 'ATIERA Hotel');
+                            $mail->addAddress($user['email'], $user['full_name'] ?: $user['email']);
+                            $mail->isHTML(true);
+                            $mail->Subject = 'Your ATIERA verification code';
+                            $mail->Body = "
+                                <div style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a\">
+                                  <h2 style=\"margin:0 0 10px\">Verify your email</h2>
+                                  <p>Hello " . htmlspecialchars($user['full_name'] ?: $user['email']) . ",</p>
+                                  <p>Use the verification code below to sign in. It expires in 15 minutes.</p>
+                                  <p style=\"font-size:18px;font-weight:700;letter-spacing:2px;background:#0f1c49;color:#fff;display:inline-block;padding:8px 12px;border-radius:8px\">{$code}</p>
+                                  <p>If you didn't request this, you can ignore this email.</p>
+                                  <p>— ATIERA</p>
+                                </div>
+                            ";
+                            $mail->AltBody = "Your ATIERA verification code is: {$code}\nThis code expires in 15 minutes.";
+                            $mail->send();
+                        } catch (\Exception $e) {
+                            // Email sending failed, but continue to show modal
+                            // User can still use resend button
+                            error_log("Email send failed during login for {$user['email']}: " . $e->getMessage());
+                        }
+                    } catch (\Exception $e) {
+                        // Code generation or database insert failed
+                        // Still show modal, user can use resend
+                    }
+                    
+                    $prefill_email = $user['email'];
+                    $show_verify_modal = true;
+                    $success_message = 'Verification code sent to your email. Please check and enter the code.';
                 } else {
                     $error_message = 'Invalid password.';
                 }
             } else {
-                if ($user) {
-                    $error_message = 'Your account is inactive. Please verify your email.';
-                    $prefill_email = $user['email'];
-                    $show_verify_modal = true;
-                } else {
-                    $error_message = 'Invalid email/username or account is inactive.';
-                }
+                $error_message = 'Invalid email/username or account not found.';
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $error_message = 'Database error. Please try again.';
         }
     } else {
@@ -305,7 +357,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         <p class="text-xs text-center text-slate-500 dark:text-slate-400">© 2025 ATIERA BSIT 4101 CLUSTER 1</p>
         <p class="text-xs text-center mt-2 text-slate-500 dark:text-slate-400">
           No account? <a class="underline" href="register.php">Register</a>
-          • <button type="button" id="openVerify" class="underline">Verify email</button>
         </p>
       </form>
     </div>
@@ -336,23 +387,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
   <div id="verifyModal" class="hidden fixed inset-0 z-[71] grid place-items-center">
     <div class="w-[92%] max-w-md card p-6">
       <div class="flex items-center justify-between mb-2">
-        <h4 class="text-lg font-bold">Verify your email</h4>
-        <button id="closeVerify" class="px-2 py-1 rounded border text-sm">✕</button>
+        <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100">Verify your email</h4>
+        <button id="closeVerify" class="px-2 py-1 rounded border text-sm text-slate-700 dark:text-slate-300">✕</button>
       </div>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Enter the 6-digit code sent to your email.</p>
-      <form id="verifyForm" method="POST" action="verify.php" class="space-y-3">
+      <form id="verifyForm" method="POST" class="space-y-3" novalidate>
+        <input type="hidden" name="action" value="verify">
         <div>
-          <label for="vemail" class="block text-sm font-medium mb-1">Email</label>
-          <input id="vemail" name="email" type="email" required class="input" placeholder="you@example.com" value="<?php echo htmlspecialchars($prefill_email); ?>">
+          <label for="vemail" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Email</label>
+          <input id="vemail" name="email" type="email" required class="input" placeholder="you@example.com" value="<?php echo htmlspecialchars($prefill_email); ?>" readonly>
         </div>
         <div>
-          <label for="vcode" class="block text-sm font-medium mb-1">Verification code</label>
-          <input id="vcode" name="code" type="text" inputmode="numeric" pattern="\\d{6}" maxlength="6" required class="input" placeholder="123456">
+          <label for="vcode" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Verification code</label>
+          <input id="vcode" name="code" type="text" inputmode="numeric" maxlength="6" required class="input" placeholder="123456" autocomplete="one-time-code">
         </div>
-        <div id="verifyMsg" class="text-xs text-slate-500"></div>
+        <div id="verifyMsg" class="text-xs min-h-[20px]"></div>
         <div class="flex items-center gap-2">
-          <button type="submit" class="btn !w-auto px-4">Verify</button>
-          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm">Resend code</button>
+          <button type="submit" class="btn !w-auto px-4 text-white" id="verifySubmitBtn" style="color: white !important;">Verify</button>
+          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Resend code</button>
         </div>
       </form>
     </div>
@@ -613,8 +665,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
   // Resend verification code
   resendBtn?.addEventListener('click', async ()=>{
     verifyMsg.textContent = 'Sending...';
+    verifyMsg.className = 'text-xs text-slate-500';
     const email = vemail.value.trim();
-    if (!email) { verifyMsg.textContent = 'Enter your email first.'; return; }
+    if (!email) { 
+      verifyMsg.textContent = 'Enter your email first.'; 
+      verifyMsg.className = 'text-xs text-red-600';
+      return; 
+    }
     try{
       const res = await fetch('verify.php', {
         method:'POST',
@@ -622,9 +679,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         body: new URLSearchParams({ action:'resend', email })
       });
       const data = await res.json();
-      verifyMsg.textContent = data?.message || (data?.ok ? 'Sent.' : 'Failed to send.');
+      if (data?.ok) {
+        verifyMsg.textContent = data.message || 'Verification code sent to your email.';
+        verifyMsg.className = 'text-xs text-green-600';
+      } else {
+        verifyMsg.textContent = data?.message || 'Failed to send verification code.';
+        verifyMsg.className = 'text-xs text-red-600';
+      }
     }catch{
       verifyMsg.textContent = 'Network error. Please try again.';
+      verifyMsg.className = 'text-xs text-red-600';
+    }
+  });
+
+  // Handle verification code input validation
+  vcode?.addEventListener('input', function() {
+    const code = this.value.trim();
+    // Only allow numbers
+    this.value = code.replace(/\D/g, '');
+    
+    // Show error if not 6 digits
+    if (this.value.length > 0 && this.value.length !== 6) {
+      verifyMsg.textContent = 'Please enter a 6-digit code.';
+      verifyMsg.className = 'text-xs text-red-600';
+    } else if (this.value.length === 6) {
+      verifyMsg.textContent = '';
+      verifyMsg.className = 'text-xs';
+    }
+  });
+
+  vcode?.addEventListener('blur', function() {
+    const code = this.value.trim();
+    if (code.length > 0 && code.length !== 6) {
+      verifyMsg.textContent = 'Please enter a 6-digit code.';
+      verifyMsg.className = 'text-xs text-red-600';
+    }
+  });
+
+  // Handle verification form submission via AJAX
+  verifyForm?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = vemail.value.trim();
+    const code = vcode.value.trim();
+    const submitBtn = document.getElementById('verifySubmitBtn');
+    
+    if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+      verifyMsg.textContent = 'Please enter a valid 6-digit code.';
+      verifyMsg.className = 'text-xs text-red-600';
+      vcode.focus();
+      return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verifying...';
+    verifyMsg.textContent = 'Verifying code...';
+    verifyMsg.className = 'text-xs text-slate-500';
+    
+    try {
+      const res = await fetch('verify.php', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action:'verify', email, code })
+      });
+      const data = await res.json();
+      
+      if (data?.ok) {
+        verifyMsg.textContent = data.message || 'Verification successful! Redirecting...';
+        verifyMsg.className = 'text-xs text-green-600';
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else {
+            window.location.href = '../Modules/facilities-reservation.php';
+          }
+        }, 1000);
+      } else {
+        verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
+        verifyMsg.className = 'text-xs text-red-600';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Verify';
+        vcode.value = '';
+        vcode.focus();
+      }
+    } catch(err) {
+      verifyMsg.textContent = 'Network error. Please try again.';
+      verifyMsg.className = 'text-xs text-red-600';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Verify';
     }
   });
 </script>

@@ -1,4 +1,4 @@
-   :root {
+:root {
             --primary: #2c3e50;
             --secondary: #3498db;
             --accent: #e74c3c;
@@ -198,22 +198,24 @@
         }
         
         .file-card {
-            background-color: var(--light);
+            border: 1px solid #ddd;
             border-radius: 8px;
-            padding: 15px;
+            padding: 1rem;
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
         }
         
         .file-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            background: white;
         }
         
         .file-icon {
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            margin-bottom: 0.5rem;
             color: var(--secondary);
         }
         
@@ -371,4 +373,31 @@
             .file-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
+        }
+
+        .category-link {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .category-link:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .category-link.active {
+            background-color: #2196F3;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .category-content {
+            display: none;
+        }
+        
+        .category-content.active {
+            display: block;
         }

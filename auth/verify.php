@@ -3,23 +3,8 @@
 // POST verify: email, code
 // POST resend: action=resend, email
 
-function get_pdo() {
-    static $pdo = null;
-    if ($pdo instanceof PDO) return $pdo;
-    $host = '127.0.0.1';
-    $db   = 'admin';
-    $user = 'root';
-    $pass = '';
-    $charset = 'utf8mb4';
-    $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    return $pdo;
-}
+// Load shared database connection
+require_once __DIR__ . '/../db/db.php';
 
 require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../PHPMailer/src/Exception.php';
@@ -28,16 +13,22 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // Reuse SMTP config from register.php (keep in sync)
-const SMTP_HOST = 'smtp.example.com';
+const SMTP_HOST = 'smtp.gmail.com';
 const SMTP_PORT = 587;
-const SMTP_USER = 'no-reply@example.com';
-const SMTP_PASS = 'change-me';
-const SMTP_FROM_EMAIL = 'no-reply@example.com';
+const SMTP_USER = 'atiera41001@gmail.com';
+const SMTP_PASS = 'shmv lrod aueu ehdn'; // Update with app-specific password
+const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
 const SMTP_FROM_NAME  = 'ATIERA Hotel';
 
-function send_verification_email(string $toEmail, string $toName, string $code): bool {
+function send_verification_email(string $toEmail, string $toName, string $code, &$errorMsg = null): bool {
     $mail = new PHPMailer(true);
     try {
+        // Enable verbose debug output (set to 0 for production, 2 for debugging)
+        $mail->SMTPDebug = 0; // 0 = off, 2 = client and server messages
+        $mail->Debugoutput = function($str, $level) {
+            // Log debug messages if needed
+        };
+        
         $mail->isSMTP();
         $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
@@ -45,6 +36,8 @@ function send_verification_email(string $toEmail, string $toName, string $code):
         $mail->Password = SMTP_PASS;
         $mail->Port = SMTP_PORT;
         $mail->SMTPSecure = (SMTP_PORT === 465) ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Timeout = 10; // 10 seconds timeout
+
         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
         $mail->addAddress($toEmail, $toName ?: $toEmail);
         $mail->isHTML(true);
@@ -55,13 +48,19 @@ function send_verification_email(string $toEmail, string $toName, string $code):
               <p>Hello " . htmlspecialchars($toName ?: $toEmail) . ",</p>
               <p>Use the verification code below to activate your account. It expires in 15 minutes.</p>
               <p style=\"font-size:18px;font-weight:700;letter-spacing:2px;background:#0f1c49;color:#fff;display:inline-block;padding:8px 12px;border-radius:8px\">{$code}</p>
-              <p>If you didn’t request this, you can ignore this email.</p>
+              <p>If you didn't request this, you can ignore this email.</p>
               <p>— ATIERA</p>
             </div>
         ";
         $mail->AltBody = "Your ATIERA verification code is: {$code}\nThis code expires in 15 minutes.";
-        return $mail->send();
+        
+        $result = $mail->send();
+        if (!$result) {
+            $errorMsg = $mail->ErrorInfo;
+        }
+        return $result;
     } catch (Exception $e) {
+        $errorMsg = $e->getMessage();
         return false;
     }
 }
@@ -103,9 +102,13 @@ try {
         $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
         $stmt->execute([':user_id' => $userId, ':code' => $code, ':expires_at' => $expiresAt]);
-        $ok = send_verification_email($email, $fullName, $code);
+        
+        $emailError = '';
+        $ok = send_verification_email($email, $fullName, $code, $emailError);
         if (!$ok) {
-            json_response(['ok' => false, 'message' => 'Failed to send verification email.'], 500);
+            // Log error for debugging
+            error_log("Email resend failed for {$email}: {$emailError}");
+            json_response(['ok' => false, 'message' => 'Failed to send verification email. Please check your email settings or contact support.'], 500);
         }
         json_response(['ok' => true, 'message' => 'Verification email sent.']);
     }
@@ -139,9 +142,32 @@ try {
     // Clean used codes (optional)
     $pdo->prepare('DELETE FROM email_verifications WHERE user_id = :uid')->execute([':uid' => $userId]);
 
-    // Redirect back to login with a success flag
-    header('Location: login.php?verified=1');
-    exit;
+    // Get user info for session
+    $stmt = $pdo->prepare('SELECT id, full_name, username, email, role FROM users WHERE id = :id LIMIT 1');
+    $stmt->execute([':id' => $userId]);
+    $user = $stmt->fetch();
+    
+    if ($user) {
+        // Start session and set user data
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['name'] = $user['full_name'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['role'] = $user['role'];
+        
+        // Clear temp session data
+        unset($_SESSION['temp_user_id']);
+        unset($_SESSION['temp_username']);
+        unset($_SESSION['temp_name']);
+        unset($_SESSION['temp_email']);
+        unset($_SESSION['temp_role']);
+    }
+
+    // Return success JSON for AJAX handling
+    json_response(['ok' => true, 'message' => 'Email verified successfully!', 'redirect' => '../Modules/facilities-reservation.php']);
 } catch (Throwable $e) {
     json_response(['ok' => false, 'message' => 'Server error. Please try again.'], 500);
 }

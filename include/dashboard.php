@@ -1,58 +1,48 @@
 <?php
 // Dashboard Tab
 ?>
-<div id="dashboard" class="tab-content active">
-    <!-- Stats Overview -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-info">
-                    <h3>Total Facilities</h3>
-                    <div class="stat-number"><?= $dashboard_data['total_facilities'] ?></div>
-                </div>
-                <div class="stat-icon">
-                    <!-- Ibinabalik sa simpleng icon/emoji, umaasa sa CSS styling ng .stat-icon -->
-                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">🏢</span>
-                </div>
+<div id="dashboard" class="tab-content">
+    <h2 class="mb-2"><span class="icon-img-placeholder">📊</span> Dashboard Overview</h2>
+
+    <!-- Facilities & Reservations Section (from facilities-reservation.php) -->
+    <div class="dashboard-section">
+        <h3 style="margin-bottom: 1rem; color: #0f172a;"><span class="icon-img-placeholder">🏢</span> Facilities & Reservations Summary</h3>
+        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <?php
+            // Fetch facilities metrics (reuse connection from parent)
+            try {
+                $db = get_pdo(); // Use shared PDO from db.php
+                
+                $total_facilities = $db->query("SELECT COUNT(*) FROM facilities WHERE status = 'active'")->fetchColumn() ?? 0;
+                $today_reservations = $db->query("SELECT COUNT(*) FROM reservations WHERE event_date = CURDATE() AND status IN ('confirmed', 'pending')")->fetchColumn() ?? 0;
+                $pending_approvals = $db->query("SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn() ?? 0;
+                $monthly_revenue = $db->query("SELECT COALESCE(SUM(total_amount), 0) FROM reservations WHERE status = 'confirmed' AND MONTH(event_date) = MONTH(CURDATE()) AND YEAR(event_date) = YEAR(CURDATE())")->fetchColumn() ?? 0;
+            } catch (PDOException $e) {
+                $total_facilities = 0;
+                $today_reservations = 0;
+                $pending_approvals = 0;
+                $monthly_revenue = 0;
+            }
+            ?>
+            <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.9;">TOTAL FACILITIES</div>
+                <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><?= $total_facilities ?></div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;"><span class="icon-img-placeholder">🏢</span></div>
             </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-info">
-                    <h3>Today's Reservations</h3>
-                    <div class="stat-number"><?= $dashboard_data['today_reservations'] ?></div>
-                </div>
-                <div class="stat-icon">
-                    <!-- Ibinabalik sa simpleng icon/emoji -->
-                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">📅</span>
-                </div>
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.9;">TODAY'S RESERVATIONS</div>
+                <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><?= $today_reservations ?></div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;"><span class="icon-img-placeholder">📅</span></div>
             </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-info">
-                    <h3>Pending Approvals</h3>
-                    <div class="stat-number"><?= $dashboard_data['pending_approvals'] ?></div>
-                </div>
-                <div class="stat-icon">
-                    <!-- Ibinabalik sa simpleng icon/emoji -->
-                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">⏳</span>
-                </div>
+            <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #333; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.8;">PENDING APPROVALS</div>
+                <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><?= $pending_approvals ?></div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;"><span class="icon-img-placeholder">⏳</span></div>
             </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-info">
-                    <h3>Monthly Revenue</h3>
-                    <div class="stat-number">₱<?= number_format($dashboard_data['monthly_revenue'], 2) ?></div>
-                </div>
-                <div class="stat-icon">
-                    <!-- Ibinabalik sa simpleng icon/emoji -->
-                    <span class="icon-img-placeholder" style="font-size: 1.5rem;">💰</span>
-                </div>
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.9;">MONTHLY REVENUE</div>
+                <div style="font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;">₱<?= number_format($monthly_revenue, 2) ?></div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;"><span class="icon-img-placeholder">💰</span></div>
             </div>
         </div>
     </div>
