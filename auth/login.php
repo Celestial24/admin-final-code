@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                             $mail->isHTML(true);
                             $mail->Subject = 'Your ATIERA verification code';
                             $mail->Body = "
-                                <div style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a\">
+                                <div style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:black\">
                                   <h2 style=\"margin:0 0 10px\">Verify your email</h2>
                                   <p>Hello " . htmlspecialchars($user['full_name'] ?: $user['email']) . ",</p>
                                   <p>Use the verification code below to sign in. It expires in 15 minutes.</p>
