@@ -1,5 +1,15 @@
 Reminder 
 
+
+
+kung mag clone ka wag kana mag download sa github ganito gawin mo 
+punta ka sa terminal then cd location ng localhost mo 
+then git clone https://github.com/username/repository.git
+
+
+ito sa system 
+
+
 first go to the http://localhost/admin-final-code/index.html
 and http://localhost/admin-final-code/auth/login.php 
 
@@ -30,4 +40,3 @@ updated
 double authcation sa login register Verification
 buttons Create Read Update Deleted button 
 including Desging
-
