@@ -561,6 +561,24 @@
             }
             /* Ensure password modal always on top */
             #passwordModal { z-index: 99999 !important; }
+
+              .back-btn {
+                background-color: #3498db;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+                margin: 10px 0;
+                text-align: center;
+                font-size: 10px;
+                width: 80px;
+
+              } 
+
+
         </style>
     </head>
     <body>
@@ -576,6 +594,7 @@
                     <input type="password" maxlength="1" class="pin-digit" id="pin4">
                 </div>
                 <button class="login-btn" id="loginBtn">Login</button>
+                <a href="http://localhost/admin-final-code/Modules/facilities-reservation.php" class="back-btn">Back</a>
                 <div class="error-message" id="errorMessage">Invalid PIN. Please try again.</div>
             </div>
         </div>

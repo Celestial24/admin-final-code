@@ -564,40 +564,10 @@ function formatFileSize($bytes) {
         // Add dummy/sample data for testing if API fails
         function loadDummyData(category) {
             const dummyFiles = {
-                'all': [
-                    { id: 1, name: 'Employee Handbook 2024', category: 'HR Documents', file_size: '2.5 MB', upload_date: '2024-11-12' },
-                    { id: 2, name: 'Budget Report Q4', category: 'Financial Records', file_size: '1.8 MB', upload_date: '2024-11-10' },
-                    { id: 3, name: 'Guest Satisfaction Survey', category: 'Guest Records', file_size: '950 KB', upload_date: '2024-11-08' }
-                ],
-                'HR Documents': [
-                    { id: 1, name: 'Employee Handbook 2024', category: 'HR Documents', file_size: '2.5 MB', upload_date: '2024-11-12' },
-                    { id: 4, name: 'Performance Review Template', category: 'HR Documents', file_size: '850 KB', upload_date: '2024-11-10' },
-                    { id: 5, name: 'Leave Policy Document', category: 'HR Documents', file_size: '650 KB', upload_date: '2024-11-01' }
-                ],
-                'Financial Records': [
-                    { id: 2, name: 'Budget Report Q4', category: 'Financial Records', file_size: '1.8 MB', upload_date: '2024-11-10' },
-                    { id: 6, name: 'Invoice Register', category: 'Financial Records', file_size: '2.1 MB', upload_date: '2024-11-05' },
-                    { id: 7, name: 'Expense Report', category: 'Financial Records', file_size: '1.3 MB', upload_date: '2024-10-28' }
-                ],
-                'Guest Records': [
-                    { id: 3, name: 'Guest Satisfaction Survey', category: 'Guest Records', file_size: '950 KB', upload_date: '2024-11-08' },
-                    { id: 8, name: 'Booking System Data', category: 'Guest Records', file_size: '3.2 MB', upload_date: '2024-11-06' }
-                ],
-                'Inventory': [
-                    { id: 9, name: 'Stock List November', category: 'Inventory', file_size: '1.6 MB', upload_date: '2024-11-12' },
-                    { id: 10, name: 'Equipment Maintenance Log', category: 'Inventory', file_size: '780 KB', upload_date: '2024-11-09' }
-                ],
-                'Compliance': [
-                    { id: 11, name: 'Safety Compliance Report', category: 'Compliance', file_size: '2.4 MB', upload_date: '2024-11-11' },
-                    { id: 12, name: 'Health & Safety Audit', category: 'Compliance', file_size: '1.9 MB', upload_date: '2024-11-07' }
-                ],
-                'Marketing': [
-                    { id: 13, name: 'Marketing Campaign 2024', category: 'Marketing', file_size: '5.2 MB', upload_date: '2024-11-10' },
-                    { id: 14, name: 'Social Media Strategy', category: 'Marketing', file_size: '1.1 MB', upload_date: '2024-11-03' }
-                ],
-                'trash': [
-                    { id: 15, name: 'Archived Report 2023', category: 'Financial Records', file_size: '2.8 MB', upload_date: '2024-09-15' }
-                ]
+              
+               
+                
+               
             };
 
             return dummyFiles[category] || [];
