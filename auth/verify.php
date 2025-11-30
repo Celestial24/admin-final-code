@@ -16,7 +16,7 @@ use PHPMailer\PHPMailer\Exception;
 const SMTP_HOST = 'smtp.gmail.com';
 const SMTP_PORT = 587;
 const SMTP_USER = 'atiera41001@gmail.com';
-const SMTP_PASS = 'shmv lrod aueu ehdn'; // Update with app-specific password
+const SMTP_PASS = 'pjln rqjf revf ryic'; // Update with app-specific password
 const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
 const SMTP_FROM_NAME  = 'ATIERA Hotel';
 
@@ -97,11 +97,28 @@ try {
     $fullName = (string)($user['full_name'] ?? '');
 
     if ($action === 'resend') {
-        // Create new code and email it
-        $code = (string)random_int(100000, 999999);
-        $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
-        $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
-        $stmt->execute([':user_id' => $userId, ':code' => $code, ':expires_at' => $expiresAt]);
+        // Check if there's an existing valid code (not expired)
+        $now = new DateTimeImmutable('now');
+        $stmt = $pdo->prepare('SELECT code, expires_at FROM email_verifications WHERE user_id = :uid ORDER BY id DESC LIMIT 1');
+        $stmt->execute([':uid' => $userId]);
+        $existing = $stmt->fetch();
+        
+        $code = null;
+        if ($existing) {
+            $expires = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $existing['expires_at']);
+            // Reuse code if it's still valid (not expired)
+            if ($expires && $expires > $now) {
+                $code = $existing['code'];
+            }
+        }
+        
+        // Generate new code only if no valid code exists
+        if (!$code) {
+            $code = (string)random_int(100000, 999999);
+            $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
+            $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
+            $stmt->execute([':user_id' => $userId, ':code' => $code, ':expires_at' => $expiresAt]);
+        }
         
         $emailError = '';
         $ok = send_verification_email($email, $fullName, $code, $emailError);

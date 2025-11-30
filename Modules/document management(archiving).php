@@ -674,6 +674,21 @@ function formatFileSize($bytes) {
                    'trash': 'allTrashFiles'
                }[category];
 
+               // Special handling for Financial Records - show button instead of cards
+               if (category === 'Financial Records') {
+                   const grid = document.getElementById(gridId);
+                   // Change the URL below to your desired financial records page
+                   const financialRecordsUrl = 'http://localhost/admin-final-code/integ/fn.php';
+                   grid.innerHTML = `
+                       <div style="text-align: center; padding: 3rem; grid-column: 1/-1;">
+                           <a href="${financialRecordsUrl}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer;">
+                               View Financial Records
+                           </a>
+                       </div>
+                   `;
+                   return;
+               }
+
                fetch(endpoint)
                    .then(response => response.json())
                    .then(data => {
@@ -694,18 +709,51 @@ function formatFileSize($bytes) {
                        
                        data.forEach(file => {
                            grid.innerHTML += `
-                               <div class="file-card">
-                                   <div class="file-icon">📄</div>
-                                   <h4>${file.name || 'Unnamed'}</h4>
-                                   <p style="font-size: 0.85rem;">${file.category || 'N/A'}</p>
-                                   <p style="font-size: 0.85rem; color: #666;">${file.file_size || 'Unknown'}</p>
-                                   <small>${new Date(file.upload_date).toLocaleDateString()}</small>
+                               <div class="file-row" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-bottom:1px solid #eee;">
+                                   <div class="file-info" style="display:flex;align-items:center;gap:0.75rem;">
+                                       <div class="file-icon" style="font-size:1.5rem">📄</div>
+                                       <div>
+                                           <h4 style="margin:0;">${file.name || 'Unnamed'}</h4>
+                                           <p style="margin:0;font-size:0.85rem;color:#666">${file.category || 'N/A'} • ${file.file_size || 'Unknown'}</p>
+                                           <small style="color:#999">${new Date(file.upload_date).toLocaleDateString()}</small>
+                                       </div>
+                                   </div>
+                                   <div class="file-actions">
+                                       <button class="btn btn-secondary view-btn" data-file='${encodeURIComponent(JSON.stringify(file))}'>View</button>
+                                   </div>
                                </div>
                            `;
                        });
+
+                       // Attach click handlers to newly created view buttons
+                       setTimeout(() => {
+                           const buttons = grid.querySelectorAll('.view-btn');
+                           buttons.forEach(btn => {
+                               btn.addEventListener('click', function() {
+                                   const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
+                                   showFileDetails(file);
+                               });
+                           });
+                       }, 0);
                    })
                    .catch(error => {
                       console.error('Fetch error:', error);
+                      
+                      // Special handling for Financial Records - show button instead of cards
+                      if (category === 'Financial Records') {
+                          const grid = document.getElementById(gridId);
+                          // Change the URL below to your desired financial records page
+                          const financialRecordsUrl = 'http://localhost/admin-final-code/Modules/financial-records.php';
+                          grid.innerHTML = `
+                              <div style="text-align: center; padding: 3rem; grid-column: 1/-1;">
+                                  <a href="${financialRecordsUrl}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer;">
+                                      View Financial Records
+                                  </a>
+                              </div>
+                          `;
+                          return;
+                      }
+                      
                       // Fallback to dummy data on error
                       const data = loadDummyData(category);
                       const grid = document.getElementById(gridId);
@@ -713,17 +761,80 @@ function formatFileSize($bytes) {
                       
                       data.forEach(file => {
                           grid.innerHTML += `
-                              <div class="file-card">
-                                  <div class="file-icon">📄</div>
-                                  <h4>${file.name || 'Unnamed'}</h4>
-                                  <p style="font-size: 0.85rem;">${file.category || 'N/A'}</p>
-                                  <p style="font-size: 0.85rem; color: #666;">${file.file_size || 'Unknown'}</p>
-                                  <small>${new Date(file.upload_date).toLocaleDateString()}</small>
+                              <div class="file-row" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-bottom:1px solid #eee;">
+                                  <div class="file-info" style="display:flex;align-items:center;gap:0.75rem;">
+                                      <div class="file-icon" style="font-size:1.5rem">📄</div>
+                                      <div>
+                                          <h4 style="margin:0;">${file.name || 'Unnamed'}</h4>
+                                          <p style="margin:0;font-size:0.85rem;color:#666">${file.category || 'N/A'} • ${file.file_size || 'Unknown'}</p>
+                                          <small style="color:#999">${new Date(file.upload_date).toLocaleDateString()}</small>
+                                      </div>
+                                  </div>
+                                  <div class="file-actions">
+                                      <button class="btn btn-secondary view-btn" data-file='${encodeURIComponent(JSON.stringify(file))}'>View</button>
+                                  </div>
                               </div>
                           `;
                       });
+
+                      // Attach click handlers to newly created view buttons (fallback)
+                      setTimeout(() => {
+                          const buttons = grid.querySelectorAll('.view-btn');
+                          buttons.forEach(btn => {
+                              btn.addEventListener('click', function() {
+                                  const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
+                                  showFileDetails(file);
+                              });
+                          });
+                      }, 0);
                    });
            }
+
+         // Utility: show file details in modal
+         function showFileDetails(file) {
+             const modal = document.getElementById('fileDetailsModal');
+             const content = document.getElementById('fileDetailsContent');
+             content.innerHTML = `
+                 <h4 style="margin-top:0;">${file.name || 'Unnamed'}</h4>
+                 <p><strong>Category:</strong> ${file.category || 'N/A'}</p>
+                 <p><strong>Size:</strong> ${file.file_size || 'Unknown'}</p>
+                 <p><strong>Uploaded:</strong> ${new Date(file.upload_date).toLocaleDateString()}</p>
+                 <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+                     <a href="#" class="btn btn-primary" id="downloadLink">View / Download</a>
+                     <button class="btn" id="closeDetails">Close</button>
+                 </div>
+             `;
+
+             const downloadLink = document.getElementById('downloadLink');
+             if (file.id) {
+                 downloadLink.setAttribute('href', '?api=1&action=download&id=' + encodeURIComponent(file.id));
+                 downloadLink.setAttribute('target', '_blank');
+             } else {
+                 downloadLink.setAttribute('href', '#');
+             }
+
+             modal.style.display = 'block';
+
+             // close button inside details
+             document.getElementById('closeDetails').addEventListener('click', () => {
+                 modal.style.display = 'none';
+             });
+         }
+
+         // Generic modal close handlers (for existing close spans)
+         document.querySelectorAll('.modal .close').forEach(span => {
+             span.addEventListener('click', function() {
+                 const m = this.closest('.modal');
+                 if (m) m.style.display = 'none';
+             });
+         });
+
+         // Close modal when clicking outside
+         window.addEventListener('click', function(event) {
+             document.querySelectorAll('.modal').forEach(modal => {
+                 if (event.target === modal) modal.style.display = 'none';
+             });
+         });
 
          // Load initial content on page load
          window.addEventListener('load', () => {

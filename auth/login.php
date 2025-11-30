@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                             $mail->Host = 'smtp.gmail.com';
                             $mail->SMTPAuth = true;
                             $mail->Username = 'atiera41001@gmail.com';
-                            $mail->Password = 'shmv lrod aueu ehdn'; // Update with app-specific password
+                            $mail->Password = 'pjln rqjf revf ryic'; // Update with app-specific password
                             $mail->Port = 587;
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                             $mail->Timeout = 10;
@@ -387,8 +387,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
   <div id="verifyModal" class="hidden fixed inset-0 z-[71] grid place-items-center">
     <div class="w-[92%] max-w-md card p-6">
       <div class="flex items-center justify-between mb-2">
-        <h4 class="text-lg font-bold text-slate-900 dark:text-slate-100">Verify your email</h4>
-        <button id="closeVerify" class="px-2 py-1 rounded border text-sm text-slate-700 dark:text-slate-300">✕</button>
+        <h4 class="text-lg font-bold" style="color: black;">Verify your email</h4>
+        <button id="closeVerify" class="px-2 py-1 rounded border text-sm" style="color: red; border-color: red;">✕</button>
       </div>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Enter the 6-digit code sent to your email.</p>
       <form id="verifyForm" method="POST" class="space-y-3" novalidate>
@@ -404,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         <div id="verifyMsg" class="text-xs min-h-[20px]"></div>
         <div class="flex items-center gap-2">
           <button type="submit" class="btn !w-auto px-4 text-white" id="verifySubmitBtn" style="color: white !important;">Verify</button>
-          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Resend code</button>
+          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm" style="color: black;">Resend code</button>
         </div>
       </form>
     </div>

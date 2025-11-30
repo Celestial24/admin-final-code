@@ -3,13 +3,16 @@
 // <!-- Sidebar -->
 ?>
 <nav class="sidebar">
-    <a href="../Modules/facilities-reservation.php" class="logo-link" title="Go to Dashboard">
-        <div class="logo-area">
-            <div class="logo">
-                <img src="../assets/image/logo.png" alt="Atiéra Logo" style="height:80px; width:auto; display:block; margin:0 auto;">
+    <div class="sidebar-header">
+       
+        <a href="../Modules/facilities-reservation.php" class="logo-link" title="Go to Dashboard">
+            <div class="logo-area">
+                <div class="logo">
+                    <img src="../assets/image/logo.png" alt="Atiéra Logo" style="height:80px; width:auto; display:block; margin:0 auto;">
+                </div>
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
     
     <div class="nav-section">
         <div class="nav-title">Main Navigation</div>

@@ -10,7 +10,7 @@ require_once __DIR__ . '/../db/db.php';
 const SMTP_HOST = 'smtp.gmail.com';    // e.g. smtp.gmail.com
 const SMTP_PORT = 587;                   // 587 (TLS) or 465 (SSL)
 const SMTP_USER = 'atiera41001@gmail.com';
-const SMTP_PASS = 'shmv lrod aueu ehdn'; // Update with app-specific password
+const SMTP_PASS = 'pjln rqjf revf ryic'; // Update with app-specific password
 const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
 const SMTP_FROM_NAME  = 'ATIERA Hotel';
 
