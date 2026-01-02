@@ -3,10 +3,10 @@
 
 class Database
 {
-    private $host = "localhost";
-    private $db_name = "visitor_management";
-    private $username = "root";  // Change as per your setup
-    private $password = "";      // Change as per your setup
+    private $host = "127.0.0.1";
+    private $db_name = "admin_new";
+    private $username = "admin_new";
+    private $password = "123";
     public $conn;
 
     // Get database connection
@@ -20,7 +20,7 @@ class Database
                 $this->username,
                 $this->password
             );
-            $this->conn->exec("set names utf8");
+            $this->conn->exec("set names utf8mb4");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();

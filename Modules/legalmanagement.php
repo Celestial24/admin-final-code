@@ -2,10 +2,10 @@
 // config.php
 class Database
 {
-    private $host = "localhost";
-    private $db_name = "legalmanagement";
-    private $username = "root";
-    private $password = "";
+    private $host = "127.0.0.1";
+    private $db_name = "admin_new";
+    private $username = "admin_new";
+    private $password = "123";
     public $conn;
 
     public function getConnection()
@@ -13,7 +13,7 @@ class Database
         $this->conn = null;
         try {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
+            $this->conn->exec("set names utf8mb4");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();
@@ -994,13 +994,15 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                     </div>
                     <?php
                     $highContracts = array_filter($contracts, function ($c) {
-                        return (isset($c['risk_level']) && strtolower($c['risk_level']) === 'high'); });
+                        return (isset($c['risk_level']) && strtolower($c['risk_level']) === 'high');
+                    });
                     if (!empty($highContracts)): ?>
                         <h4 style="margin-top:12px;">Top High-Risk Contracts</h4>
                         <ul>
                             <?php foreach (array_slice($highContracts, 0, 5) as $hc): ?>
                                 <li><?php echo htmlspecialchars($hc['contract_name'] ?? 'Untitled'); ?> —
-                                    <?php echo htmlspecialchars($hc['risk_score'] ?? 'N/A'); ?>/100</li>
+                                    <?php echo htmlspecialchars($hc['risk_score'] ?? 'N/A'); ?>/100
+                                </li>
                             <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
