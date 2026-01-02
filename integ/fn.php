@@ -1186,7 +1186,7 @@
             function showDetailsModal(title, content) {
                 document.getElementById('details-modal-title').innerText = title;
                 document.getElementById('details-modal-body').innerHTML = content;
-                document.getElementById('details-modal').style.display = 'block';
+                document.getElementById('details-modal').style.display = 'flex';
             }
 
             function closeDetailsModal() {
