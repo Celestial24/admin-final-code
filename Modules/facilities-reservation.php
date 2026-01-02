@@ -156,6 +156,15 @@ class ReservationSystem
             $data['error'] = "Error fetching data: " . $e->getMessage();
         }
 
+        // Ensure default values exist to prevent undefined array key warnings
+        $data['total_facilities'] = $data['total_facilities'] ?? 0;
+        $data['today_reservations'] = $data['today_reservations'] ?? 0;
+        $data['pending_approvals'] = $data['pending_approvals'] ?? 0;
+        $data['monthly_revenue'] = $data['monthly_revenue'] ?? 0;
+        $data['facilities'] = $data['facilities'] ?? [];
+        $data['reservations'] = $data['reservations'] ?? [];
+        $data['today_schedule'] = $data['today_schedule'] ?? [];
+
         return $data;
     }
 
@@ -178,6 +187,10 @@ class ReservationSystem
 // Initialize system
 $reservationSystem = new ReservationSystem();
 $dashboard_data = $reservationSystem->fetchDashboardData();
+
+if (isset($dashboard_data['error'])) {
+    $error_message = $dashboard_data['error'];
+}
 
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
