@@ -952,7 +952,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             $recommendations = json_decode($contract['recommendations'] ?? '[]', true);
                             ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($contract['contract_name']); ?></td>
+                                <td><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($contract['case_id']); ?></td>
                                 <td>
                                     <span class="status-badge status-<?php echo strtolower($contract['risk_level']); ?>">
