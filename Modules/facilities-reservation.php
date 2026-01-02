@@ -289,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 
 <head>
-    <link rel="icon" type="image/x-icon" href="../../assets/image/logo.png">
+    <link rel="icon" type="image/x-icon" href="../assets/image/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facilities Reservation System - Hotel Management</title>
@@ -532,7 +532,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <div class="facility-meta">
                                         <div class="meta-item"><span class="icon-img-placeholder">👤</span> Capacity:
-                                            <?= $facility['capacity'] ?></div>
+                                            <?= $facility['capacity'] ?>
+                                        </div>
                                         <div class="meta-item"><span class="icon-img-placeholder">📍</span>
                                             <?= htmlspecialchars($facility['location']) ?></div>
                                     </div>
@@ -587,7 +588,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </td>
                                         <td style="text-align: left;">
                                             <div style="font-size: 0.9rem; font-weight: 600;">
-                                                <?= htmlspecialchars($reservation['customer_name']) ?></div>
+                                                <?= htmlspecialchars($reservation['customer_name']) ?>
+                                            </div>
                                             <small
                                                 style="color: #718096; font-size: 0.75rem;"><?= htmlspecialchars($reservation['customer_email'] ?? '') ?></small>
                                         </td>
@@ -726,7 +728,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </td>
                                         <td><?= htmlspecialchars($rr['event_date']) ?></td>
                                         <td><?= date('g:i a', strtotime($rr['start_time'])) ?> -
-                                            <?= date('g:i a', strtotime($rr['end_time'])) ?></td>
+                                            <?= date('g:i a', strtotime($rr['end_time'])) ?>
+                                        </td>
                                         <td><?= $rr['guests_count'] ?></td>
                                         <td>₱<?= number_format($rr['total_amount'] ?? 0, 2) ?></td>
                                         <td><?= htmlspecialchars($rr['status']) ?></td>
