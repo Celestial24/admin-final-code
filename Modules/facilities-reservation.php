@@ -594,67 +594,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($dashboard_data['reservations'] as $reservation): ?>
+                                <?php if (empty($dashboard_data['reservations'])): ?>
                                     <tr>
-                                        <td style="text-align: center;">#<?= $reservation['id'] ?></td>
-                                        <td style="text-align: left;"><?= htmlspecialchars($reservation['facility_name']) ?>
-                                        </td>
-                                        <td style="text-align: left;">
-                                            <div style="font-size: 0.9rem; font-weight: 600;">
-                                                <?= htmlspecialchars($reservation['customer_name']) ?>
-                                            </div>
-                                            <small
-                                                style="color: #718096; font-size: 0.75rem;"><?= htmlspecialchars($reservation['customer_email'] ?? '') ?></small>
-                                        </td>
-                                        <td style="text-align: center;"><?= htmlspecialchars($reservation['event_type']) ?>
-                                        </td>
-                                        <!-- INAYOS NA DATE & TIME STRUCTURE -->
-                                        <td style="text-align: center;">
-                                            <div style="font-size: 0.85rem; font-weight: 500; line-height: 1.2;">
-                                                <?= date('m/d/Y', strtotime($reservation['event_date'])) ?>
-                                            </div>
-                                            <small style="color: #718096; font-size: 0.7rem; display: block;">
-                                                <?= date('g:i a', strtotime($reservation['start_time'])) ?> -
-                                                <?= date('g:i a', strtotime($reservation['end_time'])) ?>
-                                            </small>
-                                        </td>
-                                        <td style="text-align: center;"><?= $reservation['guests_count'] ?></td>
-                                        <td style="font-weight: 600; text-align: center;">
-                                            ₱<?= number_format($reservation['total_amount'] ?? 0, 2) ?></td>
-                                        <td style="text-align: center;">
-                                            <span class="status-badge status-<?= $reservation['status'] ?>">
-                                                <?= ucfirst($reservation['status']) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex gap-1" style="flex-wrap: nowrap; justify-content: center;">
-                                                <?php if ($reservation['status'] == 'pending'): ?>
-                                                    <button class="btn btn-success btn-sm btn-icon"
-                                                        onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')"
-                                                        title="Confirm" aria-label="Confirm">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </button>
-                                                    <button class="btn btn-danger btn-sm btn-icon"
-                                                        onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')"
-                                                        title="Cancel" aria-label="Cancel">
-                                                        <i class="fa-solid fa-xmark"></i>
-                                                    </button>
-                                                <?php elseif ($reservation['status'] == 'confirmed'): ?>
-                                                    <button class="btn btn-warning btn-sm btn-icon"
-                                                        onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')"
-                                                        title="Complete" aria-label="Complete">
-                                                        <i class="fa-solid fa-flag-checkered"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <button class="btn btn-outline btn-sm btn-icon"
-                                                    onclick="viewReservationDetails(<?= $reservation['id'] ?>)"
-                                                    title="View Details" aria-label="View Details">
-                                                    <i class="fa-solid fa-eye"></i>
-                                                </button>
+                                        <td colspan="9" style="text-align: center; padding: 20px;">
+                                            <div style="color: #718096; font-style: italic;">
+                                                <i class="fa-regular fa-folder-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                                                No reservations found in the database.
+                                                <!-- DEBUG: Count is <?= count($dashboard_data['reservations']) ?> -->
                                             </div>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php else: ?>
+                                    <?php foreach ($dashboard_data['reservations'] as $reservation): ?>
+                                        <tr>
+                                            <td style="text-align: center;">#<?= $reservation['id'] ?></td>
+                                            <td style="text-align: left;"><?= htmlspecialchars($reservation['facility_name']) ?>
+                                            </td>
+                                            <td style="text-align: left;">
+                                                <div style="font-size: 0.9rem; font-weight: 600;">
+                                                    <?= htmlspecialchars($reservation['customer_name']) ?>
+                                                </div>
+                                                <small
+                                                    style="color: #718096; font-size: 0.75rem;"><?= htmlspecialchars($reservation['customer_email'] ?? '') ?></small>
+                                            </td>
+                                            <td style="text-align: center;"><?= htmlspecialchars($reservation['event_type']) ?>
+                                            </td>
+                                            <!-- INAYOS NA DATE & TIME STRUCTURE -->
+                                            <td style="text-align: center;">
+                                                <div style="font-size: 0.85rem; font-weight: 500; line-height: 1.2;">
+                                                    <?= date('m/d/Y', strtotime($reservation['event_date'])) ?>
+                                                </div>
+                                                <small style="color: #718096; font-size: 0.7rem; display: block;">
+                                                    <?= date('g:i a', strtotime($reservation['start_time'])) ?> -
+                                                    <?= date('g:i a', strtotime($reservation['end_time'])) ?>
+                                                </small>
+                                            </td>
+                                            <td style="text-align: center;"><?= $reservation['guests_count'] ?></td>
+                                            <td style="font-weight: 600; text-align: center;">
+                                                ₱<?= number_format($reservation['total_amount'] ?? 0, 2) ?></td>
+                                            <td style="text-align: center;">
+                                                <span class="status-badge status-<?= $reservation['status'] ?>">
+                                                    <?= ucfirst($reservation['status']) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1" style="flex-wrap: nowrap; justify-content: center;">
+                                                    <?php if ($reservation['status'] == 'pending'): ?>
+                                                        <button class="btn btn-success btn-sm btn-icon"
+                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')"
+                                                            title="Confirm" aria-label="Confirm">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-sm btn-icon"
+                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')"
+                                                            title="Cancel" aria-label="Cancel">
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
+                                                    <?php elseif ($reservation['status'] == 'confirmed'): ?>
+                                                        <button class="btn btn-warning btn-sm btn-icon"
+                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')"
+                                                            title="Complete" aria-label="Complete">
+                                                            <i class="fa-solid fa-flag-checkered"></i>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                    <button class="btn btn-outline btn-sm btn-icon"
+                                                        onclick="viewReservationDetails(<?= $reservation['id'] ?>)"
+                                                        title="View Details" aria-label="View Details">
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
