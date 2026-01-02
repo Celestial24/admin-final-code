@@ -563,6 +563,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal Management System - Hotel & Restaurant</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" type="image/x-icon" href="../assets/image/logo2.png">
     <link rel="stylesheet" href="../assets/css/legalmanagement.css">
     <style>
         /* Center all table header and cell content within this module */

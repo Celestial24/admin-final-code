@@ -1,19 +1,21 @@
 <?php
 // Database Configuration
-class Database {
+class Database
+{
     private $host = "localhost";
     private $db_name = "legalmanagement";
     private $username = "root";
     private $password = "";
     public $conn;
 
-    public function getConnection() {
+    public function getConnection()
+    {
         $this->conn = null;
         try {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
             $this->conn->exec("set names utf8");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
+        } catch (PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();
         }
         return $this->conn;
@@ -26,7 +28,8 @@ define('MAX_FILE_SIZE', 50 * 1024 * 1024); // 50MB
 define('ALLOWED_TYPES', ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif']);
 
 // Document Class
-class Document {
+class Document
+{
     private $conn;
     private $table_name = "documents";
 
@@ -40,12 +43,14 @@ class Document {
     public $is_deleted;
     public $deleted_date;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
     // Create new document
-    public function create() {
+    public function create()
+    {
         $query = "INSERT INTO " . $this->table_name . "
                 SET name=:name, category=:category, file_path=:file_path, 
                     file_size=:file_size, description=:description, upload_date=:upload_date";
@@ -68,14 +73,15 @@ class Document {
         $stmt->bindParam(":description", $this->description);
         $stmt->bindParam(":upload_date", $this->upload_date);
 
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return true;
         }
         return false;
     }
 
     // Get all active documents
-    public function readActive($category = null) {
+    public function readActive($category = null)
+    {
         $query = "SELECT * FROM " . $this->table_name . " WHERE is_deleted = 0";
         if ($category && $category !== 'all') {
             $query .= " AND category = '" . htmlspecialchars($category) . "'";
@@ -87,7 +93,8 @@ class Document {
     }
 
     // Get all deleted documents
-    public function readDeleted() {
+    public function readDeleted()
+    {
         $query = "SELECT * FROM " . $this->table_name . " WHERE is_deleted = 1 ORDER BY deleted_date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -95,7 +102,8 @@ class Document {
     }
 
     // Get single document
-    public function readOne() {
+    public function readOne()
+    {
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
@@ -103,7 +111,7 @@ class Document {
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if($row) {
+        if ($row) {
             $this->name = $row['name'];
             $this->category = $row['category'];
             $this->file_path = $row['file_path'];
@@ -118,7 +126,8 @@ class Document {
     }
 
     // Move document to trash
-    public function moveToTrash() {
+    public function moveToTrash()
+    {
         $query = "UPDATE " . $this->table_name . " 
                  SET is_deleted = 1, deleted_date = :deleted_date 
                  WHERE id = :id";
@@ -127,14 +136,15 @@ class Document {
         $stmt->bindParam(":deleted_date", $this->deleted_date);
         $stmt->bindParam(":id", $this->id);
 
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return true;
         }
         return false;
     }
 
     // Restore document from trash
-    public function restore() {
+    public function restore()
+    {
         $query = "UPDATE " . $this->table_name . " 
                  SET is_deleted = 0, deleted_date = NULL 
                  WHERE id = ?";
@@ -142,14 +152,15 @@ class Document {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
 
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return true;
         }
         return false;
     }
 
     // Permanently delete document
-    public function deletePermanent() {
+    public function deletePermanent()
+    {
         // First get file path to delete physical file
         $query = "SELECT file_path FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
@@ -157,10 +168,10 @@ class Document {
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if($row) {
+        if ($row) {
             $file_path = $row['file_path'];
             // Delete physical file
-            if(file_exists($file_path)) {
+            if (file_exists($file_path)) {
                 unlink($file_path);
             }
         }
@@ -170,14 +181,15 @@ class Document {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
 
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return true;
         }
         return false;
     }
 
     // Search documents
-    public function search($keywords) {
+    public function search($keywords)
+    {
         $query = "SELECT * FROM " . $this->table_name . " 
                  WHERE (name LIKE ? OR description LIKE ? OR category LIKE ?) 
                  AND is_deleted = 0 
@@ -206,10 +218,10 @@ if (isset($_GET['api'])) {
 
     $method = $_SERVER['REQUEST_METHOD'];
 
-    switch($method) {
+    switch ($method) {
         case 'GET':
             // Get all active documents
-            if(isset($_GET['action']) && $_GET['action'] == 'active') {
+            if (isset($_GET['action']) && $_GET['action'] == 'active') {
                 $category = isset($_GET['category']) ? $_GET['category'] : null;
                 $stmt = $document->readActive($category);
                 $documents = [];
@@ -219,7 +231,7 @@ if (isset($_GET['api'])) {
                 echo json_encode($documents);
             }
             // Get all deleted documents
-            elseif(isset($_GET['action']) && $_GET['action'] == 'deleted') {
+            elseif (isset($_GET['action']) && $_GET['action'] == 'deleted') {
                 $stmt = $document->readDeleted();
                 $documents = [];
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -228,9 +240,9 @@ if (isset($_GET['api'])) {
                 echo json_encode($documents);
             }
             // Get single document
-            elseif(isset($_GET['id'])) {
+            elseif (isset($_GET['id'])) {
                 $document->id = $_GET['id'];
-                if($document->readOne()) {
+                if ($document->readOne()) {
                     echo json_encode([
                         'id' => $document->id,
                         'name' => $document->name,
@@ -247,7 +259,7 @@ if (isset($_GET['api'])) {
                 }
             }
             // Search documents
-            elseif(isset($_GET['search'])) {
+            elseif (isset($_GET['search'])) {
                 $stmt = $document->search($_GET['search']);
                 $documents = [];
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -259,9 +271,9 @@ if (isset($_GET['api'])) {
 
         case 'POST':
             // Handle file upload
-            if(isset($_FILES['file'])) {
+            if (isset($_FILES['file'])) {
                 $response = uploadFile();
-                if($response['success']) {
+                if ($response['success']) {
                     $document->name = $_POST['name'];
                     $document->category = $_POST['category'];
                     $document->file_path = $response['file_path'];
@@ -269,7 +281,7 @@ if (isset($_GET['api'])) {
                     $document->description = $_POST['description'];
                     $document->upload_date = date('Y-m-d');
 
-                    if($document->create()) {
+                    if ($document->create()) {
                         echo json_encode(["message" => "Document uploaded successfully."]);
                     } else {
                         echo json_encode(["message" => "Unable to upload document."]);
@@ -279,19 +291,19 @@ if (isset($_GET['api'])) {
                 }
             }
             // Move to trash
-            elseif(isset($_POST['action']) && $_POST['action'] == 'trash') {
+            elseif (isset($_POST['action']) && $_POST['action'] == 'trash') {
                 $document->id = $_POST['id'];
                 $document->deleted_date = date('Y-m-d');
-                if($document->moveToTrash()) {
+                if ($document->moveToTrash()) {
                     echo json_encode(["message" => "Document moved to trash."]);
                 } else {
                     echo json_encode(["message" => "Unable to move document to trash."]);
                 }
             }
             // Restore from trash
-            elseif(isset($_POST['action']) && $_POST['action'] == 'restore') {
+            elseif (isset($_POST['action']) && $_POST['action'] == 'restore') {
                 $document->id = $_POST['id'];
-                if($document->restore()) {
+                if ($document->restore()) {
                     echo json_encode(["message" => "Document restored successfully."]);
                 } else {
                     echo json_encode(["message" => "Unable to restore document."]);
@@ -302,7 +314,7 @@ if (isset($_GET['api'])) {
         case 'DELETE':
             parse_str(file_get_contents("php://input"), $delete_vars);
             $document->id = $delete_vars['id'];
-            if($document->deletePermanent()) {
+            if ($document->deletePermanent()) {
                 echo json_encode(["message" => "Document permanently deleted."]);
             } else {
                 echo json_encode(["message" => "Unable to delete document."]);
@@ -312,9 +324,10 @@ if (isset($_GET['api'])) {
     exit;
 }
 
-function uploadFile() {
+function uploadFile()
+{
     $upload_dir = UPLOAD_DIR;
-    
+
     // Create upload directory if it doesn't exist
     if (!file_exists($upload_dir)) {
         mkdir($upload_dir, 0777, true);
@@ -327,18 +340,18 @@ function uploadFile() {
     $file_error = $file['error'];
 
     // Check for errors
-    if($file_error !== UPLOAD_ERR_OK) {
+    if ($file_error !== UPLOAD_ERR_OK) {
         return ['success' => false, 'message' => 'File upload error.'];
     }
 
     // Check file size
-    if($file_size > MAX_FILE_SIZE) {
+    if ($file_size > MAX_FILE_SIZE) {
         return ['success' => false, 'message' => 'File is too large.'];
     }
 
     // Check file type
     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-    if(!in_array($file_ext, ALLOWED_TYPES)) {
+    if (!in_array($file_ext, ALLOWED_TYPES)) {
         return ['success' => false, 'message' => 'File type not allowed.'];
     }
 
@@ -347,7 +360,7 @@ function uploadFile() {
     $file_path = $upload_dir . $new_filename;
 
     // Move file to upload directory
-    if(move_uploaded_file($file_tmp, $file_path)) {
+    if (move_uploaded_file($file_tmp, $file_path)) {
         return [
             'success' => true,
             'file_path' => $file_path,
@@ -358,7 +371,8 @@ function uploadFile() {
     }
 }
 
-function formatFileSize($bytes) {
+function formatFileSize($bytes)
+{
     $units = ['B', 'KB', 'MB', 'GB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -369,12 +383,15 @@ function formatFileSize($bytes) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel & Restaurant Document Management</title>
-     <link rel="stylesheet" href="../assets/css/document.css">
+    <link rel="stylesheet" href="../assets/css/document.css">
+    <link rel="icon" type="image/x-icon" href="../assets/image/logo2.png">
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -391,12 +408,12 @@ function formatFileSize($bytes) {
             </div>
         </div>
     </header>
-    
+
     <main class="container">
         <div class="dashboard">
-             <aside class="sidebar">
-                 <h3>Categories</h3>
-                 <ul>
+            <aside class="sidebar">
+                <h3>Categories</h3>
+                <ul>
                     <li><a href="#" class="category-link active" data-category="all">All Documents</a></li>
                     <li><a href="#" class="category-link" data-category="Financial Records">Financial Records</a></li>
                     <li><a href="#" class="category-link" data-category="HR Documents">HR Documents</a></li>
@@ -405,22 +422,22 @@ function formatFileSize($bytes) {
                     <li><a href="#" class="category-link" data-category="Compliance">Compliance</a></li>
                     <li><a href="#" class="category-link" data-category="Marketing">Marketing</a></li>
                     <li><a href="#" class="category-link" data-category="trash">Trash Bin</a></li>
-                 </ul>
-                 
-                 <h3>Quick Stats</h3>
+                </ul>
+
+                <h3>Quick Stats</h3>
                 <ul id="quickStats">
                     <li>Total Files: <span id="totalFiles">0</span></li>
                     <li>Storage Used: <span id="storageUsed">0 GB</span></li>
                     <li>Files in Trash: <span id="filesInTrash">0</span></li>
                 </ul>
-             </aside>
-             
-             <div class="content">
-                 <div class="content-header">
+            </aside>
+
+            <div class="content">
+                <div class="content-header">
                     <h2 id="contentTitle">Document Management</h2>
-                     <button class="btn btn-primary" id="uploadBtn">Upload Document</button>
-                 </div>
-                 
+                    <button class="btn btn-primary" id="uploadBtn">Upload Document</button>
+                </div>
+
                 <!-- All Documents View -->
                 <div class="category-content active" id="all-content">
                     <div class="tabs">
@@ -438,13 +455,13 @@ function formatFileSize($bytes) {
                         <div class="alert alert-danger">Files in trash will be permanently deleted after 30 days.</div>
                         <div class="file-grid" id="trashFiles"><!-- Trash files will be populated here --></div>
                     </div>
-                 </div>
+                </div>
 
-              <!-- Financial Records View -->
+                <!-- Financial Records View -->
                 <div class="category-content" id="financial-records-content">
                     <div class="search-box">
-                       <input type="text" placeholder="Search financial records...">
-                       <button>Search</button>
+                        <input type="text" placeholder="Search financial records...">
+                        <button>Search</button>
                     </div>
                     <div class="file-grid" id="financialFiles"><!-- Financial files will be populated here --></div>
                 </div>
@@ -452,8 +469,8 @@ function formatFileSize($bytes) {
                 <!-- HR Documents View -->
                 <div class="category-content" id="hr-documents-content">
                     <div class="search-box">
-                       <input type="text" placeholder="Search HR documents...">
-                       <button>Search</button>
+                        <input type="text" placeholder="Search HR documents...">
+                        <button>Search</button>
                     </div>
                     <div class="file-grid" id="hrFiles"><!-- HR files will be populated here --></div>
                 </div>
@@ -461,13 +478,13 @@ function formatFileSize($bytes) {
                 <!-- Guest Records View -->
                 <div class="category-content" id="guest-records-content">
                     <div class="search-box">
-                       <input type="text" placeholder="Search guest records...">
-                       <button>Search</button>
+                        <input type="text" placeholder="Search guest records...">
+                        <button>Search</button>
                     </div>
                     <div class="file-grid" id="guestFiles"><!-- Guest files will be populated here --></div>
                 </div>
 
-             <!-- Inventory View -->
+                <!-- Inventory View -->
                 <div class="category-content" id="inventory-content">
                     <div class="search-box">
                         <input type="text" placeholder="Search inventory documents...">
@@ -499,10 +516,10 @@ function formatFileSize($bytes) {
                     <div class="alert alert-danger">Files in trash will be permanently deleted after 30 days.</div>
                     <div class="file-grid" id="allTrashFiles"><!-- All trash files will be populated here --></div>
                 </div>
-             </div>
-         </div>
-     </main>
-    
+            </div>
+        </div>
+    </main>
+
     <!-- Upload Modal -->
     <div class="modal" id="uploadModal">
         <div class="modal-content">
@@ -542,7 +559,7 @@ function formatFileSize($bytes) {
             </form>
         </div>
     </div>
-    
+
     <!-- File Details Modal -->
     <div class="modal" id="fileDetailsModal">
         <div class="modal-content">
@@ -555,7 +572,7 @@ function formatFileSize($bytes) {
             </div>
         </div>
     </div>
-    
+
     <footer class="container">
         <p>Hotel & Restaurant Document Management System &copy; 2023</p>
     </footer>
@@ -564,121 +581,121 @@ function formatFileSize($bytes) {
         // Add dummy/sample data for testing if API fails
         function loadDummyData(category) {
             const dummyFiles = {
-              
-               
-                
-               
+
+
+
+
             };
 
             return dummyFiles[category] || [];
         }
 
-         // Category Navigation Handler
-         document.querySelectorAll('.category-link').forEach(link => {
-             link.addEventListener('click', function(e) {
-                 e.preventDefault();
-                 const category = this.getAttribute('data-category');
-                 const categoryNames = {
-                     'all': 'Document Management',
-                     'Financial Records': 'Financial Records',
-                     'HR Documents': 'HR Documents',
-                     'Guest Records': 'Guest Records',
-                     'Inventory': 'Inventory',
-                     'Compliance': 'Compliance',
-                     'Marketing': 'Marketing',
-                     'trash': 'Trash Bin'
-                 };
+        // Category Navigation Handler
+        document.querySelectorAll('.category-link').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const category = this.getAttribute('data-category');
+                const categoryNames = {
+                    'all': 'Document Management',
+                    'Financial Records': 'Financial Records',
+                    'HR Documents': 'HR Documents',
+                    'Guest Records': 'Guest Records',
+                    'Inventory': 'Inventory',
+                    'Compliance': 'Compliance',
+                    'Marketing': 'Marketing',
+                    'trash': 'Trash Bin'
+                };
 
-                 // Update active state in sidebar
-                 document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
-                 this.classList.add('active');
+                // Update active state in sidebar
+                document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
 
-                 // Update page title
-                 document.getElementById('contentTitle').textContent = categoryNames[category] || 'Document Management';
+                // Update page title
+                document.getElementById('contentTitle').textContent = categoryNames[category] || 'Document Management';
 
-                 // Hide all category contents and show selected
-                 document.querySelectorAll('.category-content').forEach(content => {
-                      content.classList.remove('active');
-                  });
-                  
-                 let contentId;
-                 switch(category) {
-                     case 'all': contentId = 'all-content'; break;
-                     case 'trash': contentId = 'trash-content'; break;
-                     case 'Financial Records': contentId = 'financial-records-content'; break;
-                     case 'HR Documents': contentId = 'hr-documents-content'; break;
-                     case 'Guest Records': contentId = 'guest-records-content'; break;
-                     case 'Inventory': contentId = 'inventory-content'; break;
-                     case 'Compliance': contentId = 'compliance-content'; break;
-                     case 'Marketing': contentId = 'marketing-content'; break;
-                     default: contentId = 'all-content';
-                 }
-                  const contentEl = document.getElementById(contentId);
-                 if (contentEl) {
-                     contentEl.classList.add('active');
-                 } else {
-                     console.error('Content element not found:', contentId);
-                 }
+                // Hide all category contents and show selected
+                document.querySelectorAll('.category-content').forEach(content => {
+                    content.classList.remove('active');
+                });
 
-                 // Load files for this category
-                 loadCategoryFiles(category);
-             });
-         });
+                let contentId;
+                switch (category) {
+                    case 'all': contentId = 'all-content'; break;
+                    case 'trash': contentId = 'trash-content'; break;
+                    case 'Financial Records': contentId = 'financial-records-content'; break;
+                    case 'HR Documents': contentId = 'hr-documents-content'; break;
+                    case 'Guest Records': contentId = 'guest-records-content'; break;
+                    case 'Inventory': contentId = 'inventory-content'; break;
+                    case 'Compliance': contentId = 'compliance-content'; break;
+                    case 'Marketing': contentId = 'marketing-content'; break;
+                    default: contentId = 'all-content';
+                }
+                const contentEl = document.getElementById(contentId);
+                if (contentEl) {
+                    contentEl.classList.add('active');
+                } else {
+                    console.error('Content element not found:', contentId);
+                }
 
-         // Function to load files by category
-          function loadCategoryFiles(category) {
-              const endpoint = category === 'trash' ? 
-                  '?api=1&action=deleted' : 
-                  category === 'all' ? 
-                  '?api=1&action=active' : 
-                  '?api=1&action=active&category=' + encodeURIComponent(category);
+                // Load files for this category
+                loadCategoryFiles(category);
+            });
+        });
 
-              const gridId = {
-                  'all': 'activeFiles',
-                  'Financial Records': 'financialFiles',
-                  'HR Documents': 'hrFiles',
-                  'Guest Records': 'guestFiles',
-                   'Inventory': 'inventoryFiles',
-                   'Compliance': 'complianceFiles',
-                   'Marketing': 'marketingFiles',
-                   'trash': 'allTrashFiles'
-               }[category];
+        // Function to load files by category
+        function loadCategoryFiles(category) {
+            const endpoint = category === 'trash' ?
+                '?api=1&action=deleted' :
+                category === 'all' ?
+                    '?api=1&action=active' :
+                    '?api=1&action=active&category=' + encodeURIComponent(category);
 
-               // Special handling for Financial Records - show button instead of cards
-               if (category === 'Financial Records') {
-                   const grid = document.getElementById(gridId);
-                   // Change the URL below to your desired financial records page
-                   const financialRecordsUrl = 'http://localhost/admin-final-code/integ/fn.php';
-                   grid.innerHTML = `
+            const gridId = {
+                'all': 'activeFiles',
+                'Financial Records': 'financialFiles',
+                'HR Documents': 'hrFiles',
+                'Guest Records': 'guestFiles',
+                'Inventory': 'inventoryFiles',
+                'Compliance': 'complianceFiles',
+                'Marketing': 'marketingFiles',
+                'trash': 'allTrashFiles'
+            }[category];
+
+            // Special handling for Financial Records - show button instead of cards
+            if (category === 'Financial Records') {
+                const grid = document.getElementById(gridId);
+                // Change the URL below to your desired financial records page
+                const financialRecordsUrl = 'http://localhost/admin-final-code/integ/fn.php';
+                grid.innerHTML = `
                        <div style="text-align: center; padding: 3rem; grid-column: 1/-1;">
                            <a href="${financialRecordsUrl}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer;">
                                View Financial Records
                            </a>
                        </div>
                    `;
-                   return;
-               }
+                return;
+            }
 
-               fetch(endpoint)
-                   .then(response => response.json())
-                   .then(data => {
-                      // Always use dummy data (ignore API response)
-                      data = loadDummyData(category);
-                      
-                       const grid = document.getElementById(gridId);
-                       grid.innerHTML = '';
-                       
-                       if (!data || data.length === 0) {
-                          grid.innerHTML = `
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    // Always use dummy data (ignore API response)
+                    data = loadDummyData(category);
+
+                    const grid = document.getElementById(gridId);
+                    grid.innerHTML = '';
+
+                    if (!data || data.length === 0) {
+                        grid.innerHTML = `
                               <div style="text-align: center; padding: 3rem; color: #999; grid-column: 1/-1;">
                                   <p style="font-size: 1.1rem; margin-bottom: 1rem;">📭 No files found</p>
                               </div>
                           `;
-                           return;
-                       }
-                       
-                       data.forEach(file => {
-                           grid.innerHTML += `
+                        return;
+                    }
+
+                    data.forEach(file => {
+                        grid.innerHTML += `
                                <div class="file-row" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-bottom:1px solid #eee;">
                                    <div class="file-info" style="display:flex;align-items:center;gap:0.75rem;">
                                        <div class="file-icon" style="font-size:1.5rem">📄</div>
@@ -693,44 +710,44 @@ function formatFileSize($bytes) {
                                    </div>
                                </div>
                            `;
-                       });
+                    });
 
-                       // Attach click handlers to newly created view buttons
-                       setTimeout(() => {
-                           const buttons = grid.querySelectorAll('.view-btn');
-                           buttons.forEach(btn => {
-                               btn.addEventListener('click', function() {
-                                   const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
-                                   showFileDetails(file);
-                               });
-                           });
-                       }, 0);
-                   })
-                   .catch(error => {
-                      console.error('Fetch error:', error);
-                      
-                      // Special handling for Financial Records - show button instead of cards
-                      if (category === 'Financial Records') {
-                          const grid = document.getElementById(gridId);
-                          // Change the URL below to your desired financial records page
-                          const financialRecordsUrl = 'http://localhost/admin-final-code/Modules/financial-records.php';
-                          grid.innerHTML = `
+                    // Attach click handlers to newly created view buttons
+                    setTimeout(() => {
+                        const buttons = grid.querySelectorAll('.view-btn');
+                        buttons.forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
+                                showFileDetails(file);
+                            });
+                        });
+                    }, 0);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+
+                    // Special handling for Financial Records - show button instead of cards
+                    if (category === 'Financial Records') {
+                        const grid = document.getElementById(gridId);
+                        // Change the URL below to your desired financial records page
+                        const financialRecordsUrl = 'http://localhost/admin-final-code/Modules/financial-records.php';
+                        grid.innerHTML = `
                               <div style="text-align: center; padding: 3rem; grid-column: 1/-1;">
                                   <a href="${financialRecordsUrl}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer;">
                                       View Financial Records
                                   </a>
                               </div>
                           `;
-                          return;
-                      }
-                      
-                      // Fallback to dummy data on error
-                      const data = loadDummyData(category);
-                      const grid = document.getElementById(gridId);
-                      grid.innerHTML = '';
-                      
-                      data.forEach(file => {
-                          grid.innerHTML += `
+                        return;
+                    }
+
+                    // Fallback to dummy data on error
+                    const data = loadDummyData(category);
+                    const grid = document.getElementById(gridId);
+                    grid.innerHTML = '';
+
+                    data.forEach(file => {
+                        grid.innerHTML += `
                               <div class="file-row" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-bottom:1px solid #eee;">
                                   <div class="file-info" style="display:flex;align-items:center;gap:0.75rem;">
                                       <div class="file-icon" style="font-size:1.5rem">📄</div>
@@ -745,26 +762,26 @@ function formatFileSize($bytes) {
                                   </div>
                               </div>
                           `;
-                      });
+                    });
 
-                      // Attach click handlers to newly created view buttons (fallback)
-                      setTimeout(() => {
-                          const buttons = grid.querySelectorAll('.view-btn');
-                          buttons.forEach(btn => {
-                              btn.addEventListener('click', function() {
-                                  const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
-                                  showFileDetails(file);
-                              });
-                          });
-                      }, 0);
-                   });
-           }
+                    // Attach click handlers to newly created view buttons (fallback)
+                    setTimeout(() => {
+                        const buttons = grid.querySelectorAll('.view-btn');
+                        buttons.forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const file = JSON.parse(decodeURIComponent(this.getAttribute('data-file')));
+                                showFileDetails(file);
+                            });
+                        });
+                    }, 0);
+                });
+        }
 
-         // Utility: show file details in modal
-         function showFileDetails(file) {
-             const modal = document.getElementById('fileDetailsModal');
-             const content = document.getElementById('fileDetailsContent');
-             content.innerHTML = `
+        // Utility: show file details in modal
+        function showFileDetails(file) {
+            const modal = document.getElementById('fileDetailsModal');
+            const content = document.getElementById('fileDetailsContent');
+            content.innerHTML = `
                  <h4 style="margin-top:0;">${file.name || 'Unnamed'}</h4>
                  <p><strong>Category:</strong> ${file.category || 'N/A'}</p>
                  <p><strong>Size:</strong> ${file.file_size || 'Unknown'}</p>
@@ -775,42 +792,42 @@ function formatFileSize($bytes) {
                  </div>
              `;
 
-             const downloadLink = document.getElementById('downloadLink');
-             if (file.id) {
-                 downloadLink.setAttribute('href', '?api=1&action=download&id=' + encodeURIComponent(file.id));
-                 downloadLink.setAttribute('target', '_blank');
-             } else {
-                 downloadLink.setAttribute('href', '#');
-             }
+            const downloadLink = document.getElementById('downloadLink');
+            if (file.id) {
+                downloadLink.setAttribute('href', '?api=1&action=download&id=' + encodeURIComponent(file.id));
+                downloadLink.setAttribute('target', '_blank');
+            } else {
+                downloadLink.setAttribute('href', '#');
+            }
 
-             modal.style.display = 'block';
+            modal.style.display = 'block';
 
-             // close button inside details
-             document.getElementById('closeDetails').addEventListener('click', () => {
-                 modal.style.display = 'none';
-             });
-         }
+            // close button inside details
+            document.getElementById('closeDetails').addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
 
-         // Generic modal close handlers (for existing close spans)
-         document.querySelectorAll('.modal .close').forEach(span => {
-             span.addEventListener('click', function() {
-                 const m = this.closest('.modal');
-                 if (m) m.style.display = 'none';
-             });
-         });
+        // Generic modal close handlers (for existing close spans)
+        document.querySelectorAll('.modal .close').forEach(span => {
+            span.addEventListener('click', function () {
+                const m = this.closest('.modal');
+                if (m) m.style.display = 'none';
+            });
+        });
 
-         // Close modal when clicking outside
-         window.addEventListener('click', function(event) {
-             document.querySelectorAll('.modal').forEach(modal => {
-                 if (event.target === modal) modal.style.display = 'none';
-             });
-         });
+        // Close modal when clicking outside
+        window.addEventListener('click', function (event) {
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (event.target === modal) modal.style.display = 'none';
+            });
+        });
 
-         // Load initial content on page load
-         window.addEventListener('load', () => {
-             loadCategoryFiles('all');
-         });
-     </script>
- </body>
- </html>
+        // Load initial content on page load
+        window.addEventListener('load', () => {
+            loadCategoryFiles('all');
+        });
+    </script>
+</body>
 
+</html>
