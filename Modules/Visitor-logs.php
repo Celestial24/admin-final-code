@@ -1,7 +1,8 @@
 <?php
 // config.php - Database configuration
 
-class Database {
+class Database
+{
     private $host = "localhost";
     private $db_name = "visitor_management";
     private $username = "root";  // Change as per your setup
@@ -9,18 +10,19 @@ class Database {
     public $conn;
 
     // Get database connection
-    public function getConnection() {
+    public function getConnection()
+    {
         $this->conn = null;
 
         try {
             $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name, 
-                $this->username, 
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
+                $this->username,
                 $this->password
             );
             $this->conn->exec("set names utf8");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
+        } catch (PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();
         }
 
@@ -29,20 +31,22 @@ class Database {
 }
 
 // Helper functions
-function executeQuery($sql, $params = []) {
+function executeQuery($sql, $params = [])
+{
     $database = new Database();
     $db = $database->getConnection();
-    
+
     try {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return $stmt;
-    } catch(PDOException $exception) {
+    } catch (PDOException $exception) {
         return false;
     }
 }
 
-function fetchAll($sql, $params = []) {
+function fetchAll($sql, $params = [])
+{
     $stmt = executeQuery($sql, $params);
     if ($stmt) {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -50,7 +54,8 @@ function fetchAll($sql, $params = []) {
     return [];
 }
 
-function fetchOne($sql, $params = []) {
+function fetchOne($sql, $params = [])
+{
     $stmt = executeQuery($sql, $params);
     if ($stmt) {
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -58,7 +63,8 @@ function fetchOne($sql, $params = []) {
     return false;
 }
 
-function getLastInsertId() {
+function getLastInsertId()
+{
     $database = new Database();
     $db = $database->getConnection();
     return $db->lastInsertId();
@@ -67,11 +73,12 @@ function getLastInsertId() {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visitor Management System</title>
-     <link rel="stylesheet" href="../assets/css/Visitors.css">
+    <link rel="stylesheet" href="../assets/css/Visitors.css">
     <!-- Added styles for Reports read-panel (beautify only) -->
     <style>
         /* Read panel (side details) */
@@ -79,45 +86,52 @@ function getLastInsertId() {
             display: none;
             background: #fff;
             border-radius: 8px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             padding: 20px;
             margin-top: 20px;
         }
+
         .read-panel.header {
             font-weight: 600;
         }
+
         .read-panel .rp-header {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            border-bottom:1px solid #eee;
-            padding-bottom:12px;
-            margin-bottom:16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
+
         .btn-back {
-            background:#2d8cf0;
-            color:#fff;
-            border:none;
-            padding:8px 12px;
-            border-radius:6px;
-            cursor:pointer;
-            font-size:14px;
+            background: #2d8cf0;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
         }
+
         .rp-row {
-            margin-bottom:10px;
+            margin-bottom: 10px;
         }
+
         .rp-row .label {
-            color:#6b7280;
-            font-size:13px;
-            margin-bottom:4px;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 4px;
         }
+
         .rp-row .value {
-            color:#111827;
-            font-size:15px;
-            font-weight:500;
+            color: #111827;
+            font-size: 15px;
+            font-weight: 500;
         }
     </style>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -129,7 +143,8 @@ function getLastInsertId() {
                         <li><a href="#" class="nav-link" data-page="hotel">Hotel</a></li>
                         <li><a href="#" class="nav-link" data-page="restaurant">Restaurant</a></li>
                         <li><a href="#" class="nav-link" data-page="reports">Reports</a></li>
-                        <li><a href="http://localhost/admin-final-code/Modules/facilities-reservation.php" class="nav-link logout" data-action="logout">Back</a></li>
+                        <li><a href="http://localhost/admin-final-code/Modules/facilities-reservation.php"
+                                class="nav-link logout" data-action="logout">Back</a></li>
                     </ul>
                 </nav>
             </div>
@@ -139,17 +154,18 @@ function getLastInsertId() {
     <div class="container">
         <div class="main-content">
             <aside class="sidebar">
-                    <ul class="sidebar-menu">
-                        <li><a href="#" class="sidebar-link active" data-page="dashboard">Dashboard</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="hotel-checkin">Hotel Time-in</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="hotel-visitors">Hotel Visitors</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="restaurant-checkin">Restaurant time-in</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="restaurant-visitors">Restaurant Visitors</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="reports">Reports</a></li>
-                        <li><a href="http://localhost/admin-final-code/Modules/facilities-reservation.php" class="sidebar-link logout" data-action="logout">Back</a></li>
-                        <li><a href="#" class="sidebar-link" data-page="settings">Settings</a></li>
-                    </ul>
-                </aside>
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="sidebar-link active" data-page="dashboard">Dashboard</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="hotel-checkin">Hotel Time-in</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="hotel-visitors">Hotel Visitors</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="restaurant-checkin">Restaurant time-in</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="restaurant-visitors">Restaurant Visitors</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="reports">Reports</a></li>
+                    <li><a href="http://localhost/admin-final-code/Modules/facilities-reservation.php"
+                            class="sidebar-link logout" data-action="logout">Back</a></li>
+                    <li><a href="#" class="sidebar-link" data-page="settings">Settings</a></li>
+                </ul>
+            </aside>
 
             <main class="content">
                 <!-- Dashboard Page -->
@@ -196,45 +212,52 @@ function getLastInsertId() {
                         <form id="hotel-checkin-form" method="post" action="#">
                             <div class="form-group">
                                 <label for="full_name">Full Name</label>
-                                <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Full name" required>
+                                <input type="text" id="full_name" name="full_name" class="form-control"
+                                    placeholder="Full name" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="email" id="email" name="email" class="form-control" placeholder="Email address">
+                                <input type="email" id="email" name="email" class="form-control"
+                                    placeholder="Email address">
                             </div>
 
                             <div class="form-group">
                                 <label for="phone">Phone</label>
-                                <input type="text" id="phone" name="phone" class="form-control" placeholder="Phone number">
+                                <input type="text" id="phone" name="phone" class="form-control"
+                                    placeholder="Phone number">
                             </div>
 
                             <div class="form-group">
                                 <label for="room_number">Room Number</label>
-                                <input type="text" id="room_number" name="room_number" class="form-control" placeholder="Room number">
+                                <input type="text" id="room_number" name="room_number" class="form-control"
+                                    placeholder="Room number">
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-group" style="flex:1; margin-right:12px;">
                                     <label for="time_in">Time-in Date</label>
-                                    <input type="datetime-local" id="time_in" name="time_in" class="form-control" placeholder="mm/dd/yyyy">
+                                    <input type="datetime-local" id="time_in" name="time_in" class="form-control"
+                                        placeholder="mm/dd/yyyy">
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label for="time_out">Time-out Date</label>
-                                    <input type="datetime-local" id="time_out" name="time_out" class="form-control" placeholder="mm/dd/yyyy">
+                                    <input type="datetime-local" id="time_out" name="time_out" class="form-control"
+                                        placeholder="mm/dd/yyyy">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label for="notes">Notes</label>
-                                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="Notes..."></textarea>
+                                <textarea id="notes" name="notes" class="form-control" rows="4"
+                                    placeholder="Notes..."></textarea>
                             </div>
 
                             <div class="form-group">
                                 <button type="submit" class="btn btn-success" id="timein-submit">Time-in Guest</button>
                             </div>
                         </form>
-                     </div>
+                    </div>
 
                     <div class="tab-content" id="hotel-visitors-tab">
                         <h2>Current Hotel Guests</h2>
@@ -394,35 +417,35 @@ function getLastInsertId() {
                         </div>
                     </div>
 
-                   <!-- Read / Details panel for selected report item -->
-                   <aside id="report-read-panel" class="read-panel" aria-hidden="true" style="display:none;">
-                       <div class="rp-header">
-                           <h3 style="margin:0;">Report Details</h3>
-                           <button type="button" class="btn-back" id="rp-back-btn">Back</button>
-                       </div>
-                       <div id="rp-content">
-                           <div class="rp-row">
-                               <div class="label">Name</div>
-                               <div class="value" id="rp-name">-</div>
-                           </div>
-                           <div class="rp-row">
-                               <div class="label">Venue</div>
-                               <div class="value" id="rp-venue">-</div>
-                           </div>
-                           <div class="rp-row">
-                               <div class="label">Check-in</div>
-                               <div class="value" id="rp-checkin">-</div>
-                           </div>
-                           <div class="rp-row">
-                               <div class="label">Check-out</div>
-                               <div class="value" id="rp-checkout">-</div>
-                           </div>
-                           <div class="rp-row">
-                               <div class="label">Notes</div>
-                               <div class="value" id="rp-notes">-</div>
-                           </div>
-                       </div>
-                   </aside>
+                    <!-- Read / Details panel for selected report item -->
+                    <aside id="report-read-panel" class="read-panel" aria-hidden="true" style="display:none;">
+                        <div class="rp-header">
+                            <h3 style="margin:0;">Report Details</h3>
+                            <button type="button" class="btn-back" id="rp-back-btn">Back</button>
+                        </div>
+                        <div id="rp-content">
+                            <div class="rp-row">
+                                <div class="label">Name</div>
+                                <div class="value" id="rp-name">-</div>
+                            </div>
+                            <div class="rp-row">
+                                <div class="label">Venue</div>
+                                <div class="value" id="rp-venue">-</div>
+                            </div>
+                            <div class="rp-row">
+                                <div class="label">Check-in</div>
+                                <div class="value" id="rp-checkin">-</div>
+                            </div>
+                            <div class="rp-row">
+                                <div class="label">Check-out</div>
+                                <div class="value" id="rp-checkout">-</div>
+                            </div>
+                            <div class="rp-row">
+                                <div class="label">Notes</div>
+                                <div class="value" id="rp-notes">-</div>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
 
                 <!-- Settings Page -->
@@ -456,116 +479,275 @@ function getLastInsertId() {
         </div>
     </div>
 
-   <!-- corrected external script filename (fix typo) -->
-   <script src="../assets/Javascript/Visitors.js"></script>
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none;">
+                <h2 style="color: #e74c3c;"><i class="fas fa-exclamation-triangle"></i> Confirm Action</h2>
+            </div>
+            <div class="modal-body" style="padding: 20px 0;">
+                <p id="confirmation-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: center; gap: 10px; padding-top: 10px;">
+                <button id="confirm-btn" class="btn-danger">Yes, Confirm</button>
+                <button id="cancel-btn" class="btn-secondary" onclick="closeConfirmationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-   <script>
-   document.addEventListener('DOMContentLoaded', function () {
-       // SHOW/HIDE PAGES from sidebar / top nav
-       function showPage(pageId) {
-           // hide all pages
-           document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-           // show requested page
-           const page = document.getElementById(pageId);
-           if (page) page.classList.add('active');
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
 
-           // update active state for any element with data-page
-           document.querySelectorAll('[data-page]').forEach(function(el){
-               if (el.getAttribute('data-page') === pageId || el.getAttribute('data-page') === pageId + '-checkin' || el.getAttribute('data-page') === pageId + '-visitors') {
-                   el.classList.add('active');
-               } else {
-                   el.classList.remove('active');
-               }
-           });
-       }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
 
-       // Activate inner tab (tabName e.g. "hotel-checkin" => content id "hotel-checkin-tab")
-       function activateTab(tabName) {
-           document.querySelectorAll('.tabs .tab').forEach(function(t){ t.classList.remove('active'); });
-           document.querySelectorAll('.tab-content').forEach(function(tc){ tc.classList.remove('active'); });
-           const tab = document.querySelector('.tabs .tab[data-tab="'+tabName+'"]');
-           if (tab) tab.classList.add('active');
-           const tc = document.getElementById(tabName + '-tab');
-           if (tc) tc.classList.add('active');
-       }
+            to {
+                opacity: 1;
+            }
+        }
 
-       // Sidebar / nav click handling — attach only to elements that have data-page
-       document.querySelectorAll('a[data-page]').forEach(function(el){
-           el.addEventListener('click', function(e){
-               const requested = this.getAttribute('data-page');
-               if (!requested) return; // do nothing if no data-page
-               e.preventDefault(); // only prevent when we handle SPA navigation
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s;
+        }
 
-               // If data-page is compound like "hotel-checkin" show main page 'hotel' and activate tab
-               if (requested.indexOf('-') !== -1) {
-                   const parts = requested.split('-');
-                   const main = parts[0]; // 'hotel' or 'restaurant'
-                   showPage(main);
-                   activateTab(requested);
-               } else {
-                   // direct page id matches page div ids (dashboard, hotel, restaurant, reports, settings)
-                   showPage(requested);
-               }
-           });
-       });
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
 
-       // Tabs click handling inside pages
-       document.querySelectorAll('.tabs .tab').forEach(function(tab){
-           tab.addEventListener('click', function(){
-               activateTab(this.getAttribute('data-tab'));
-           });
-       });
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
 
-       // On load: trigger display based on existing sidebar active, otherwise default to dashboard
-       var starter = document.querySelector('.sidebar-link.active') || document.querySelector('.nav-link.active');
-       if (starter && starter.getAttribute('data-page')) {
-           var p = starter.getAttribute('data-page');
-           // reuse click logic to ensure inner tabs show
-           starter.click();
-       } else {
-           showPage('dashboard');
-       }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-       // REPORT read-panel helpers (moved inside DOM ready to avoid null errors)
-       function showReportRead(data) {
-           var results = document.getElementById('report-results');
-           if (results) results.style.display = 'none';
-           var panel = document.getElementById('report-read-panel');
-           if (!panel) return;
-           panel.style.display = 'block';
-           panel.setAttribute('aria-hidden','false');
-           document.getElementById('rp-name').textContent = data.name || '-';
-           document.getElementById('rp-venue').textContent = data.venue || '-';
-           document.getElementById('rp-checkin').textContent = data.checkin || '-';
-           document.getElementById('rp-checkout').textContent = data.checkout || '-';
-           document.getElementById('rp-notes').textContent = data.notes || '-';
-       }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
 
-       var backBtn = document.getElementById('rp-back-btn');
-       if (backBtn) {
-           backBtn.addEventListener('click', function () {
-               var panel = document.getElementById('report-read-panel');
-               if (panel) {
-                   panel.style.display = 'none';
-                   panel.setAttribute('aria-hidden','true');
-               }
-               var results = document.getElementById('report-results');
-               if (results) results.style.display = '';
-           });
-       }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-       var reportData = document.getElementById('report-data');
-       if (reportData) {
-           reportData.addEventListener('click', function(e){
-               var target = e.target;
-               if (target.classList && target.classList.contains('view-btn')) {
-                   var row = target.closest('[data-item]');
-                   var payload = row ? JSON.parse(row.getAttribute('data-item')) : {};
-                   showReportRead(payload);
-               }
-           });
-       }
-   });
-   </script>
- </body>
- </html>
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h2 id="details-modal-title" style="color: var(--primary); margin: 0;">Details</h2>
+                <button onclick="closeDetailsModal()"
+                    style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+            <div class="modal-body" id="details-modal-body" style="padding: 20px 0;">
+                <!-- Content will be injected here -->
+            </div>
+            <div class="modal-footer" style="text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+                <button class="btn-primary" onclick="closeDetailsModal()"
+                    style="background-color: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- corrected external script filename (fix typo) -->
+    <script src="../assets/Javascript/Visitor.js"></script>
+
+    <script>
+        // Modal Helper Functions
+
+        // --- Details Modal ---
+        function showDetailsModal(title, content) {
+            document.getElementById('details-modal-title').innerText = title;
+            document.getElementById('details-modal-body').innerHTML = content;
+            document.getElementById('details-modal').style.display = 'block';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+
+        // Modal Helper Functions
+        function showConfirmationModal(message, callback) {
+            document.getElementById('confirmation-message').innerText = message;
+            const modal = document.getElementById('confirmation-modal');
+            modal.style.display = 'block';
+
+            const confirmBtn = document.getElementById('confirm-btn');
+            // Remove existing event listeners to prevent multiple firings
+            const newBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+            newBtn.onclick = function () {
+                callback();
+                closeConfirmationModal();
+            };
+        }
+
+        function closeConfirmationModal() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const confirmModal = document.getElementById('confirmation-modal');
+            const detailsModal = document.getElementById('details-modal');
+
+            if (event.target == confirmModal) {
+                closeConfirmationModal();
+            }
+            if (event.target == detailsModal) {
+                closeDetailsModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // SHOW/HIDE PAGES from sidebar / top nav
+            function showPage(pageId) {
+                // hide all pages
+                document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+                // show requested page
+                const page = document.getElementById(pageId);
+                if (page) page.classList.add('active');
+
+                // update active state for any element with data-page
+                document.querySelectorAll('[data-page]').forEach(function (el) {
+                    if (el.getAttribute('data-page') === pageId || el.getAttribute('data-page') === pageId + '-checkin' || el.getAttribute('data-page') === pageId + '-visitors') {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+            }
+
+            // Activate inner tab (tabName e.g. "hotel-checkin" => content id "hotel-checkin-tab")
+            function activateTab(tabName) {
+                document.querySelectorAll('.tabs .tab').forEach(function (t) { t.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(function (tc) { tc.classList.remove('active'); });
+                const tab = document.querySelector('.tabs .tab[data-tab="' + tabName + '"]');
+                if (tab) tab.classList.add('active');
+                const tc = document.getElementById(tabName + '-tab');
+                if (tc) tc.classList.add('active');
+            }
+
+            // Sidebar / nav click handling — attach only to elements that have data-page
+            document.querySelectorAll('a[data-page]').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    const requested = this.getAttribute('data-page');
+                    if (!requested) return; // do nothing if no data-page
+                    e.preventDefault(); // only prevent when we handle SPA navigation
+
+                    // If data-page is compound like "hotel-checkin" show main page 'hotel' and activate tab
+                    if (requested.indexOf('-') !== -1) {
+                        const parts = requested.split('-');
+                        const main = parts[0]; // 'hotel' or 'restaurant'
+                        showPage(main);
+                        activateTab(requested);
+                    } else {
+                        // direct page id matches page div ids (dashboard, hotel, restaurant, reports, settings)
+                        showPage(requested);
+                    }
+                });
+            });
+
+            // Tabs click handling inside pages
+            document.querySelectorAll('.tabs .tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    activateTab(this.getAttribute('data-tab'));
+                });
+            });
+
+            // On load: trigger display based on existing sidebar active, otherwise default to dashboard
+            var starter = document.querySelector('.sidebar-link.active') || document.querySelector('.nav-link.active');
+            if (starter && starter.getAttribute('data-page')) {
+                var p = starter.getAttribute('data-page');
+                // reuse click logic to ensure inner tabs show
+                starter.click();
+            } else {
+                showPage('dashboard');
+            }
+
+            // REPORT read-panel helpers (moved inside DOM ready to avoid null errors)
+            function showReportRead(data) {
+                var results = document.getElementById('report-results');
+                if (results) results.style.display = 'none';
+                var panel = document.getElementById('report-read-panel');
+                if (!panel) return;
+                panel.style.display = 'block';
+                panel.setAttribute('aria-hidden', 'false');
+                document.getElementById('rp-name').textContent = data.name || '-';
+                document.getElementById('rp-venue').textContent = data.venue || '-';
+                document.getElementById('rp-checkin').textContent = data.checkin || '-';
+                document.getElementById('rp-checkout').textContent = data.checkout || '-';
+                document.getElementById('rp-notes').textContent = data.notes || '-';
+            }
+
+            var backBtn = document.getElementById('rp-back-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', function () {
+                    var panel = document.getElementById('report-read-panel');
+                    if (panel) {
+                        panel.style.display = 'none';
+                        panel.setAttribute('aria-hidden', 'true');
+                    }
+                    var results = document.getElementById('report-results');
+                    if (results) results.style.display = '';
+                });
+            }
+
+            var reportData = document.getElementById('report-data');
+            if (reportData) {
+                reportData.addEventListener('click', function (e) {
+                    var target = e.target;
+                    if (target.classList && target.classList.contains('view-btn')) {
+                        var row = target.closest('[data-item]');
+                        var payload = row ? JSON.parse(row.getAttribute('data-item')) : {};
+                        showReportRead(payload);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

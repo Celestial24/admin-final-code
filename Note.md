@@ -40,3 +40,15 @@ updated
 double authcation sa login register Verification
 buttons Create Read Update Deleted button 
 including Desging
+
+
+Reminder 
+
+first go to the http://localhost/admin-final-code/index.html
+and http://localhost/admin-final-code/auth/login.php 
+
+Admin
+linbilcelstre3@gmailcom
+password:1234567
+
+Admin 
