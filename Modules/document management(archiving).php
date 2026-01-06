@@ -665,7 +665,7 @@ function formatFileSize($bytes)
             if (category === 'Financial Records') {
                 const grid = document.getElementById(gridId);
                 // Change the URL below to your desired financial records page
-                const financialRecordsUrl = 'http://localhost/admin-final-code/integ/fn.php';
+                const financialRecordsUrl = '../integ/fn.php';
                 grid.innerHTML = `
                        <div style="text-align: center; padding: 3rem; grid-column: 1/-1;">
                            <a href="${financialRecordsUrl}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer;">
