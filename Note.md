@@ -47,14 +47,27 @@ Reminder
 first go to the http://localhost/admin-final-code/index.html
 and http://localhost/admin-final-code/auth/login.php 
 
-Admin
-linbilcelstre3@gmailcom
-password:1234567
 
-Admin 
+### SQL Commands
 
-### SQL Insert for New Admin User (Password: 123)
+#### 1. Create Table `users`
 ```sql
-INSERT INTO `users` (`full_name`, `username`, `email`, `password_hash`, `role`, `status`) VALUES
-('New Admin', 'admin_new', 'admin_new@atiera.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu', 'super_admin', 'Active');
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `full_name` varchar(255) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+#### 2. Insert Admin User
+User: `admin` / `admin@atiera.com`
+Password: `123` (hashed)
+```sql
+INSERT INTO `users` (`full_name`, `username`, `email`, `password_hash`) VALUES
+('admin', 'admin', 'admin@atiera.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu');
 ```

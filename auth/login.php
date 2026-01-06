@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       $pdo = get_pdo();
 
       // Check user credentials - try email first, then username
-      $stmt = $pdo->prepare('SELECT id, full_name, username, email, password_hash, role, status FROM users WHERE email = :email OR username = :username LIMIT 1');
+      $stmt = $pdo->prepare('SELECT id, full_name, username, email, password_hash FROM users WHERE email = :email OR username = :username LIMIT 1');
       $stmt->execute([':email' => $username, ':username' => $username]);
       $user = $stmt->fetch();
 
@@ -67,7 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           $_SESSION['temp_username'] = $user['username'];
           $_SESSION['temp_name'] = $user['full_name'];
           $_SESSION['temp_email'] = $user['email'];
-          $_SESSION['temp_role'] = $user['role'];
+          $_SESSION['temp_email'] = $user['email'];
+          // Redirect to verify.php
+          header('Location: verify.php');
+          exit;
 
           // Ensure email_verifications table exists
           try {
@@ -612,7 +615,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
 
         <!-- Submit -->
         <button id="submitBtn" type="submit" class="btn" aria-live="polite">
-          <span id="btnText">Sign In</span>
+          <span id="btnText">Login</span>
         </button>
 
         <p class="text-xs text-center text-slate-500 dark:text-slate-400">© 2025 ATIERA BSIT 4101 CLUSTER 1</p>
@@ -754,94 +757,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       pwEl.focus();
     });
 
-    /* ---------- Popup (success & goodbye only, slow animation) ---------- */
-    (() => {
-      const backdrop = $('#popupBackdrop');
-      const root = $('#popupRoot');
-      const card = $('#popupCard');
-      const titleEl = $('#popupTitle');
-      const msgEl = $('#popupMsg');
-      const okBtn = $('#popupOkBtn');
-      const icon = $('#popupIcon');
-      const ripple = $('#iconRipple');
 
-      let autoTimer = null;
-      let closeResolver = null;
-      let typingTimer = null;
 
-      const ICONS = {
-        success: `<path d="M9.5 16.2 5.8 12.5l-1.3 1.3 5 5 10-10-1.3-1.3-8.7 8.7Z" fill="currentColor"/>`,
-        goodbye: `<path d="M12 2a5 5 0 0 0-5 5v3H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5Z" fill="currentColor"/>`
-      };
 
-      function setIcon(variant) { icon.innerHTML = ICONS[variant] || ICONS.success; }
-      function pulseRipple() { ripple.style.animation = 'none'; void ripple.offsetWidth; ripple.style.animation = 'ripple .6s ease-out'; }
-
-      function typeMessage(text, speed = 30) {
-        clearInterval(typingTimer);
-        msgEl.classList.add('typing');
-        msgEl.textContent = '';
-        let i = 0;
-        typingTimer = setInterval(() => {
-          msgEl.textContent += text.charAt(i++);
-          if (i >= text.length) { clearInterval(typingTimer); msgEl.classList.remove('typing'); }
-        }, speed);
-      }
-
-      function animateIn(variant, title, message) {
-        root.classList.remove('hidden'); backdrop.classList.remove('hidden');
-        backdrop.style.animation = 'fadeBackdrop 3s both';
-        card.style.animation = 'popSpring 3s both';
-        titleEl.style.animation = 'slideUp 3s ease-out both';
-        msgEl.style.animation = 'slideUp 3s ease-out both';
-        root.classList.remove('popup-success', 'popup-goodbye');
-        root.classList.add(`popup-${variant}`);
-        setIcon(variant);
-        titleEl.textContent = title || 'Notice';
-        pulseRipple();
-        typeMessage(message || '');
-        okBtn?.focus({ preventScroll: true });
-      }
-
-      function animateOut() {
-        backdrop.style.animation = 'fadeBackdrop 2s reverse both';
-        card.style.animation = 'popSpring 2s reverse both';
-        setTimeout(() => {
-          root.classList.add('hidden'); backdrop.classList.add('hidden');
-        }, 160);
-      }
-
-      window.showPopup = function ({ title = 'Notice', message = '', variant = 'success', autocloseMs = 0, onClose = null } = {}) {
-        clearTimeout(autoTimer);
-        animateIn(variant, title, message);
-        if (onClose) closeResolver = onClose;
-        if (autocloseMs > 0) { autoTimer = setTimeout(() => { window.hidePopup(); }, autocloseMs); }
-      };
-
-      window.hidePopup = function () {
-        animateOut();
-        if (typeof closeResolver === 'function') { try { closeResolver(); } catch { } }
-        closeResolver = null;
-      };
-
-      backdrop.addEventListener('click', () => window.hidePopup());
-      okBtn.addEventListener('click', () => window.hidePopup());
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.hidePopup(); });
-    })();
-
-    /* ---------- Logout popup ---------- */
-    (function handleLogout() {
-      const q = new URLSearchParams(location.search);
-      if (q.get('logout') === '1') {
-        sessionStorage.removeItem('atiera_logged_in');
-        showPopup({
-          title: 'Goodbye, ADMIN 👋',
-          message: 'Thank you ADMIN — See you next time!',
-          variant: 'goodbye',
-          autocloseMs: 4200
-        });
-      }
-    })();
 
     /* ---------- Auth + lockout ---------- */
     const MAX_TRIES = 5, LOCK_MS = 60_000;
@@ -869,7 +787,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           localStorage.removeItem(lockKey);
           setNum(triesKey, 0);
           submitBtn.disabled = false;
-          btnText.textContent = 'Sign In';
+          btnText.textContent = 'Login';
           hideError(); hideInfo();
           return;
         }
@@ -889,7 +807,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     function startLoading() { submitBtn.disabled = true; btnText.textContent = 'Checking…'; }
     function stopLoading(ok = false) {
       if (ok) { btnText.textContent = 'Success'; }
-      else { btnText.textContent = 'Sign In'; submitBtn.disabled = false; }
+      else { btnText.textContent = 'Login'; submitBtn.disabled = false; }
     }
 
     function shakeCard() {

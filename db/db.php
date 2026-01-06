@@ -6,7 +6,7 @@ function get_pdo()
     if ($pdo instanceof PDO)
         return $pdo;
 
-    $host = '127.0.0.1';
+    $host = 'localhost';
     $db = 'admin_new';
     $user = 'admin_new';
     $pass = '123';
