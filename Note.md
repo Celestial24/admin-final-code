@@ -65,9 +65,9 @@ CREATE TABLE `users` (
 ```
 
 #### 2. Insert Admin User
-User: `admin` / `admin@atiera.com`
+User: `admin` / `atiera41001@gmail.com`
 Password: `123` (hashed)
 ```sql
 INSERT INTO `users` (`full_name`, `username`, `email`, `password_hash`) VALUES
-('admin', 'admin', 'admin@atiera.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu');
+('admin', 'admin', 'atiera41001@gmail.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu');
 ```
