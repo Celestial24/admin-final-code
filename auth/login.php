@@ -67,10 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           $_SESSION['temp_username'] = $user['username'];
           $_SESSION['temp_name'] = $user['full_name'];
           $_SESSION['temp_email'] = $user['email'];
-          $_SESSION['temp_email'] = $user['email'];
-          // Redirect to verify.php
-          header('Location: verify.php');
-          exit;
+
 
           // Ensure email_verifications table exists
           try {
