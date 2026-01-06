@@ -52,3 +52,9 @@ linbilcelstre3@gmailcom
 password:1234567
 
 Admin 
+
+### SQL Insert for New Admin User (Password: 123)
+```sql
+INSERT INTO `users` (`full_name`, `username`, `email`, `password_hash`, `role`, `status`) VALUES
+('New Admin', 'admin_new', 'admin_new@atiera.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu', 'super_admin', 'Active');
+```

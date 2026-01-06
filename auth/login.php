@@ -14,15 +14,15 @@ session_start();
 
 // Handle logout
 if (isset($_GET['logout'])) {
-    session_destroy();
-    header('Location: login.php');
-    exit;
+  session_destroy();
+  header('Location: login.php');
+  exit;
 }
 
 // Check if already logged in
 if (isset($_SESSION['user_id'])) {
-    header('Location: ../Modules/facilities-reservation.php');
-    exit;
+  header('Location: ../Modules/facilities-reservation.php');
+  exit;
 }
 
 $error_message = '';
@@ -32,46 +32,46 @@ $show_verify_modal = false;
 
 // Surface success after verification
 if (isset($_GET['verified']) && $_GET['verified'] === '1') {
-    $success_message = 'Email verified. You can now sign in.';
+  $success_message = 'Email verified. You can now sign in.';
 }
 
 // Show warning if email failed to send
 if (isset($_GET['email_failed']) && $_GET['email_failed'] === '1') {
-    $error_message = 'Email could not be sent, but your verification code was saved. Please use the "Resend code" button in the verification modal.';
+  $error_message = 'Email could not be sent, but your verification code was saved. Please use the "Resend code" button in the verification modal.';
 }
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    
-    if (!empty($username) && !empty($password)) {
-        try {
-            $pdo = get_pdo();
-            
-            // Check user credentials - try email first, then username
-            $stmt = $pdo->prepare('SELECT id, full_name, username, email, password_hash, role, status FROM users WHERE email = :email OR username = :username LIMIT 1');
-            $stmt->execute([':email' => $username, ':username' => $username]);
-            $user = $stmt->fetch();
-            
-            if ($user) {
-                // Verify password
-                $stored_password = $user['password_hash'];
-                $is_hash = str_starts_with($stored_password, '$2y$') || str_starts_with($stored_password, '$argon2');
-                $valid = $is_hash ? password_verify($password, $stored_password) : hash_equals($stored_password, $password);
-                
-                if ($valid) {
-                    // Password is correct - show verification modal for all users
-                    // Store user info in session temporarily (will be set after verification)
-                    $_SESSION['temp_user_id'] = $user['id'];
-                    $_SESSION['temp_username'] = $user['username'];
-                    $_SESSION['temp_name'] = $user['full_name'];
-                    $_SESSION['temp_email'] = $user['email'];
-                    $_SESSION['temp_role'] = $user['role'];
-                    
-                    // Ensure email_verifications table exists
-                    try {
-                        $pdo->exec("
+  $username = trim($_POST['username']);
+  $password = $_POST['password'];
+
+  if (!empty($username) && !empty($password)) {
+    try {
+      $pdo = get_pdo();
+
+      // Check user credentials - try email first, then username
+      $stmt = $pdo->prepare('SELECT id, full_name, username, email, password_hash, role, status FROM users WHERE email = :email OR username = :username LIMIT 1');
+      $stmt->execute([':email' => $username, ':username' => $username]);
+      $user = $stmt->fetch();
+
+      if ($user) {
+        // Verify password
+        $stored_password = $user['password_hash'];
+        $is_hash = str_starts_with($stored_password, '$2y$') || str_starts_with($stored_password, '$argon2');
+        $valid = $is_hash ? password_verify($password, $stored_password) : hash_equals($stored_password, $password);
+
+        if ($valid) {
+          // Password is correct - show verification modal for all users
+          // Store user info in session temporarily (will be set after verification)
+          $_SESSION['temp_user_id'] = $user['id'];
+          $_SESSION['temp_username'] = $user['username'];
+          $_SESSION['temp_name'] = $user['full_name'];
+          $_SESSION['temp_email'] = $user['email'];
+          $_SESSION['temp_role'] = $user['role'];
+
+          // Ensure email_verifications table exists
+          try {
+            $pdo->exec("
                             CREATE TABLE IF NOT EXISTS email_verifications (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 user_id INT NOT NULL,
@@ -83,34 +83,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                                 CONSTRAINT fk_ev_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
                         ");
-                    } catch (\Exception $e) {
-                        // Table might already exist, ignore
-                    }
-                    
-                    // Generate and send verification code
-                    try {
-                        $code = (string)random_int(100000, 999999);
-                        $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
-                        $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
-                        $stmt->execute([':user_id' => $user['id'], ':code' => $code, ':expires_at' => $expiresAt]);
-                        
-                        // Send email
-                        $mail = new PHPMailer(true);
-                        try {
-                            $mail->SMTPDebug = 0; // 0 = off, 2 = debug
-                            $mail->isSMTP();
-                            $mail->Host = 'smtp.gmail.com';
-                            $mail->SMTPAuth = true;
-                            $mail->Username = 'atiera41001@gmail.com';
-                            $mail->Password = 'pjln rqjf revf ryic'; // Update with app-specific password
-                            $mail->Port = 587;
-                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                            $mail->Timeout = 10;
-                            $mail->setFrom('atiera41001@gmail.com', 'ATIERA Hotel');
-                            $mail->addAddress($user['email'], $user['full_name'] ?: $user['email']);
-                            $mail->isHTML(true);
-                            $mail->Subject = 'Your ATIERA verification code';
-                            $mail->Body = "
+          } catch (\Exception $e) {
+            // Table might already exist, ignore
+          }
+
+          // Generate and send verification code
+          try {
+            $code = (string) random_int(100000, 999999);
+            $expiresAt = (new DateTime('+15 minutes'))->format('Y-m-d H:i:s');
+            $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)');
+            $stmt->execute([':user_id' => $user['id'], ':code' => $code, ':expires_at' => $expiresAt]);
+
+            // Send email
+            $mail = new PHPMailer(true);
+            try {
+              $mail->SMTPDebug = 0; // 0 = off, 2 = debug
+              $mail->isSMTP();
+              $mail->Host = 'smtp.gmail.com';
+              $mail->SMTPAuth = true;
+              $mail->Username = 'atiera41001@gmail.com';
+              $mail->Password = 'pjln rqjf revf ryic'; // Update with app-specific password
+              $mail->Port = 587;
+              $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+              $mail->Timeout = 10;
+              $mail->setFrom('atiera41001@gmail.com', 'ATIERA Hotel');
+              $mail->addAddress($user['email'], $user['full_name'] ?: $user['email']);
+              $mail->isHTML(true);
+              $mail->Subject = 'Your ATIERA verification code';
+              $mail->Body = "
                                 <div style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:black\">
                                   <h2 style=\"margin:0 0 10px\">Verify your email</h2>
                                   <p>Hello " . htmlspecialchars($user['full_name'] ?: $user['email']) . ",</p>
@@ -120,148 +120,387 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                                   <p>— ATIERA</p>
                                 </div>
                             ";
-                            $mail->AltBody = "Your ATIERA verification code is: {$code}\nThis code expires in 15 minutes.";
-                            $mail->send();
-                        } catch (\Exception $e) {
-                            // Email sending failed, but continue to show modal
-                            // User can still use resend button
-                            error_log("Email send failed during login for {$user['email']}: " . $e->getMessage());
-                        }
-                    } catch (\Exception $e) {
-                        // Code generation or database insert failed
-                        // Still show modal, user can use resend
-                    }
-                    
-                    $prefill_email = $user['email'];
-                    $show_verify_modal = true;
-                    $success_message = 'Verification code sent to your email. Please check and enter the code.';
-                } else {
-                    $error_message = 'Invalid password.';
-                }
-            } else {
-                $error_message = 'Invalid email/username or account not found.';
+              $mail->AltBody = "Your ATIERA verification code is: {$code}\nThis code expires in 15 minutes.";
+              $mail->send();
+            } catch (\Exception $e) {
+              // Email sending failed, but continue to show modal
+              // User can still use resend button
+              error_log("Email send failed during login for {$user['email']}: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            $error_message = 'Database error. Please try again.';
+          } catch (\Exception $e) {
+            // Code generation or database insert failed
+            // Still show modal, user can use resend
+          }
+
+          $prefill_email = $user['email'];
+          $show_verify_modal = true;
+          $success_message = 'Verification code sent to your email. Please check and enter the code.';
+        } else {
+          $error_message = 'Invalid password.';
         }
-    } else {
-        $error_message = 'Please enter both email and password.';
+      } else {
+        $error_message = 'Invalid email/username or account not found.';
+      }
+    } catch (\Exception $e) {
+      $error_message = 'Database error. Please try again.';
     }
+  } else {
+    $error_message = 'Please enter both email and password.';
+  }
 }
 ?>
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ATIERA — Secure Login</title>
-<link rel="icon" href="../assets/image/logo2.png">
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ATIERA — Secure Login</title>
+  <link rel="icon" href="../assets/image/logo2.png">
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-  :root{
-    --blue-600:#1b2f73; --blue-700:#15265e; --blue-800:#0f1c49; --blue-a:#2342a6;
-    --gold:#d4af37; --ink:#0f172a; --muted:#64748b;
-    --ring:0 0 0 3px rgba(35,66,166,.28);
-    --card-bg: rgba(255,255,255,.95); --card-border: rgba(226,232,240,.9);
-    --wm-opa-light:.35; --wm-opa-dark:.55;
-  }
-  @media (prefers-color-scheme: dark){ :root{ --ink:#e5e7eb; --muted:#9ca3af; } }
+  <style>
+    :root {
+      --blue-600: #1b2f73;
+      --blue-700: #15265e;
+      --blue-800: #0f1c49;
+      --blue-a: #2342a6;
+      --gold: #d4af37;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --ring: 0 0 0 3px rgba(35, 66, 166, .28);
+      --card-bg: rgba(255, 255, 255, .95);
+      --card-border: rgba(226, 232, 240, .9);
+      --wm-opa-light: .35;
+      --wm-opa-dark: .55;
+    }
 
-  /* ===== Background ===== */
-  body{
-    min-height:100svh; margin:0; color:var(--ink);
-    background:
-      radial-gradient(70% 60% at 8% 10%, rgba(255,255,255,.18) 0, transparent 60%),
-      radial-gradient(40% 40% at 100% 0%, rgba(212,175,55,.08) 0, transparent 40%),
-      linear-gradient(140deg, rgba(15,28,73,1) 50%, rgba(255,255,255,1) 50%);
-  }
-  html.dark body{
-    background:
-      radial-gradient(70% 60% at 8% 10%, rgba(212,175,55,.08) 0, transparent 60%),
-      radial-gradient(40% 40% at 100% 0%, rgba(212,175,55,.12) 0, transparent 40%),
-      linear-gradient(140deg, rgba(7,12,38,1) 50%, rgba(11,21,56,1) 50%);
-    color:#e5e7eb;
-  }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #e5e7eb;
+        --muted: #9ca3af;
+      }
+    }
 
-  /* ===== Watermark ===== */
-  .bg-watermark{ position:fixed; inset:0; z-index:-1; display:grid; place-items:center; pointer-events:none; }
-  .bg-watermark img{
-    width:min(820px,70vw); max-height:68vh; object-fit:contain; opacity:var(--wm-opa-light);
-    filter: drop-shadow(0 0 26px rgba(255,255,255,.40)) drop-shadow(0 14px 34px rgba(0,0,0,.25));
-    transition:opacity .25s ease, filter .25s ease, transform .6s ease;
-  }
-  html.dark .bg-watermark img{
-    opacity:var(--wm-opa-dark);
-    filter: drop-shadow(0 0 34px rgba(255,255,255,.55)) drop-shadow(0 16px 40px rgba(0,0,0,.30));
-  }
+    /* ===== Background ===== */
+    body {
+      min-height: 100svh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(70% 60% at 8% 10%, rgba(255, 255, 255, .18) 0, transparent 60%),
+        radial-gradient(40% 40% at 100% 0%, rgba(212, 175, 55, .08) 0, transparent 40%),
+        linear-gradient(140deg, rgba(15, 28, 73, 1) 50%, rgba(255, 255, 255, 1) 50%);
+    }
 
-  .reveal { opacity:0; transform:translateY(8px); animation:reveal .45s .05s both; }
-  @keyframes reveal { to { opacity:1; transform:none; } }
+    html.dark body {
+      background:
+        radial-gradient(70% 60% at 8% 10%, rgba(212, 175, 55, .08) 0, transparent 60%),
+        radial-gradient(40% 40% at 100% 0%, rgba(212, 175, 55, .12) 0, transparent 40%),
+        linear-gradient(140deg, rgba(7, 12, 38, 1) 50%, rgba(11, 21, 56, 1) 50%);
+      color: #e5e7eb;
+    }
 
-  /* ===== Card ===== */
-  .card{
-    background:var(--card-bg); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-    border:1px solid var(--card-border); border-radius:18px; box-shadow:0 16px 48px rgba(2,6,23,.18);
-  }
-  html.dark .card{ background:rgba(17,24,39,.92); border-color:rgba(71,85,105,.55); box-shadow:0 16px 48px rgba(0,0,0,.5); }
+    /* ===== Watermark ===== */
+    .bg-watermark {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
 
-  /* ===== Inputs ===== */
-  .field{ position:relative; }
-  .input{
-    width:100%; border:1px solid #e5e7eb; border-radius:12px; background:#fff;
-    padding:1rem 2.6rem 1rem .95rem; outline:none; color:#0f172a; transition:border-color .15s, box-shadow .15s, background .15s;
-  }
-  .input:focus{ border-color:var(--blue-a); box-shadow:var(--ring) }
-  html.dark .input{ background:#0b1220; border-color:#243041; color:#e5e7eb; }
-  .float-label{
-    position:absolute; left:.9rem; top:50%; transform:translateY(-50%); padding:0 .25rem; color:#94a3b8;
-    pointer-events:none; background:transparent; transition:all .15s ease;
-  }
-  .input:focus + .float-label,
-  .input:not(:placeholder-shown) + .float-label{
-    top:0; transform:translateY(-50%) scale(.92); color:var(--blue-a); background:#fff;
-  }
-  html.dark .input:focus + .float-label,
-  html.dark .input:not(:placeholder-shown) + .float-label{ background:#0b1220; }
-  .icon-right{ position:absolute; right:.6rem; top:50%; transform:translateY(-50%); color:#64748b; }
-  html.dark .icon-right{ color:#94a3b8; }
+    .bg-watermark img {
+      width: min(820px, 70vw);
+      max-height: 68vh;
+      object-fit: contain;
+      opacity: var(--wm-opa-light);
+      filter: drop-shadow(0 0 26px rgba(255, 255, 255, .40)) drop-shadow(0 14px 34px rgba(0, 0, 0, .25));
+      transition: opacity .25s ease, filter .25s ease, transform .6s ease;
+    }
 
-  /* ===== Buttons ===== */
-  .btn{
-    width:100%; display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
-    background:linear-gradient(180deg, var(--blue-600), var(--blue-800));
-    color:#fff; font-weight:800; border-radius:14px; padding:.95rem 1rem; border:1px solid rgba(255,255,255,.06);
-    transition:transform .08s ease, filter .15s ease, box-shadow .2s ease; box-shadow:0 8px 18px rgba(2,6,23,.18);
-  }
-  .btn:hover{ filter:saturate(1.08); box-shadow:0 12px 26px rgba(2,6,23,.26); }
-  .btn:active{ transform:translateY(1px) scale(.99); }
-  .btn[disabled]{ opacity:.85; cursor:not-allowed; }
+    html.dark .bg-watermark img {
+      opacity: var(--wm-opa-dark);
+      filter: drop-shadow(0 0 34px rgba(255, 255, 255, .55)) drop-shadow(0 16px 40px rgba(0, 0, 0, .30));
+    }
 
-  /* ===== Alerts (inline attempts/info) ===== */
-  .alert{ border-radius:12px; padding:.65rem .8rem; font-size:.9rem }
-  .alert-error{ border:1px solid #fecaca; background:#fef2f2; color:#b91c1c }
-  .alert-info{ border:1px solid #c7d2fe; background:#eef2ff; color:#3730a3 }
-  html.dark .alert-error{ background:#3f1b1b; border-color:#7f1d1d; color:#fecaca }
-  html.dark .alert-info{ background:#1e1b4b; border-color:#3730a3; color:#c7d2fe }
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: reveal .45s .05s both;
+    }
 
-  /* ===== Popup animations (slow) ===== */
-  @keyframes popSpring { 0%{transform:scale(.92);opacity:0} 60%{transform:scale(1.04);opacity:1} 85%{transform:scale(.98)} 100%{transform:scale(1)} }
-  @keyframes fadeBackdrop { from{opacity:0} to{opacity:1} }
-  @keyframes ripple { 0%{transform:scale(.6);opacity:.35} 70%{transform:scale(1.4);opacity:.18} 100%{transform:scale(1.8);opacity:0} }
-  @keyframes slideUp { from { transform: translateY(6px) } to { transform: translateY(0) } }
-  @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(2px)} }
-  @media (prefers-reduced-motion: reduce){
-    #popupCard, #popupBackdrop, #popupTitle, #popupMsg { animation: none !important }
-  }
-  .popup-success #popupIconWrap{ background:linear-gradient(180deg,#16a34a,#15803d) }
-  .popup-info    #popupIconWrap{ background:linear-gradient(180deg,#2563eb,#1d4ed8) }
-  .popup-error   #popupIconWrap{ background:linear-gradient(180deg,#ef4444,#b91c1c) }
-  .popup-goodbye #popupIconWrap{ background:linear-gradient(180deg,var(--blue-600),var(--blue-800)) }
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
 
-  .typing::after{ content:'|'; margin-left:2px; opacity:.6; animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50%{opacity:0} }
-</style>
+    /* ===== Card ===== */
+    .card {
+      background: var(--card-bg);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: 0 16px 48px rgba(2, 6, 23, .18);
+    }
+
+    html.dark .card {
+      background: rgba(17, 24, 39, .92);
+      border-color: rgba(71, 85, 105, .55);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+    }
+
+    /* ===== Inputs ===== */
+    .field {
+      position: relative;
+    }
+
+    .input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      padding: 1rem 2.6rem 1rem .95rem;
+      outline: none;
+      color: #0f172a;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+
+    .input:focus {
+      border-color: var(--blue-a);
+      box-shadow: var(--ring)
+    }
+
+    html.dark .input {
+      background: #0b1220;
+      border-color: #243041;
+      color: #e5e7eb;
+    }
+
+    .float-label {
+      position: absolute;
+      left: .9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0 .25rem;
+      color: #94a3b8;
+      pointer-events: none;
+      background: transparent;
+      transition: all .15s ease;
+    }
+
+    .input:focus+.float-label,
+    .input:not(:placeholder-shown)+.float-label {
+      top: 0;
+      transform: translateY(-50%) scale(.92);
+      color: var(--blue-a);
+      background: #fff;
+    }
+
+    html.dark .input:focus+.float-label,
+    html.dark .input:not(:placeholder-shown)+.float-label {
+      background: #0b1220;
+    }
+
+    .icon-right {
+      position: absolute;
+      right: .6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+
+    html.dark .icon-right {
+      color: #94a3b8;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .6rem;
+      background: linear-gradient(180deg, var(--blue-600), var(--blue-800));
+      color: #fff;
+      font-weight: 800;
+      border-radius: 14px;
+      padding: .95rem 1rem;
+      border: 1px solid rgba(255, 255, 255, .06);
+      transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
+      box-shadow: 0 8px 18px rgba(2, 6, 23, .18);
+    }
+
+    .btn:hover {
+      filter: saturate(1.08);
+      box-shadow: 0 12px 26px rgba(2, 6, 23, .26);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(.99);
+    }
+
+    .btn[disabled] {
+      opacity: .85;
+      cursor: not-allowed;
+    }
+
+    /* ===== Alerts (inline attempts/info) ===== */
+    .alert {
+      border-radius: 12px;
+      padding: .65rem .8rem;
+      font-size: .9rem
+    }
+
+    .alert-error {
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      color: #b91c1c
+    }
+
+    .alert-info {
+      border: 1px solid #c7d2fe;
+      background: #eef2ff;
+      color: #3730a3
+    }
+
+    html.dark .alert-error {
+      background: #3f1b1b;
+      border-color: #7f1d1d;
+      color: #fecaca
+    }
+
+    html.dark .alert-info {
+      background: #1e1b4b;
+      border-color: #3730a3;
+      color: #c7d2fe
+    }
+
+    /* ===== Popup animations (slow) ===== */
+    @keyframes popSpring {
+      0% {
+        transform: scale(.92);
+        opacity: 0
+      }
+
+      60% {
+        transform: scale(1.04);
+        opacity: 1
+      }
+
+      85% {
+        transform: scale(.98)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    @keyframes fadeBackdrop {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(.6);
+        opacity: .35
+      }
+
+      70% {
+        transform: scale(1.4);
+        opacity: .18
+      }
+
+      100% {
+        transform: scale(1.8);
+        opacity: 0
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(6px)
+      }
+
+      to {
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes shakeX {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      20% {
+        transform: translateX(-8px)
+      }
+
+      40% {
+        transform: translateX(6px)
+      }
+
+      60% {
+        transform: translateX(-4px)
+      }
+
+      80% {
+        transform: translateX(2px)
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      #popupCard,
+      #popupBackdrop,
+      #popupTitle,
+      #popupMsg {
+        animation: none !important
+      }
+    }
+
+    .popup-success #popupIconWrap {
+      background: linear-gradient(180deg, #16a34a, #15803d)
+    }
+
+    .popup-info #popupIconWrap {
+      background: linear-gradient(180deg, #2563eb, #1d4ed8)
+    }
+
+    .popup-error #popupIconWrap {
+      background: linear-gradient(180deg, #ef4444, #b91c1c)
+    }
+
+    .popup-goodbye #popupIconWrap {
+      background: linear-gradient(180deg, var(--blue-600), var(--blue-800))
+    }
+
+    .typing::after {
+      content: '|';
+      margin-left: 2px;
+      opacity: .6;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0
+      }
+    }
+  </style>
 </head>
 
 <body class="grid md:grid-cols-2 gap-0 place-items-center p-6 md:p-10">
@@ -290,10 +529,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           <img src="../assets/image/logo.png" alt="ATIERA" class="h-10 w-auto">
           <div>
             <div class="text-sm font-semibold leading-4">ATIERA Finance Suite</div>
-            <div class="text-[10px] text-[color:var(--muted)]">Blue • White • <span class="font-medium" style="color:var(--gold)">Gold</span></div>
+            <div class="text-[10px] text-[color:var(--muted)]">Blue • White • <span class="font-medium"
+                style="color:var(--gold)">Gold</span></div>
           </div>
         </div>
-        <button id="modeBtn" class="px-3 py-2 rounded-lg border border-slate-200 text-sm hover:bg-white/60 dark:hover:bg-slate-800" aria-pressed="false" title="Toggle dark mode">🌓</button>
+        <button id="modeBtn"
+          class="px-3 py-2 rounded-lg border border-slate-200 text-sm hover:bg-white/60 dark:hover:bg-slate-800"
+          aria-pressed="false" title="Toggle dark mode">🌓</button>
       </div>
 
       <h3 class="text-lg sm:text-xl font-semibold mb-1">Sign in</h3>
@@ -305,7 +547,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           <?php echo htmlspecialchars($error_message); ?>
         </div>
       <?php endif; ?>
-      
+
       <?php if (!empty($success_message)): ?>
         <div class="alert alert-info mb-4" role="status">
           <?php echo htmlspecialchars($success_message); ?>
@@ -315,27 +557,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       <form method="POST" class="space-y-4" novalidate>
         <!-- Email/Username -->
         <div class="field">
-          <input id="username" name="username" type="email" autocomplete="email" class="input peer" placeholder=" " required aria-describedby="userHelp">
+          <input id="username" name="username" type="email" autocomplete="email" class="input peer" placeholder=" "
+            required aria-describedby="userHelp">
           <label for="username" class="float-label">Email Address</label>
           <span class="icon-right" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
+                fill="currentColor" />
+            </svg>
           </span>
-          <p id="userHelp" class="mt-1 text-xs text-slate-500 dark:text-slate-400">e.g., <span class="font-mono">admin@atiera-hotel.com</span> or <span class="font-mono">admin</span></p>
+          <p id="userHelp" class="mt-1 text-xs text-slate-500 dark:text-slate-400">e.g., <span
+              class="font-mono">admin@atiera-hotel.com</span> or <span class="font-mono">admin</span></p>
         </div>
 
         <!-- Password -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-            <span id="capsNote" class="hidden text-xs px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200">Caps Lock is ON</span>
+            <span id="capsNote"
+              class="hidden text-xs px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200">Caps
+              Lock is ON</span>
           </div>
           <div class="field">
-            <input id="password" name="password" type="password" autocomplete="current-password" class="input pr-12 peer" placeholder=" " required>
+            <input id="password" name="password" type="password" autocomplete="current-password"
+              class="input pr-12 peer" placeholder=" " required>
             <label for="password" class="float-label">••••••••</label>
             <div class="icon-right flex items-center gap-1">
-              <button type="button" id="togglePw" class="w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center" aria-label="Show password" aria-pressed="false" title="Show/Hide password">
-                <svg id="eyeOn" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 11a4 4 0 1 1 4-4 4 4 0 0 1-4 4Z" fill="currentColor"/></svg>
-                <svg id="eyeOff" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 4.27 4.28 3 21 19.72 19.73 21l-2.2-2.2A11.73 11.73 0 0 1 12 19c-5 0-9.27-3.11-11-7a12.71 12.71 0 0 1 4.1-4.73L3 4.27ZM12 7a5 5 0 0 1 5 5 5 5 0 0 1-.46 2.11L14.6 12.17A2.5 2.5 0 0 0 11.83 9.4L9.9 7.46A4.84 4.84 0 0 1 12 7Z" fill="currentColor"/></svg>
+              <button type="button" id="togglePw"
+                class="w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center"
+                aria-label="Show password" aria-pressed="false" title="Show/Hide password">
+                <svg id="eyeOn" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 11a4 4 0 1 1 4-4 4 4 0 0 1-4 4Z"
+                    fill="currentColor" />
+                </svg>
+                <svg id="eyeOff" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M3 4.27 4.28 3 21 19.72 19.73 21l-2.2-2.2A11.73 11.73 0 0 1 12 19c-5 0-9.27-3.11-11-7a12.71 12.71 0 0 1 4.1-4.73L3 4.27ZM12 7a5 5 0 0 1 5 5 5 5 0 0 1-.46 2.11L14.6 12.17A2.5 2.5 0 0 0 11.83 9.4L9.9 7.46A4.84 4.84 0 0 1 12 7Z"
+                    fill="currentColor" />
+                </svg>
               </button>
             </div>
           </div>
@@ -355,22 +616,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         </button>
 
         <p class="text-xs text-center text-slate-500 dark:text-slate-400">© 2025 ATIERA BSIT 4101 CLUSTER 1</p>
-        <p class="text-xs text-center mt-2 text-slate-500 dark:text-slate-400">
-          No account? <a class="underline" href="register.php">Register</a>
-        </p>
+
       </form>
     </div>
   </main>
 
   <!-- ===== Center Popup (success/goodbye only; slow animations) ===== -->
-  <div id="popupBackdrop" class="hidden fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] will-change-[opacity]"></div>
+  <div id="popupBackdrop" class="hidden fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] will-change-[opacity]">
+  </div>
   <div id="popupRoot" class="hidden fixed inset-0 z-[61] grid place-items-center pointer-events-none">
     <div id="popupCard" class="pointer-events-auto w-[92%] max-w-sm rounded-2xl p-6 card shadow-2xl opacity-0 scale-95"
-         role="alertdialog" aria-modal="true" aria-labelledby="popupTitle" aria-describedby="popupMsg">
-      <div id="popupIconWrap" class="mx-auto mb-3 w-14 h-14 rounded-full flex items-center justify-center text-white relative overflow-visible"
-           style="background:linear-gradient(180deg,var(--blue-600),var(--blue-800)); box-shadow:0 10px 18px rgba(2,6,23,.18)">
+      role="alertdialog" aria-modal="true" aria-labelledby="popupTitle" aria-describedby="popupMsg">
+      <div id="popupIconWrap"
+        class="mx-auto mb-3 w-14 h-14 rounded-full flex items-center justify-center text-white relative overflow-visible"
+        style="background:linear-gradient(180deg,var(--blue-600),var(--blue-800)); box-shadow:0 10px 18px rgba(2,6,23,.18)">
         <svg id="popupIcon" width="26" height="26" viewBox="0 0 24 24" fill="none">
-          <path d="M9.5 16.2 5.8 12.5l-1.3 1.3 5 5 10-10-1.3-1.3-8.7 8.7Z" fill="currentColor"/>
+          <path d="M9.5 16.2 5.8 12.5l-1.3 1.3 5 5 10-10-1.3-1.3-8.7 8.7Z" fill="currentColor" />
         </svg>
         <span id="iconRipple" class="absolute inset-0 rounded-full border border-white/60 opacity-0"></span>
       </div>
@@ -388,390 +649,397 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     <div class="w-[92%] max-w-md card p-6">
       <div class="flex items-center justify-between mb-2">
         <h4 class="text-lg font-bold" style="color: black;">Verify your email</h4>
-        <button id="closeVerify" class="px-2 py-1 rounded border text-sm" style="color: red; border-color: red;">✕</button>
+        <button id="closeVerify" class="px-2 py-1 rounded border text-sm"
+          style="color: red; border-color: red;">✕</button>
       </div>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Enter the 6-digit code sent to your email.</p>
       <form id="verifyForm" method="POST" class="space-y-3" novalidate>
         <input type="hidden" name="action" value="verify">
         <div>
           <label for="vemail" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Email</label>
-          <input id="vemail" name="email" type="email" required class="input" placeholder="you@example.com" value="<?php echo htmlspecialchars($prefill_email); ?>" readonly>
+          <input id="vemail" name="email" type="email" required class="input" placeholder="you@example.com"
+            value="<?php echo htmlspecialchars($prefill_email); ?>" readonly>
         </div>
         <div>
-          <label for="vcode" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Verification code</label>
-          <input id="vcode" name="code" type="text" inputmode="numeric" maxlength="6" required class="input" placeholder="123456" autocomplete="one-time-code">
+          <label for="vcode" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Verification
+            code</label>
+          <input id="vcode" name="code" type="text" inputmode="numeric" maxlength="6" required class="input"
+            placeholder="123456" autocomplete="one-time-code">
         </div>
         <div id="verifyMsg" class="text-xs min-h-[20px]"></div>
         <div class="flex items-center gap-2">
-          <button type="submit" class="btn !w-auto px-4 text-white" id="verifySubmitBtn" style="color: white !important;">Verify</button>
-          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm" style="color: black;">Resend code</button>
+          <button type="submit" class="btn !w-auto px-4 text-white" id="verifySubmitBtn"
+            style="color: white !important;">Verify</button>
+          <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm" style="color: black;">Resend
+            code</button>
         </div>
       </form>
     </div>
   </div>
 
-<script>
-  const $ = (s, r=document)=>r.querySelector(s);
+  <script>
+    const $ = (s, r = document) => r.querySelector(s);
 
-  // Elements
-  const form      = $('#loginForm');
-  const userEl    = $('#username');
-  const pwEl      = $('#password');
-  const toggle    = $('#togglePw');
-  const eyeOn     = $('#eyeOn');
-  const eyeOff    = $('#eyeOff');
-  const alertBox  = $('#alert');
-  const infoBox   = $('#info');
-  const submitBtn = $('#submitBtn');
-  const btnText   = $('#btnText');
-  const capsNote  = $('#capsNote');
-  const pwBar     = $('#pwBar');
-  const pwLabel   = $('#pwLabel');
-  const modeBtn   = $('#modeBtn');
-  const wmImg     = $('#wm');
-  // Verify modal elements
-  const verifyModal   = $('#verifyModal');
-  const verifyBackdrop= $('#verifyBackdrop');
-  const openVerifyBtn = $('#openVerify');
-  const closeVerifyBtn= $('#closeVerify');
-  const verifyForm    = $('#verifyForm');
-  const resendBtn     = $('#resendBtn');
-  const vemail        = $('#vemail');
-  const vcode         = $('#vcode');
-  const verifyMsg     = $('#verifyMsg');
+    // Elements
+    const form = $('#loginForm');
+    const userEl = $('#username');
+    const pwEl = $('#password');
+    const toggle = $('#togglePw');
+    const eyeOn = $('#eyeOn');
+    const eyeOff = $('#eyeOff');
+    const alertBox = $('#alert');
+    const infoBox = $('#info');
+    const submitBtn = $('#submitBtn');
+    const btnText = $('#btnText');
+    const capsNote = $('#capsNote');
+    const pwBar = $('#pwBar');
+    const pwLabel = $('#pwLabel');
+    const modeBtn = $('#modeBtn');
+    const wmImg = $('#wm');
+    // Verify modal elements
+    const verifyModal = $('#verifyModal');
+    const verifyBackdrop = $('#verifyBackdrop');
+    const openVerifyBtn = $('#openVerify');
+    const closeVerifyBtn = $('#closeVerify');
+    const verifyForm = $('#verifyForm');
+    const resendBtn = $('#resendBtn');
+    const vemail = $('#vemail');
+    const vcode = $('#vcode');
+    const verifyMsg = $('#verifyMsg');
 
-  /* ---------- Dark mode toggle ---------- */
-  modeBtn.addEventListener('click', ()=>{
-    const root = document.documentElement;
-    const dark = root.classList.toggle('dark');
-    modeBtn.setAttribute('aria-pressed', String(dark));
-    wmImg.style.transform = 'scale(1.01)'; setTimeout(()=> wmImg.style.transform = '', 220);
-  });
+    /* ---------- Dark mode toggle ---------- */
+    modeBtn.addEventListener('click', () => {
+      const root = document.documentElement;
+      const dark = root.classList.toggle('dark');
+      modeBtn.setAttribute('aria-pressed', String(dark));
+      wmImg.style.transform = 'scale(1.01)'; setTimeout(() => wmImg.style.transform = '', 220);
+    });
 
-  /* ---------- Alerts helpers ---------- */
-  const showError = (msg)=>{ alertBox.textContent = msg; alertBox.classList.remove('hidden'); };
-  const hideError = ()=> alertBox.classList.add('hidden');
-  const showInfo  = (msg)=>{ infoBox.textContent = msg; infoBox.classList.remove('hidden'); };
-  const hideInfo  = ()=> infoBox.classList.add('hidden');
+    /* ---------- Alerts helpers ---------- */
+    const showError = (msg) => { alertBox.textContent = msg; alertBox.classList.remove('hidden'); };
+    const hideError = () => alertBox.classList.add('hidden');
+    const showInfo = (msg) => { infoBox.textContent = msg; infoBox.classList.remove('hidden'); };
+    const hideInfo = () => infoBox.classList.add('hidden');
 
-  /* ---------- Caps Lock chip ---------- */
-  function caps(e){
-    const on = e.getModifierState && e.getModifierState('CapsLock');
-    if (capsNote) capsNote.classList.toggle('hidden', !on);
-  }
-  pwEl.addEventListener('keyup', caps);
-  pwEl.addEventListener('keydown', caps);
+    /* ---------- Caps Lock chip ---------- */
+    function caps(e) {
+      const on = e.getModifierState && e.getModifierState('CapsLock');
+      if (capsNote) capsNote.classList.toggle('hidden', !on);
+    }
+    pwEl.addEventListener('keyup', caps);
+    pwEl.addEventListener('keydown', caps);
 
-  /* ---------- Password meter ---------- */
-  pwEl.addEventListener('input', () => {
-    const v = pwEl.value;
-    let score = 0;
-    if (v.length >= 6) score++;
-    if (/[A-Z]/.test(v)) score++;
-    if (/[0-9]/.test(v)) score++;
-    if (/[^A-Za-z0-9]/.test(v)) score++;
-    const widths = ['12%','38%','64%','88%','100%'];
-    const labels = ['weak','fair','okay','good','strong'];
-    pwBar.style.width = widths[score];
-    pwLabel.textContent = labels[score];
-  });
+    /* ---------- Password meter ---------- */
+    pwEl.addEventListener('input', () => {
+      const v = pwEl.value;
+      let score = 0;
+      if (v.length >= 6) score++;
+      if (/[A-Z]/.test(v)) score++;
+      if (/[0-9]/.test(v)) score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      const widths = ['12%', '38%', '64%', '88%', '100%'];
+      const labels = ['weak', 'fair', 'okay', 'good', 'strong'];
+      pwBar.style.width = widths[score];
+      pwLabel.textContent = labels[score];
+    });
 
-  /* ---------- Show/Hide password ---------- */
-  toggle.addEventListener('click', () => {
-    const show = pwEl.type === 'password';
-    pwEl.type = show ? 'text' : 'password';
-    toggle.setAttribute('aria-pressed', String(show));
-    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-    eyeOn.classList.toggle('hidden', show);
-    eyeOff.classList.toggle('hidden', !show);
-    pwEl.focus();
-  });
+    /* ---------- Show/Hide password ---------- */
+    toggle.addEventListener('click', () => {
+      const show = pwEl.type === 'password';
+      pwEl.type = show ? 'text' : 'password';
+      toggle.setAttribute('aria-pressed', String(show));
+      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      eyeOn.classList.toggle('hidden', show);
+      eyeOff.classList.toggle('hidden', !show);
+      pwEl.focus();
+    });
 
-  /* ---------- Popup (success & goodbye only, slow animation) ---------- */
-  (() => {
-    const backdrop  = $('#popupBackdrop');
-    const root      = $('#popupRoot');
-    const card      = $('#popupCard');
-    const titleEl   = $('#popupTitle');
-    const msgEl     = $('#popupMsg');
-    const okBtn     = $('#popupOkBtn');
-    const icon      = $('#popupIcon');
-    const ripple    = $('#iconRipple');
+    /* ---------- Popup (success & goodbye only, slow animation) ---------- */
+    (() => {
+      const backdrop = $('#popupBackdrop');
+      const root = $('#popupRoot');
+      const card = $('#popupCard');
+      const titleEl = $('#popupTitle');
+      const msgEl = $('#popupMsg');
+      const okBtn = $('#popupOkBtn');
+      const icon = $('#popupIcon');
+      const ripple = $('#iconRipple');
 
-    let autoTimer = null;
-    let closeResolver = null;
-    let typingTimer = null;
+      let autoTimer = null;
+      let closeResolver = null;
+      let typingTimer = null;
 
-    const ICONS = {
-      success: `<path d="M9.5 16.2 5.8 12.5l-1.3 1.3 5 5 10-10-1.3-1.3-8.7 8.7Z" fill="currentColor"/>`,
-      goodbye: `<path d="M12 2a5 5 0 0 0-5 5v3H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5Z" fill="currentColor"/>`
-    };
+      const ICONS = {
+        success: `<path d="M9.5 16.2 5.8 12.5l-1.3 1.3 5 5 10-10-1.3-1.3-8.7 8.7Z" fill="currentColor"/>`,
+        goodbye: `<path d="M12 2a5 5 0 0 0-5 5v3H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5Z" fill="currentColor"/>`
+      };
 
-    function setIcon(variant){ icon.innerHTML = ICONS[variant] || ICONS.success; }
-    function pulseRipple(){ ripple.style.animation = 'none'; void ripple.offsetWidth; ripple.style.animation = 'ripple .6s ease-out'; }
+      function setIcon(variant) { icon.innerHTML = ICONS[variant] || ICONS.success; }
+      function pulseRipple() { ripple.style.animation = 'none'; void ripple.offsetWidth; ripple.style.animation = 'ripple .6s ease-out'; }
 
-    function typeMessage(text, speed=30){
-      clearInterval(typingTimer);
-      msgEl.classList.add('typing');
-      msgEl.textContent = '';
-      let i = 0;
-      typingTimer = setInterval(()=>{
-        msgEl.textContent += text.charAt(i++);
-        if (i >= text.length) { clearInterval(typingTimer); msgEl.classList.remove('typing'); }
-      }, speed);
+      function typeMessage(text, speed = 30) {
+        clearInterval(typingTimer);
+        msgEl.classList.add('typing');
+        msgEl.textContent = '';
+        let i = 0;
+        typingTimer = setInterval(() => {
+          msgEl.textContent += text.charAt(i++);
+          if (i >= text.length) { clearInterval(typingTimer); msgEl.classList.remove('typing'); }
+        }, speed);
+      }
+
+      function animateIn(variant, title, message) {
+        root.classList.remove('hidden'); backdrop.classList.remove('hidden');
+        backdrop.style.animation = 'fadeBackdrop 3s both';
+        card.style.animation = 'popSpring 3s both';
+        titleEl.style.animation = 'slideUp 3s ease-out both';
+        msgEl.style.animation = 'slideUp 3s ease-out both';
+        root.classList.remove('popup-success', 'popup-goodbye');
+        root.classList.add(`popup-${variant}`);
+        setIcon(variant);
+        titleEl.textContent = title || 'Notice';
+        pulseRipple();
+        typeMessage(message || '');
+        okBtn?.focus({ preventScroll: true });
+      }
+
+      function animateOut() {
+        backdrop.style.animation = 'fadeBackdrop 2s reverse both';
+        card.style.animation = 'popSpring 2s reverse both';
+        setTimeout(() => {
+          root.classList.add('hidden'); backdrop.classList.add('hidden');
+        }, 160);
+      }
+
+      window.showPopup = function ({ title = 'Notice', message = '', variant = 'success', autocloseMs = 0, onClose = null } = {}) {
+        clearTimeout(autoTimer);
+        animateIn(variant, title, message);
+        if (onClose) closeResolver = onClose;
+        if (autocloseMs > 0) { autoTimer = setTimeout(() => { window.hidePopup(); }, autocloseMs); }
+      };
+
+      window.hidePopup = function () {
+        animateOut();
+        if (typeof closeResolver === 'function') { try { closeResolver(); } catch { } }
+        closeResolver = null;
+      };
+
+      backdrop.addEventListener('click', () => window.hidePopup());
+      okBtn.addEventListener('click', () => window.hidePopup());
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.hidePopup(); });
+    })();
+
+    /* ---------- Logout popup ---------- */
+    (function handleLogout() {
+      const q = new URLSearchParams(location.search);
+      if (q.get('logout') === '1') {
+        sessionStorage.removeItem('atiera_logged_in');
+        showPopup({
+          title: 'Goodbye, ADMIN 👋',
+          message: 'Thank you ADMIN — See you next time!',
+          variant: 'goodbye',
+          autocloseMs: 4200
+        });
+      }
+    })();
+
+    /* ---------- Auth + lockout ---------- */
+    const MAX_TRIES = 5, LOCK_MS = 60_000;
+    const triesKey = 'atiera_login_tries';
+    const lockKey = 'atiera_login_lock';
+    let lockTimer = null;
+
+    const num = key => Number(localStorage.getItem(key) || '0');
+    const setNum = (key, val) => localStorage.setItem(key, String(val));
+
+    function mmss(ms) {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return (m ? `${m}:${String(r).padStart(2, '0')}` : `${r}s`);
     }
 
-    function animateIn(variant, title, message){
-      root.classList.remove('hidden'); backdrop.classList.remove('hidden');
-      backdrop.style.animation = 'fadeBackdrop 3s both';
-      card.style.animation     = 'popSpring 3s both';
-      titleEl.style.animation  = 'slideUp 3s ease-out both';
-      msgEl.style.animation    = 'slideUp 3s ease-out both';
-      root.classList.remove('popup-success','popup-goodbye');
-      root.classList.add(`popup-${variant}`);
-      setIcon(variant);
-      titleEl.textContent = title || 'Notice';
-      pulseRipple();
-      typeMessage(message || '');
-      okBtn?.focus({ preventScroll:true });
+    function startLockCountdown(until) {
+      clearInterval(lockTimer);
+      submitBtn.disabled = true;
+      const tick = () => {
+        const left = until - Date.now();
+        if (left <= 0) {
+          clearInterval(lockTimer);
+          localStorage.removeItem(lockKey);
+          setNum(triesKey, 0);
+          submitBtn.disabled = false;
+          btnText.textContent = 'Sign In';
+          hideError(); hideInfo();
+          return;
+        }
+        btnText.textContent = `Locked ${mmss(left)}`;
+        showError(`Too many attempts. Try again in ${mmss(left)}.`);
+      };
+      tick();
+      lockTimer = setInterval(tick, 250);
     }
 
-    function animateOut(){
-      backdrop.style.animation = 'fadeBackdrop 2s reverse both';
-      card.style.animation     = 'popSpring 2s reverse both';
-      setTimeout(() => {
-        root.classList.add('hidden'); backdrop.classList.add('hidden');
-      }, 160);
+    function checkLock() {
+      const until = Number(localStorage.getItem(lockKey) || '0');
+      if (until > Date.now()) { startLockCountdown(until); return true; }
+      return false;
     }
 
-    window.showPopup = function({ title='Notice', message='', variant='success', autocloseMs=0, onClose=null } = {}){
-      clearTimeout(autoTimer);
-      animateIn(variant, title, message);
-      if (onClose) closeResolver = onClose;
-      if (autocloseMs > 0){ autoTimer = setTimeout(() => { window.hidePopup(); }, autocloseMs); }
-    };
-
-    window.hidePopup = function(){
-      animateOut();
-      if (typeof closeResolver === 'function'){ try { closeResolver(); } catch{} }
-      closeResolver = null;
-    };
-
-    backdrop.addEventListener('click', () => window.hidePopup());
-    okBtn.addEventListener('click', () => window.hidePopup());
-    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') window.hidePopup(); });
-  })();
-
-  /* ---------- Logout popup ---------- */
-  (function handleLogout(){
-    const q = new URLSearchParams(location.search);
-    if (q.get('logout') === '1') {
-      sessionStorage.removeItem('atiera_logged_in');
-      showPopup({
-        title: 'Goodbye, ADMIN 👋',
-        message: 'Thank you ADMIN — See you next time!',
-        variant: 'goodbye',
-        autocloseMs: 4200
-      });
+    function startLoading() { submitBtn.disabled = true; btnText.textContent = 'Checking…'; }
+    function stopLoading(ok = false) {
+      if (ok) { btnText.textContent = 'Success'; }
+      else { btnText.textContent = 'Sign In'; submitBtn.disabled = false; }
     }
-  })();
 
-  /* ---------- Auth + lockout ---------- */
-  const MAX_TRIES = 5, LOCK_MS = 60_000;
-  const triesKey = 'atiera_login_tries';
-  const lockKey  = 'atiera_login_lock';
-  let   lockTimer = null;
+    function shakeCard() {
+      const card = document.getElementById('card');
+      card.style.animation = 'shakeX .35s ease-in-out';
+      setTimeout(() => card.style.animation = '', 360);
+    }
 
-  const num = key => Number(localStorage.getItem(key) || '0');
-  const setNum = (key,val) => localStorage.setItem(key, String(val));
+    /* ---------- LOGIN SUBMIT ---------- */
+    // Form is now handled by PHP POST method, no JavaScript needed
 
-  function mmss(ms){
-    const s = Math.max(0, Math.ceil(ms/1000));
-    const m = Math.floor(s/60);
-    const r = s % 60;
-    return (m? `${m}:${String(r).padStart(2,'0')}` : `${r}s`);
-  }
+    // Resume countdown if locked
+    checkLock();
 
-  function startLockCountdown(until){
-    clearInterval(lockTimer);
-    submitBtn.disabled = true;
-    const tick = () => {
-      const left = until - Date.now();
-      if (left <= 0){
-        clearInterval(lockTimer);
-        localStorage.removeItem(lockKey);
-        setNum(triesKey, 0);
-        submitBtn.disabled = false;
-        btnText.textContent = 'Sign In';
-        hideError(); hideInfo();
+    /* ---------- Verify Modal ---------- */
+    function openVerify() {
+      verifyModal.classList.remove('hidden');
+      verifyBackdrop.classList.remove('hidden');
+      setTimeout(() => vcode?.focus(), 50);
+    }
+    function closeVerify() {
+      verifyModal.classList.add('hidden');
+      verifyBackdrop.classList.add('hidden');
+      verifyMsg.textContent = '';
+    }
+    openVerifyBtn?.addEventListener('click', openVerify);
+    closeVerifyBtn?.addEventListener('click', closeVerify);
+    verifyBackdrop?.addEventListener('click', closeVerify);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeVerify(); });
+
+    // Auto-open from server flag or query (when coming from register)
+    const serverShowVerify = <?php echo $show_verify_modal ? 'true' : 'false'; ?>;
+    const urlParams = new URLSearchParams(location.search);
+    if (serverShowVerify || urlParams.get('verify') === '1') {
+      const pre = '<?php echo htmlspecialchars($prefill_email, ENT_QUOTES); ?>' || urlParams.get('email') || '';
+      if (pre) vemail.value = pre;
+      openVerify();
+    }
+
+    // Resend verification code
+    resendBtn?.addEventListener('click', async () => {
+      verifyMsg.textContent = 'Sending...';
+      verifyMsg.className = 'text-xs text-slate-500';
+      const email = vemail.value.trim();
+      if (!email) {
+        verifyMsg.textContent = 'Enter your email first.';
+        verifyMsg.className = 'text-xs text-red-600';
         return;
       }
-      btnText.textContent = `Locked ${mmss(left)}`;
-      showError(`Too many attempts. Try again in ${mmss(left)}.`);
-    };
-    tick();
-    lockTimer = setInterval(tick, 250);
-  }
-
-  function checkLock(){
-    const until = Number(localStorage.getItem(lockKey) || '0');
-    if (until > Date.now()) { startLockCountdown(until); return true; }
-    return false;
-  }
-
-  function startLoading(){ submitBtn.disabled = true; btnText.textContent = 'Checking…'; }
-  function stopLoading(ok=false){
-    if (ok){ btnText.textContent = 'Success'; }
-    else { btnText.textContent = 'Sign In'; submitBtn.disabled = false; }
-  }
-
-  function shakeCard(){
-    const card = document.getElementById('card');
-    card.style.animation = 'shakeX .35s ease-in-out';
-    setTimeout(()=> card.style.animation = '', 360);
-  }
-
-  /* ---------- LOGIN SUBMIT ---------- */
-  // Form is now handled by PHP POST method, no JavaScript needed
-
-  // Resume countdown if locked
-  checkLock();
-
-  /* ---------- Verify Modal ---------- */
-  function openVerify(){
-    verifyModal.classList.remove('hidden');
-    verifyBackdrop.classList.remove('hidden');
-    setTimeout(()=> vcode?.focus(), 50);
-  }
-  function closeVerify(){
-    verifyModal.classList.add('hidden');
-    verifyBackdrop.classList.add('hidden');
-    verifyMsg.textContent = '';
-  }
-  openVerifyBtn?.addEventListener('click', openVerify);
-  closeVerifyBtn?.addEventListener('click', closeVerify);
-  verifyBackdrop?.addEventListener('click', closeVerify);
-  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeVerify(); });
-
-  // Auto-open from server flag or query (when coming from register)
-  const serverShowVerify = <?php echo $show_verify_modal ? 'true' : 'false'; ?>;
-  const urlParams = new URLSearchParams(location.search);
-  if (serverShowVerify || urlParams.get('verify') === '1') {
-    const pre = '<?php echo htmlspecialchars($prefill_email, ENT_QUOTES); ?>' || urlParams.get('email') || '';
-    if (pre) vemail.value = pre;
-    openVerify();
-  }
-
-  // Resend verification code
-  resendBtn?.addEventListener('click', async ()=>{
-    verifyMsg.textContent = 'Sending...';
-    verifyMsg.className = 'text-xs text-slate-500';
-    const email = vemail.value.trim();
-    if (!email) { 
-      verifyMsg.textContent = 'Enter your email first.'; 
-      verifyMsg.className = 'text-xs text-red-600';
-      return; 
-    }
-    try{
-      const res = await fetch('verify.php', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action:'resend', email })
-      });
-      const data = await res.json();
-      if (data?.ok) {
-        verifyMsg.textContent = data.message || 'Verification code sent to your email.';
-        verifyMsg.className = 'text-xs text-green-600';
-      } else {
-        verifyMsg.textContent = data?.message || 'Failed to send verification code.';
+      try {
+        const res = await fetch('verify.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ action: 'resend', email })
+        });
+        const data = await res.json();
+        if (data?.ok) {
+          verifyMsg.textContent = data.message || 'Verification code sent to your email.';
+          verifyMsg.className = 'text-xs text-green-600';
+        } else {
+          verifyMsg.textContent = data?.message || 'Failed to send verification code.';
+          verifyMsg.className = 'text-xs text-red-600';
+        }
+      } catch {
+        verifyMsg.textContent = 'Network error. Please try again.';
         verifyMsg.className = 'text-xs text-red-600';
       }
-    }catch{
-      verifyMsg.textContent = 'Network error. Please try again.';
-      verifyMsg.className = 'text-xs text-red-600';
-    }
-  });
+    });
 
-  // Handle verification code input validation
-  vcode?.addEventListener('input', function() {
-    const code = this.value.trim();
-    // Only allow numbers
-    this.value = code.replace(/\D/g, '');
-    
-    // Show error if not 6 digits
-    if (this.value.length > 0 && this.value.length !== 6) {
-      verifyMsg.textContent = 'Please enter a 6-digit code.';
-      verifyMsg.className = 'text-xs text-red-600';
-    } else if (this.value.length === 6) {
-      verifyMsg.textContent = '';
-      verifyMsg.className = 'text-xs';
-    }
-  });
+    // Handle verification code input validation
+    vcode?.addEventListener('input', function () {
+      const code = this.value.trim();
+      // Only allow numbers
+      this.value = code.replace(/\D/g, '');
 
-  vcode?.addEventListener('blur', function() {
-    const code = this.value.trim();
-    if (code.length > 0 && code.length !== 6) {
-      verifyMsg.textContent = 'Please enter a 6-digit code.';
-      verifyMsg.className = 'text-xs text-red-600';
-    }
-  });
+      // Show error if not 6 digits
+      if (this.value.length > 0 && this.value.length !== 6) {
+        verifyMsg.textContent = 'Please enter a 6-digit code.';
+        verifyMsg.className = 'text-xs text-red-600';
+      } else if (this.value.length === 6) {
+        verifyMsg.textContent = '';
+        verifyMsg.className = 'text-xs';
+      }
+    });
 
-  // Handle verification form submission via AJAX
-  verifyForm?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const email = vemail.value.trim();
-    const code = vcode.value.trim();
-    const submitBtn = document.getElementById('verifySubmitBtn');
-    
-    if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
-      verifyMsg.textContent = 'Please enter a valid 6-digit code.';
-      verifyMsg.className = 'text-xs text-red-600';
-      vcode.focus();
-      return;
-    }
-    
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Verifying...';
-    verifyMsg.textContent = 'Verifying code...';
-    verifyMsg.className = 'text-xs text-slate-500';
-    
-    try {
-      const res = await fetch('verify.php', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action:'verify', email, code })
-      });
-      const data = await res.json();
-      
-      if (data?.ok) {
-        verifyMsg.textContent = data.message || 'Verification successful! Redirecting...';
-        verifyMsg.className = 'text-xs text-green-600';
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          if (data.redirect) {
-            window.location.href = data.redirect;
-          } else {
-            window.location.href = '../Modules/facilities-reservation.php';
-          }
-        }, 1000);
-      } else {
-        verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
+    vcode?.addEventListener('blur', function () {
+      const code = this.value.trim();
+      if (code.length > 0 && code.length !== 6) {
+        verifyMsg.textContent = 'Please enter a 6-digit code.';
+        verifyMsg.className = 'text-xs text-red-600';
+      }
+    });
+
+    // Handle verification form submission via AJAX
+    verifyForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = vemail.value.trim();
+      const code = vcode.value.trim();
+      const submitBtn = document.getElementById('verifySubmitBtn');
+
+      if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+        verifyMsg.textContent = 'Please enter a valid 6-digit code.';
+        verifyMsg.className = 'text-xs text-red-600';
+        vcode.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying...';
+      verifyMsg.textContent = 'Verifying code...';
+      verifyMsg.className = 'text-xs text-slate-500';
+
+      try {
+        const res = await fetch('verify.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ action: 'verify', email, code })
+        });
+        const data = await res.json();
+
+        if (data?.ok) {
+          verifyMsg.textContent = data.message || 'Verification successful! Redirecting...';
+          verifyMsg.className = 'text-xs text-green-600';
+
+          // Redirect to dashboard
+          setTimeout(() => {
+            if (data.redirect) {
+              window.location.href = data.redirect;
+            } else {
+              window.location.href = '../Modules/facilities-reservation.php';
+            }
+          }, 1000);
+        } else {
+          verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
+          verifyMsg.className = 'text-xs text-red-600';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Verify';
+          vcode.value = '';
+          vcode.focus();
+        }
+      } catch (err) {
+        verifyMsg.textContent = 'Network error. Please try again.';
         verifyMsg.className = 'text-xs text-red-600';
         submitBtn.disabled = false;
         submitBtn.textContent = 'Verify';
-        vcode.value = '';
-        vcode.focus();
       }
-    } catch(err) {
-      verifyMsg.textContent = 'Network error. Please try again.';
-      verifyMsg.className = 'text-xs text-red-600';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Verify';
-    }
-  });
-</script>
+    });
+  </script>
 
 
 </body>
+
 </html>
