@@ -162,8 +162,7 @@ function getLastInsertId()
                     <li><a href="#" class="sidebar-link" data-page="restaurant-checkin">Restaurant time-in</a></li>
                     <li><a href="#" class="sidebar-link" data-page="restaurant-visitors">Restaurant Visitors</a></li>
                     <li><a href="#" class="sidebar-link" data-page="reports">Reports</a></li>
-                    <li><a href="../include/dashboard.php" class="sidebar-link">Back</a>
-                    </li>
+
                     <li><a href="#" class="sidebar-link" data-page="settings">Settings</a></li>
                 </ul>
             </aside>
