@@ -140,12 +140,11 @@ function getLastInsertId()
                 <div class="logo">Visitor Management System</div>
                 <nav>
                     <ul>
-                        <li><a href="#" class="nav-link active" data-page="dashboard">Dashboard</a></li>
-                        <li><a href="#" class="nav-link" data-page="hotel">Hotel</a></li>
+                        <li><a href="../include/dashboard.php" class="nav-link">Dashboard</a></li>
+                        <li><a href="#" class="nav-link active" data-page="hotel">Hotel</a></li>
                         <li><a href="#" class="nav-link" data-page="restaurant">Restaurant</a></li>
                         <li><a href="#" class="nav-link" data-page="reports">Reports</a></li>
-                        <li><a href="../include/dashboard.php" class="nav-link">Back</a>
-                        </li>
+                    </ul>
                     </ul>
                 </nav>
             </div>
@@ -156,8 +155,8 @@ function getLastInsertId()
         <div class="main-content">
             <aside class="sidebar">
                 <ul class="sidebar-menu">
-                    <li><a href="#" class="sidebar-link active" data-page="dashboard">Dashboard</a></li>
-                    <li><a href="#" class="sidebar-link" data-page="hotel-checkin">Hotel Time-in</a></li>
+                    <li><a href="../include/dashboard.php" class="sidebar-link">Dashboard</a></li>
+                    <li><a href="#" class="sidebar-link active" data-page="hotel-checkin">Hotel Time-in</a></li>
                     <li><a href="#" class="sidebar-link" data-page="hotel-visitors">Hotel Visitors</a></li>
                     <li><a href="#" class="sidebar-link" data-page="restaurant-checkin">Restaurant time-in</a></li>
                     <li><a href="#" class="sidebar-link" data-page="restaurant-visitors">Restaurant Visitors</a></li>

@@ -163,14 +163,13 @@ function showPage(pageId) {
     pages.forEach(page => page.classList.remove('active'));
 
     // Show requested page
+    // Show requested page
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.classList.add('active');
 
         // Load data if needed
-        if (pageId === 'dashboard') {
-            updateDashboard();
-        } else if (pageId === 'hotel' || pageId === 'restaurant') {
+        if (pageId === 'hotel' || pageId === 'restaurant') {
             loadCurrentVisitors();
         }
     }
