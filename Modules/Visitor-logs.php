@@ -144,7 +144,8 @@ function getLastInsertId()
                         <li><a href="#" class="nav-link" data-page="hotel">Hotel</a></li>
                         <li><a href="#" class="nav-link" data-page="restaurant">Restaurant</a></li>
                         <li><a href="#" class="nav-link" data-page="reports">Reports</a></li>
-                        <li><a href="facilities-reservation.php" class="nav-link">Back</a></li>
+                        <li><a href="facilities-reservation.php" class="nav-link"
+                                onclick="window.location.href='facilities-reservation.php'; return false;">Back</a></li>
                     </ul>
                 </nav>
             </div>
