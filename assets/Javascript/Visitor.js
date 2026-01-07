@@ -34,8 +34,9 @@ function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', function (e) {
-            e.preventDefault();
             const pageId = this.getAttribute('data-page');
+            if (!pageId) return;
+            e.preventDefault();
             showPage(pageId);
 
             // Update active states
@@ -58,8 +59,9 @@ function setupNavigation() {
     const sidebarLinks = document.querySelectorAll('.sidebar-link');
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function (e) {
-            e.preventDefault();
             const pageId = this.getAttribute('data-page');
+            if (!pageId) return;
+            e.preventDefault();
             // If the sidebar link targets a sub-section like 'hotel-checkin',
             // split by '-' and use the parent page as the main page to show.
             let mainPage = pageId;
