@@ -169,7 +169,9 @@ function showPage(pageId) {
         targetPage.classList.add('active');
 
         // Load data if needed
-        if (pageId === 'hotel' || pageId === 'restaurant') {
+        if (pageId === 'dashboard') {
+            updateDashboard();
+        } else if (pageId === 'hotel' || pageId === 'restaurant') {
             loadCurrentVisitors();
         }
     }
