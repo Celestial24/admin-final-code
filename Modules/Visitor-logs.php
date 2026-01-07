@@ -130,6 +130,23 @@ function getLastInsertId()
             font-size: 15px;
             font-weight: 500;
         }
+
+        /* Imitate nav-link styling for the back button to bypass JS selectors */
+        .nav-item-back {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-item-back:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
     </style>
 </head>
 
@@ -144,8 +161,7 @@ function getLastInsertId()
                         <li><a href="#" class="nav-link" data-page="hotel">Hotel</a></li>
                         <li><a href="#" class="nav-link" data-page="restaurant">Restaurant</a></li>
                         <li><a href="#" class="nav-link" data-page="reports">Reports</a></li>
-                        <li><a href="facilities-reservation.php" class="nav-link"
-                                onclick="window.location.href='facilities-reservation.php'; return false;">Back</a></li>
+                        <li><a href="facilities-reservation.php" class="nav-item-back">Back</a></li>
                     </ul>
                 </nav>
             </div>
