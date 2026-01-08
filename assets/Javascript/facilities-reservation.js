@@ -180,6 +180,7 @@ window.updateReservationStatus = function (id, status) {
 };
 
 window.viewReservationDetails = function (data) {
+    console.log('viewReservationDetails called with:', data);
     if (!data) return;
     const res = typeof data === 'string' ? JSON.parse(data) : data;
     const body = document.getElementById('reservation-details-body');
@@ -283,6 +284,7 @@ window.showManagementCard = function (type) {
 
 // --- FACILITY ACTIONS ---
 window.viewFacilityDetails = function (facility) {
+    console.log('viewFacilityDetails called with:', facility);
     const body = document.getElementById('facility-details-body');
     if (!body || !facility) return;
 
@@ -331,8 +333,10 @@ window.viewFacilityDetails = function (facility) {
 
 // --- MAINTENANCE ACTIONS ---
 window.viewMaintenanceDetails = function (log) {
+    console.log('viewMaintenanceDetails called with:', log);
+    if (!log) return;
     const body = document.getElementById('maintenance-details-body');
-    if (!body || !log) return;
+    if (!body) return;
 
     const colors = { 'pending': '#744210', 'in-progress': '#22543d', 'completed': '#1a365d' };
     const bgs = { 'pending': '#fefcbf', 'in-progress': '#c6f6d5', 'completed': '#bee3f8' };

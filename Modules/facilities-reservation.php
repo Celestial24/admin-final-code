@@ -727,24 +727,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <td>
                                                 <div class="d-flex gap-1" style="flex-wrap: nowrap; justify-content: center;">
                                                     <button class="btn btn-outline btn-sm btn-icon"
-                                                        onclick="viewReservationDetails(<?= htmlspecialchars(json_encode($reservation)) ?>)"
+                                                        onclick="event.preventDefault(); window.viewReservationDetails(<?= htmlspecialchars(json_encode($reservation)) ?>)"
                                                         title="View Details" aria-label="View Details">
                                                         <i class="fa-solid fa-eye"></i>
                                                     </button>
                                                     <?php if ($reservation['status'] == 'pending'): ?>
                                                         <button class="btn btn-success btn-sm btn-icon"
-                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')"
+                                                            onclick="event.preventDefault(); window.updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')"
                                                             title="Confirm Reservation" aria-label="Confirm">
                                                             <i class="fa-solid fa-check"></i>
                                                         </button>
                                                         <button class="btn btn-danger btn-sm btn-icon"
-                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')"
+                                                            onclick="event.preventDefault(); window.updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')"
                                                             title="Cancel Reservation" aria-label="Cancel">
                                                             <i class="fa-solid fa-xmark"></i>
                                                         </button>
                                                     <?php elseif ($reservation['status'] == 'confirmed'): ?>
                                                         <button class="btn btn-warning btn-sm btn-icon"
-                                                            onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')"
+                                                            onclick="event.preventDefault(); window.updateReservationStatus(<?= $reservation['id'] ?>, 'completed')"
                                                             title="Mark as Completed" aria-label="Complete">
                                                             <i class="fa-solid fa-flag-checkered"></i>
                                                         </button>
@@ -848,7 +848,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <td>
                                             <div class="d-flex gap-1" style="justify-content: center;">
                                                 <button type="button" class="btn btn-outline btn-sm btn-icon"
-                                                    onclick="viewReservationDetails(<?= htmlspecialchars(json_encode($rr)) ?>)"
+                                                    onclick="event.preventDefault(); window.viewReservationDetails(<?= htmlspecialchars(json_encode($rr)) ?>)"
                                                     title="View Details">
                                                     <i class="fa-solid fa-eye"></i>
                                                 </button>
@@ -969,7 +969,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?php foreach ($dashboard_data['facilities'] as $facility): ?>
                                                 <tr>
                                                     <td style="font-weight: 600; text-align: left !important;">
-                                                        <?= htmlspecialchars($facility['name']) ?></td>
+                                                        <?= htmlspecialchars($facility['name']) ?>
+                                                    </td>
                                                     <td><?= ucfirst(htmlspecialchars($facility['type'])) ?></td>
                                                     <td style="font-weight: 500;">
                                                         ₱<?= number_format($facility['hourly_rate'], 2) ?></td>
@@ -982,7 +983,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     <td>
                                                         <div class="d-flex gap-1" style="justify-content: center;">
                                                             <button class="btn btn-outline btn-sm btn-icon"
-                                                                onclick="viewFacilityDetails(<?= htmlspecialchars(json_encode($facility)) ?>)"
+                                                                onclick="event.preventDefault(); window.viewFacilityDetails(<?= htmlspecialchars(json_encode($facility)) ?>)"
                                                                 title="View Facility Info">
                                                                 <i class="fa-solid fa-eye"></i>
                                                             </button>
@@ -1060,12 +1061,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                         <td>
                                                             <div class="d-flex gap-1" style="justify-content: center;">
                                                                 <button class="btn btn-outline btn-sm btn-icon"
-                                                                    onclick="viewMaintenanceDetails(<?= htmlspecialchars(json_encode($log)) ?>)"
+                                                                    onclick="event.preventDefault(); window.viewMaintenanceDetails(<?= htmlspecialchars(json_encode($log)) ?>)"
                                                                     title="View Details">
                                                                     <i class="fa-solid fa-eye"></i>
                                                                 </button>
                                                                 <button class="btn btn-danger btn-sm btn-icon"
-                                                                    onclick="deleteMaintenanceLog(<?= $log['id'] ?>)"
+                                                                    onclick="event.preventDefault(); window.deleteMaintenanceLog(<?= $log['id'] ?>)"
                                                                     title="Delete">
                                                                     <i class="fa-solid fa-trash"></i>
                                                                 </button>
