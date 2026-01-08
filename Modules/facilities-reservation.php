@@ -18,6 +18,26 @@ class ReservationSystem
     public function __construct()
     {
         $this->pdo = get_pdo();
+        $this->ensureMaintenanceTableExists();
+    }
+
+    private function ensureMaintenanceTableExists()
+    {
+        try {
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS maintenance_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                item_name VARCHAR(255) NOT NULL,
+                description TEXT,
+                maintenance_date DATE NOT NULL,
+                assigned_staff VARCHAR(255) NOT NULL,
+                contact_number VARCHAR(50),
+                status ENUM('pending', 'in-progress', 'completed') DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        } catch (PDOException $e) {
+            // Silently fail or log (app will handle missing table via try-catches in fetch methods)
+        }
     }
 
 
@@ -181,7 +201,11 @@ class ReservationSystem
 
             // Maintenance data
             $data['maintenance_logs'] = $this->fetchMaintenanceLogs();
-            $data['pending_maintenance'] = $pdo->query("SELECT COUNT(*) FROM maintenance_logs WHERE status != 'completed'")->fetchColumn();
+            try {
+                $data['pending_maintenance'] = $pdo->query("SELECT COUNT(*) FROM maintenance_logs WHERE status != 'completed'")->fetchColumn();
+            } catch (PDOException $e) {
+                $data['pending_maintenance'] = 0;
+            }
 
         } catch (PDOException $e) {
             $data['error'] = "Error fetching data: " . $e->getMessage();
@@ -976,7 +1000,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     <tr>
                                                         <td><strong><?= htmlspecialchars($log['item_name']) ?></strong></td>
                                                         <td style="font-size: 0.85rem;">
-                                                            <?= htmlspecialchars($log['description']) ?></td>
+                                                            <?= htmlspecialchars($log['description']) ?>
+                                                        </td>
                                                         <td><?= date('M d, Y', strtotime($log['maintenance_date'])) ?></td>
                                                         <td><?= htmlspecialchars($log['assigned_staff']) ?></td>
                                                         <td><?= htmlspecialchars($log['contact_number']) ?></td>
