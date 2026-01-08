@@ -101,8 +101,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Show corresponding content section
             contentSections.forEach(section => {
                 section.classList.remove('active');
+                section.style.display = 'none'; // Force hide
                 if (section.id === targetId) {
                     section.classList.add('active');
+                    section.style.display = 'block'; // Force show
                 }
             });
         });
@@ -134,10 +136,13 @@ document.addEventListener('DOMContentLoaded', function () {
         populateTable('contractsTableBody', MOCK_CONTRACTS_DATA, 'contract');
 
         // Find the logout button handler and update it:
-        document.getElementById('backDashboardBtn').addEventListener('click', function () {
-            // Redirect to facilities reservation dashboard
-            window.location.href = 'facilities-reservation.php';
-        });
+        const backBtn = document.getElementById('backDashboardBtn');
+        if (backBtn) {
+            backBtn.addEventListener('click', function () {
+                // Redirect to facilities reservation dashboard
+                window.location.href = 'facilities-reservation.php';
+            });
+        }
         // Initialize risk analysis chart
         initializeRiskChart();
 

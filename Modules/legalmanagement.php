@@ -863,7 +863,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             </div>
 
             <!-- Contracts Section -->
-            <div class="content-section" id="contracts">
+            <div class="content-section" id="contracts" style="display:none;">
                 <div class="section-header">
                     <h2 class="section-title">Contracts <span class="ai-badge">AI-Powered Analysis</span></h2>
                     <div style="display: flex; gap: 10px;">
@@ -1649,6 +1649,68 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 });
             }
 
+            // Section display logic
+            const contentSections = document.querySelectorAll('.content-section'); // Assuming sections have this class
+            const navLinks = document.querySelectorAll('.nav-link'); // Assuming nav links have this class
+
+            function showSection(targetId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                    section.style.display = 'none';
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                        section.style.display = 'block';
+                    }
+                });
+            }
+
+            // Initialize: Hide all sections and show the default one (e.g., 'dashboardSection')
+            document.addEventListener('DOMContentLoaded', () => {
+                contentSections.forEach(section => {
+                    section.style.display = 'none'; // Hide all by default
+                });
+                // Show the default section, e.g., 'dashboardSection' or the first one
+                const defaultSection = document.getElementById('dashboardSection') || contentSections[0];
+                if (defaultSection) {
+                    defaultSection.style.display = 'block';
+                    defaultSection.classList.add('active');
+                }
+
+                // Handle navigation clicks
+                navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const targetId = link.getAttribute('data-target');
+                        if (targetId) {
+                            showSection(targetId);
+                            // Update URL hash for back/forward button support
+                            history.pushState({ section: targetId }, '', `#${targetId}`);
+                        }
+                    });
+                });
+
+                // Handle browser back/forward buttons
+                window.addEventListener('popstate', (event) => {
+                    if (event.state && event.state.section) {
+                        showSection(event.state.section);
+                    } else {
+                        // If no state, go to default section or handle as needed
+                        const defaultSectionId = 'dashboardSection'; // Or your actual default
+                        showSection(defaultSectionId);
+                    }
+                });
+
+                // Initial load based on URL hash
+                if (window.location.hash) {
+                    const targetId = window.location.hash.substring(1);
+                    showSection(targetId);
+                } else {
+                    // Push initial state for default section if no hash
+                    const defaultSectionId = 'dashboardSection'; // Or your actual default
+                    history.replaceState({ section: defaultSectionId }, '', `#${defaultSectionId}`);
+                }
+            });
+
             // Open Document upload modal
             addDocumentBtn?.addEventListener('click', () => openModal(documentFormModal));
 
@@ -1861,8 +1923,18 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                     exportPdfForm?.submit();
                 });
             });
+
+            // Find the back button handler and update it:
+            const backBtn = document.getElementById('backDashboardBtn');
+            if (backBtn) {
+                backBtn.addEventListener('click', function () {
+                    // Redirect to facilities reservation dashboard
+                    window.location.href = 'facilities-reservation.php';
+                });
+            }
         })();
     </script>
 </body>
 
 </html>
+```
