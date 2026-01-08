@@ -5,95 +5,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading - Atiéra</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400&display=swap"
+        rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000000;
-            /* Pure Black */
             height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            font-family: sans-serif;
+            font-family: 'Cinzel', serif;
         }
 
-        .logo-container {
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             position: relative;
-            animation: fadeIn 1s ease-out;
+            z-index: 10;
         }
 
-        .logo-img {
-            max-width: 400px;
-            width: 80vw;
+        .flame-wrapper {
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        .flame-img {
+            max-width: 100px;
+            /* Assumes logo.png is the flame icon */
             height: auto;
-            /* Gold Glow Animation */
-            filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
-            animation: flameGlow 2.5s infinite alternate ease-in-out;
         }
 
-        @keyframes flameGlow {
-            0% {
-                filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
-                transform: scale(1);
-            }
+        .brand-text {
+            font-family: 'Cinzel', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            background: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0;
+            padding-bottom: 5px;
+            /* For descenders */
+            animation: shine 5s infinite linear;
+            background-size: 200%;
+            text-shadow: 0 0 20px rgba(191, 149, 63, 0.2);
+        }
 
-            50% {
-                filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
-                transform: scale(1.02);
-            }
-
-            100% {
-                filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
-                transform: scale(1);
-            }
+        .tagline {
+            font-family: 'Montserrat', sans-serif;
+            color: #888;
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-top: 5px;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.5s forwards;
         }
 
         .loading-line {
             width: 300px;
             height: 2px;
             background: rgba(255, 255, 255, 0.1);
-            margin-top: 40px;
-            border-radius: 2px;
             position: relative;
             overflow: hidden;
+            border-radius: 2px;
         }
 
         .loading-progress {
             position: absolute;
-            left: 0;
             top: 0;
+            left: 0;
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, transparent, #ffd700, transparent);
-            background-color: #d4af37;
-            box-shadow: 0 0 10px #ffd700;
-            animation: loadProgress 3s ease-in-out forwards;
+            background: linear-gradient(90deg, #bf953f, #fcf6ba, #aa771c);
+            box-shadow: 0 0 10px #bf953f;
+            animation: load 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        @keyframes loadProgress {
+        /* Animations */
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes pulseGlow {
+            from {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+            }
+
+            to {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+            }
+        }
+
+        @keyframes load {
             0% {
                 width: 0%;
-                box-shadow: 0 0 5px #ffd700;
             }
 
-            40% {
-                width: 40%;
-            }
-
-            70% {
-                width: 80%;
+            50% {
+                width: 70%;
             }
 
             100% {
                 width: 100%;
-                box-shadow: 0 0 15px #ffd700;
             }
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(10px);
@@ -109,20 +141,19 @@
 
 <body>
 
-    <div class="logo-container">
-        <img src="logo.png" alt="Atiéra Gold Logo" class="logo-img">
+    <div class="loader-container">
+        <!-- If logo.png has the flame, show it. If it includes text, this might look double. 
+             If user wants 'Lettering', the text below handles it. -->
+
+
+        <h1 class="brand-text">ATIÉRA</h1>
+        <div class="tagline">Hotel & Restaurant</div>
+
+        <div class="loading-line">
+            <div class="loading-progress"></div>
+        </div>
     </div>
 
-    <div class="loading-line">
-        <div class="loading-progress"></div>
-    </div>
-
-    <script>
-        // Optional: Redirect after animation
-        // setTimeout(() => {
-        //     window.location.href = '../index.php';
-        // }, 3500);
-    </script>
 </body>
 
 </html>

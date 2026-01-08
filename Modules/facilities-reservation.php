@@ -1402,7 +1402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="d-flex justify-between" style="gap: 1rem;">
                 <button class="btn btn-outline" onclick="closeModal('logout-modal')"
                     style="flex: 1; justify-content: center;">Cancel</button>
-                <button class="btn btn-danger" onclick="window.location.href='../auth/login.php?logout=1'"
+                <button class="btn btn-danger" onclick="showLoadingAndRedirect('../auth/login.php?logout=1')"
                     style="flex: 1; justify-content: center; white-space: nowrap;">
                     <span class="icon-img-placeholder">🚪</span> Confirm Logout
                 </button>
@@ -1415,7 +1415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
         // Final insurance to ensure Management functions are ready
-        document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function () {
             if (sessionStorage.getItem('activeTab') === 'management') {
                 setTimeout(function () {
                     if (typeof window.showManagementCard === 'function') {
@@ -1424,7 +1424,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }, 100);
             }
         });
+
+            function showLoadingAndRedirect(url) {
+            const loader = document.getElementById('loadingOverlay');
+            if(loader) {
+                loader.style.display = 'block';
+            loader.style.opacity = '1';
+            const iframe = loader.querySelector('iframe');
+            if(iframe) iframe.src = iframe.src;
+                
+                setTimeout(() => {
+                window.location.href = url;
+                }, 3000); // 3s animation
+            } else {
+                window.location.href = url;
+            }
+        }
     </script>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay"
+        style="display:none; position:fixed; inset:0; z-index:99999; background:#000; transition: opacity 0.5s ease; opacity: 1;">
+        <iframe src="../animation/loading.html" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
 </body>
 
 </html>

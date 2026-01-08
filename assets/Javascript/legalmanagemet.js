@@ -156,9 +156,22 @@ document.addEventListener('DOMContentLoaded', function () {
         // Find the logout button handler and update it:
         const backBtn = document.getElementById('backDashboardBtn');
         if (backBtn) {
-            backBtn.addEventListener('click', function () {
-                // Redirect to facilities reservation dashboard
-                window.location.href = 'facilities-reservation.php';
+            backBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Trigger Loading Animation
+                const loader = document.getElementById('loadingOverlay');
+                if (loader) {
+                    loader.style.display = 'block';
+                    loader.style.opacity = '1';
+                    const iframe = loader.querySelector('iframe');
+                    if (iframe) iframe.src = iframe.src;
+
+                    setTimeout(() => {
+                        window.location.href = 'facilities-reservation.php';
+                    }, 3000);
+                } else {
+                    window.location.href = 'facilities-reservation.php';
+                }
             });
         }
         // Initialize risk analysis chart
