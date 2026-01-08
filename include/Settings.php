@@ -87,151 +87,29 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Account Settings - Admin</title>
     <link rel="icon" type="image/x-icon" href="../assets/image/logo2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/facilities-reservation.css">
     <style>
-        /* Reusing basic dashboard styles */
-        :root {
-            --primary-color: #1a365d;
-            --secondary-color: #2c5282;
-            --bg-color: #f8fafc;
-            --text-color: #2d3748;
-            --border-color: #e2e8f0;
+        .icon-img-placeholder {
+            display: inline-block;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
+        .dashboard-layout .main-content {
+            margin-left: 280px;
         }
 
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            /* Sidebar width from common css */
-            padding: 20px;
+        @media screen and (max-width: 991px) {
+            .dashboard-layout .main-content {
+                margin-left: 0;
+            }
         }
 
-        .header-title {
-            margin-bottom: 2rem;
-        }
-
-        .header-title h1 {
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .header-title p {
-            color: #718096;
-            margin: 5px 0 0;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-        }
-
-        th,
-        td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-        }
-
-        .btn-danger {
-            background: #e53e3e;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c53030;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-        }
-
-        .btn-outline:hover {
-            background: #f1f5f9;
-        }
-
-        .btn-sm {
-            padding: 4px 10px;
-            font-size: 0.85rem;
-        }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .badge-active {
-            background: #def7ec;
-            color: #03543f;
-        }
-
-        .badge-inactive {
-            background: #fde8e8;
-            color: #9b1c1c;
-        }
-
-        /* Modal */
+        /* Modal logic fix for this page */
         .modal {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
         }
 
         .modal.active {
@@ -241,187 +119,170 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .modal-content {
             background: white;
             border-radius: 12px;
+            padding: 2rem;
             width: 100%;
             max-width: 500px;
-            padding: 24px;
             position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
         .close-modal {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            color: #a0aec0;
+            color: #718096;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.25rem;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-family: inherit;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-success {
-            background: #def7ec;
-            color: #03543f;
-        }
-
-        .alert-error {
-            background: #fde8e8;
-            color: #9b1c1c;
-        }
-
-        /* Sidebar inclusion fix */
-        nav.sidebar {
-            position: fixed;
-            height: 100vh;
-            width: 260px;
-            left: 0;
-            top: 0;
-            background: white;
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
-
-        /* Icon fixes */
-        .icon-img-placeholder {
-            display: inline-block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
         }
     </style>
-    <!-- Include existing sidebar CSS if needed, but styling inline for simplicity check -->
-    <link rel="stylesheet" href="../assets/css/facilities-reservation.css">
 </head>
 
-<body>
+<body class="dashboard-layout">
+    <div class="container">
+        <?php include 'sidebar.php'; ?>
 
-    <?php include 'sidebar.php'; ?>
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-title">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Account Settings</h1>
+                    <span style="color: #718096; margin-left: 10px; font-size: 0.9rem; font-weight: 400;">Manage Admin Accounts and System Users</span>
+                </div>
+                <div class="header-actions">
+                    <div class="user-info" style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                        <span class="icon-img-placeholder">👤</span> Admin
+                    </div>
+                </div>
+            </header>
 
-    <main class="main-content">
-        <header class="header-title">
-            <h1>Account Settings</h1>
-            <p>Manage Admin Accounts and System Users</p>
-        </header>
+            <div class="dashboard-content">
+                <?php if ($message): ?>
+                    <div class="alert alert-success" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($error): ?>
+                    <div class="alert alert-error" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
+                    </div>
+                <?php endif; ?>
 
-        <?php if ($message): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
-        <?php endif; ?>
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+                <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
+                        <h3 style="color: #2d3748; font-size: 1.5rem; font-weight: 600;">Users List</h3>
+                        <button class="btn btn-primary" onclick="openCreateModal()">
+                            <span class="icon-img-placeholder">➕</span> Add User
+                        </button>
+                    </div>
 
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h3>Users List</h3>
-                <button class="btn btn-primary" onclick="openCreateModal()">
-                    <i class="fa fa-plus"></i> Add User
-                </button>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">ID</th>
+                                    <th>Full Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($users as $user): ?>
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 600; color: #718096;">#<?= $user['id'] ?></td>
+                                        <td style="font-weight: 500;"><?= htmlspecialchars($user['full_name']) ?></td>
+                                        <td><?= htmlspecialchars($user['username']) ?></td>
+                                        <td><?= htmlspecialchars($user['email']) ?></td>
+                                        <td style="text-align: center;">
+                                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                                <button class="btn btn-outline btn-sm"
+                                                    onclick='openEditModal(<?= json_encode($user) ?>)'>
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" onclick="openDeleteModal(<?= $user['id'] ?>)">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+        </main>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Full Name</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $user): ?>
-                            <tr>
-                                <td>#<?= $user['id'] ?></td>
-                                <td><?= htmlspecialchars($user['full_name']) ?></td>
-                                <td><?= htmlspecialchars($user['username']) ?></td>
-                                <td><?= htmlspecialchars($user['email']) ?></td>
-                                <td>
-                                    <button class="btn btn-outline btn-sm"
-                                        onclick='openEditModal(<?= json_encode($user) ?>)'>
-                                        <i class="fa fa-edit"></i> Edit
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal(<?= $user['id'] ?>)">
-                                        <i class="fa fa-trash"></i> Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+        <!-- Edit/Create User Modal -->
+        <div class="modal" id="userModal">
+            <div class="modal-content">
+                <span class="close-modal" onclick="closeModal('userModal')">&times;</span>
+                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 1.5rem; color: var(--primary);">Edit User</h3>
+                <form method="POST" id="userForm">
+                    <input type="hidden" name="action" id="formAction" value="update_user">
+                    <input type="hidden" name="user_id" id="userId">
+
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="full_name" id="fullName" class="form-control" required placeholder="Enter full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" id="userName" class="form-control" required placeholder="Choose a username">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" id="userEmail" class="form-control" required placeholder="Enter email address">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password <small style="font-weight: 400; color: #718096;">(Leave blank to keep unchanged)</small></label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter new password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+                        <span class="icon-img-placeholder">💾</span> Save Changes
+                    </button>
+                </form>
             </div>
         </div>
-    </main>
 
-    <!-- Edit/Create User Modal -->
-    <div class="modal" id="userModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('userModal')">&times;</span>
-            <h3 id="modalTitle">Edit User</h3>
-            <form method="POST" id="userForm">
-                <input type="hidden" name="action" id="formAction" value="update_user">
-                <input type="hidden" name="user_id" id="userId">
-
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" name="full_name" id="fullName" class="form-control" required>
+        <!-- Delete Confirmation Modal -->
+        <div class="modal" id="deleteModal">
+            <div class="modal-content" style="max-width:400px; text-align:center;">
+                <div style="color: #e53e3e; font-size: 3rem; margin-bottom: 1rem;">
+                    <span class="icon-img-placeholder">⚠️</span>
                 </div>
-
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" name="username" id="userName" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" id="userEmail" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Password <small>(Leave blank to keep unchanged)</small></label>
-                    <input type="password" name="password" class="form-control" placeholder="New Password">
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width:100%">Save Changes</button>
-            </form>
+                <h3 style="margin-top: 0; color: #2d3748;">Delete User?</h3>
+                <p style="color: #718096; margin-bottom: 1.5rem;">Are you sure you want to delete this user? This action cannot be undone.</p>
+                <form method="POST">
+                    <input type="hidden" name="action" value="delete_user">
+                    <input type="hidden" name="user_id" id="deleteUserId">
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button type="button" class="btn btn-outline" style="flex: 1;"
+                            onclick="closeModal('deleteModal')">Cancel</button>
+                        <button type="submit" class="btn btn-danger" style="flex: 1;">Delete User</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal" id="deleteModal">
-        <div class="modal-content" style="max-width:400px; text-align:center;">
-            <i class="fa fa-exclamation-triangle" style="font-size:48px; color:#e53e3e; margin-bottom:15px;"></i>
-            <h3>Delete User?</h3>
-            <p>Are you sure you want to delete this user? This action cannot be undone.</p>
-            <form method="POST">
-                <input type="hidden" name="action" value="delete_user">
-                <input type="hidden" name="user_id" id="deleteUserId">
-                <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal('deleteModal')">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <script src="../assets/Javascript/facilities-reservation.js"></script>
     <script>
         function openEditModal(user) {
             document.getElementById('modalTitle').innerText = 'Edit User';
