@@ -548,6 +548,13 @@ document.addEventListener('click', function (e) {
         const statusClass = `status-${contractData.risk_level.toLowerCase()}`;
         const html = `
                 <div style="line-height:1.6;">
+                    ${contractData.file_path ? `
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <a href="${contractData.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);">
+                            📄 View Original PDF Contract
+                        </a>
+                    </div>
+                    ` : ''}
                     <div class="ai-analysis-section p-4 bg-blue-50 rounded-lg mb-6 border border-blue-200">
                         <h4 class="flex items-center text-blue-800">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15v-6h-2v6h2zm0-8V7h-2v2h2z"/></svg>

@@ -1745,6 +1745,13 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
 
                             detailsBody.innerHTML = `
+                                ${c.file_path ? `
+                                <div style="margin-bottom: 20px; text-align: center;">
+                                    <a href="${c.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2); transition: all 0.2s;">
+                                        📄 View Original PDF Contract
+                                    </a>
+                                </div>
+                                ` : ''}
                                 <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
                                     <div style="width:64px; height:64px; border-radius:50%; background:#eef2ff; display:grid; place-items:center; color:#4338ca; border: 2px solid #cbd5e1;">
                                         <span style="font-size:20px; font-weight:700;">${score}</span>
