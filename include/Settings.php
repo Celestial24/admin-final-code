@@ -7,18 +7,12 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../db/db.php';
-require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/Config.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-const SMTP_HOST = 'smtp.gmail.com';
-const SMTP_PORT = 587;
-const SMTP_USER = 'atiera41001@gmail.com';
-const SMTP_PASS = 'jqxr wuwi shyb tzzp';
-const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
-const SMTP_FROM_NAME = 'ATIERA Hotel';
 
 $pdo = get_pdo();
 
@@ -114,15 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $pdo->beginTransaction();
 
-                        // Reliable Base URL detection
-                        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
-                        $host = $_SERVER['HTTP_HOST'];
-                        // Get the path to the current directory and go up one level to reach project root
-                        $currentDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
-                        $projectRoot = str_replace('\\', '/', dirname($currentDir));
-                        if ($projectRoot === '/')
-                            $projectRoot = '';
-                        $baseUrl = $protocol . "://" . $host . $projectRoot;
+                        $baseUrl = getBaseUrl();
 
                         if (!empty($password)) {
                             // 1. Insert user with manual password

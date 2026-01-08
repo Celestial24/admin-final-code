@@ -6,6 +6,7 @@ require_once __DIR__ . '/../db/db.php';
 require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/../include/Config.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -106,11 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
             try {
               $mail->SMTPDebug = 0; // 0 = off, 2 = debug
               $mail->isSMTP();
-              $mail->Host = 'smtp.gmail.com';
+              $mail->Host = SMTP_HOST;
               $mail->SMTPAuth = true;
-              $mail->Username = 'atiera41001@gmail.com';
-              $mail->Password = 'jqxr wuwi shyb tzzp'; // Update with app-specific password
-              $mail->Port = 587;
+              $mail->Username = SMTP_USER;
+              $mail->Password = SMTP_PASS;
+              $mail->Port = SMTP_PORT;
               $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
               $mail->Timeout = 10;
 
@@ -123,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                 )
               );
 
-              $mail->setFrom('atiera41001@gmail.com', 'ATIERA Hotel');
+              $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
               $mail->addAddress($user['email'], $user['full_name'] ?: $user['email']);
               $mail->isHTML(true);
               $mail->Subject = 'Your ATIERA verification code';

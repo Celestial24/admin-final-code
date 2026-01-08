@@ -6,16 +6,9 @@ require_once __DIR__ . '/../db/db.php';
 require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/../include/Config.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-// Constants
-const SMTP_HOST = 'smtp.gmail.com';
-const SMTP_PORT = 587;
-const SMTP_USER = 'atiera41001@gmail.com';
-const SMTP_PASS = 'jqxr wuwi shyb tzzp';
-const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
-const SMTP_FROM_NAME = 'ATIERA Hotel';
 
 header('Content-Type: application/json');
 session_start();
