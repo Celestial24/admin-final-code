@@ -393,7 +393,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facilities Reservation System - Hotel Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/facilities-reservation.css">
+    <link rel="stylesheet" href="../assets/css/facilities-reservation.css?v=<?= time() ?>">
     <style>
         /* Center all table headers and cells in this module only */
         .table th,
@@ -1411,7 +1411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
 
-    <script src="../assets/Javascript/facilities-reservation.js"></script>
+    <script src="../assets/Javascript/facilities-reservation.js?v=<?= time() ?>"></script>
 
     <script>
         // Final insurance to ensure Management functions are ready
