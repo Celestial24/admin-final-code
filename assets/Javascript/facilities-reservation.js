@@ -281,6 +281,59 @@ window.showManagementCard = function (type) {
     });
 };
 
+// --- MAINTENANCE ACTIONS ---
+window.viewMaintenanceDetails = function (log) {
+    const body = document.getElementById('maintenance-details-body');
+    if (!body || !log) return;
+
+    const colors = { 'pending': '#744210', 'in-progress': '#22543d', 'completed': '#1a365d' };
+    const bgs = { 'pending': '#fefcbf', 'in-progress': '#c6f6d5', 'completed': '#bee3f8' };
+
+    body.innerHTML = `
+        <div style="background: ${bgs[log.status] || '#f7fafc'}; padding: 12px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.05);">
+            <span style="font-weight: 700; color: ${colors[log.status] || '#2d3748'}; text-transform: uppercase;">Status: ${log.status}</span>
+            <span style="font-size: 0.85rem; color: #64748b;">Log ID: #${log.id}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+            <div>
+                <h4 style="margin-bottom: 5px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Maintenance Item</h4>
+                <p style="margin: 0; font-weight: 600; font-size: 1.1rem; color: #1e293b;">${log.item_name}</p>
+            </div>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #64748b;">
+                <h4 style="margin-bottom: 5px; font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Issue Description</h4>
+                <p style="margin: 0; color: #475569; line-height: 1.6;">${log.description || 'No description provided.'}</p>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <h4 style="margin-bottom: 5px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">Scheduled Date</h4>
+                    <p style="margin: 0;"><i class="fa-solid fa-calendar-days" style="color: #64748b; margin-right: 8px;"></i>${new Date(log.maintenance_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 5px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">Assigned Staff</h4>
+                    <p style="margin: 0;"><i class="fa-solid fa-user-gear" style="color: #64748b; margin-right: 8px;"></i>${log.assigned_staff}</p>
+                </div>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 5px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">Staff Contact</h4>
+                <p style="margin: 0;"><i class="fa-solid fa-phone" style="color: #64748b; margin-right: 8px;"></i>${log.contact_number || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+    openModal('maintenance-details-modal');
+};
+
+window.deleteMaintenanceLog = function (id) {
+    if (confirm('Are you sure you want to permanently delete this maintenance log?')) {
+        const formData = new FormData();
+        formData.append('action', 'delete_maintenance');
+        formData.append('log_id', id);
+
+        fetch('', { method: 'POST', body: formData })
+            .then(res => location.reload())
+            .catch(err => console.error('Delete error:', err));
+    }
+};
+
 // --- INITIALIZATION ---
 function initializePage() {
     console.log('Initializing Facilities Reservation Page...');

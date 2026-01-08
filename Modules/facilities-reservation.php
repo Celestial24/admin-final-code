@@ -167,6 +167,17 @@ class ReservationSystem
         }
     }
 
+    public function deleteMaintenanceLog($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM maintenance_logs WHERE id = ?");
+            $stmt->execute([$id]);
+            return ['success' => true, 'message' => 'Maintenance log deleted successfully.'];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Error deleting maintenance log: ' . $e->getMessage()];
+        }
+    }
+
     public function fetchDashboardData()
     {
         $pdo = $this->pdo;
@@ -284,6 +295,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success_message = $result['message'];
                 } else {
                     $error_message = $result['message'];
+                }
+                break;
+
+            case 'delete_maintenance':
+                if (isset($_POST['log_id'])) {
+                    $result = $reservationSystem->deleteMaintenanceLog($_POST['log_id']);
+                    if ($result['success']) {
+                        $success_message = $result['message'];
+                    } else {
+                        $error_message = $result['message'];
+                    }
                 }
                 break;
 
@@ -982,18 +1004,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <table class="table management-table">
                                         <thead>
                                             <tr>
-                                                <th>Item/Area</th>
-                                                <th>Issue/Description</th>
-                                                <th>Scheduled Date</th>
-                                                <th>Deployed Staff</th>
+                                                <th style="text-align: left !important;">Item/Area</th>
+                                                <th style="text-align: left !important;">Description</th>
+                                                <th>Schedule</th>
+                                                <th>Staff</th>
                                                 <th>Contact</th>
                                                 <th>Status</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if (empty($dashboard_data['maintenance_logs'])): ?>
                                                 <tr>
-                                                    <td colspan="6"
+                                                    <td colspan="7"
                                                         style="text-align: center; padding: 2rem; color: #718096; font-style: italic;">
                                                         No maintenance logs found.
                                                     </td>
@@ -1001,17 +1024,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?php else: ?>
                                                 <?php foreach ($dashboard_data['maintenance_logs'] as $log): ?>
                                                     <tr>
-                                                        <td><strong><?= htmlspecialchars($log['item_name']) ?></strong></td>
-                                                        <td style="font-size: 0.85rem;">
+                                                        <td style="font-weight: 600; text-align: left !important;">
+                                                            <?= htmlspecialchars($log['item_name']) ?>
+                                                        </td>
+                                                        <td style="font-size: 0.85rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left !important;"
+                                                            title="<?= htmlspecialchars($log['description']) ?>">
                                                             <?= htmlspecialchars($log['description']) ?>
                                                         </td>
-                                                        <td><?= date('M d, Y', strtotime($log['maintenance_date'])) ?></td>
-                                                        <td><?= htmlspecialchars($log['assigned_staff']) ?></td>
-                                                        <td><?= htmlspecialchars($log['contact_number']) ?></td>
+                                                        <td style="font-size: 0.85rem;">
+                                                            <?= date('m/d/Y', strtotime($log['maintenance_date'])) ?>
+                                                        </td>
+                                                        <td style="font-weight: 500;">
+                                                            <?= htmlspecialchars($log['assigned_staff']) ?>
+                                                        </td>
+                                                        <td style="font-size: 0.85rem;">
+                                                            <?= htmlspecialchars($log['contact_number'] ?? 'N/A') ?>
+                                                        </td>
                                                         <td>
                                                             <span class="status-badge status-<?= $log['status'] ?>">
                                                                 <?= ucfirst($log['status']) ?>
                                                             </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex gap-1" style="justify-content: center;">
+                                                                <button class="btn btn-outline btn-sm btn-icon"
+                                                                    onclick="viewMaintenanceDetails(<?= htmlspecialchars(json_encode($log)) ?>)"
+                                                                    title="View Details">
+                                                                    <i class="fa-solid fa-eye"></i>
+                                                                </button>
+                                                                <button class="btn btn-danger btn-sm btn-icon"
+                                                                    onclick="deleteMaintenanceLog(<?= $log['id'] ?>)"
+                                                                    title="Delete">
+                                                                    <i class="fa-solid fa-trash"></i>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -1293,6 +1339,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div style="margin-top: 1.5rem; text-align: right;">
                 <button class="btn btn-outline" onclick="closeModal('details-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Details Modal -->
+    <div id="maintenance-details-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Details</h3>
+                <span class="close" onclick="closeModal('maintenance-details-modal')">&times;</span>
+            </div>
+            <div id="maintenance-details-body">
+                <!-- Filled via JS -->
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right; pt: 1rem; border-top: 1px solid #eee;">
+                <button class="btn btn-outline" onclick="closeModal('maintenance-details-modal')">Close Window</button>
             </div>
         </div>
     </div>
