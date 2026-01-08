@@ -623,7 +623,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Employee Information Modal (Create/Update) -->
     <div id="employeeInfoModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); align-items:center; justify-content:center; z-index:1250;">
-        <div style="background:#ffffff; width:92%; max-width:600px; border-radius:24px; padding:30px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:92%; max-width:600px; border-radius:24px; padding:30px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
             <button type="button" id="closeEmployeeInfo"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 id="employeeInfoTitle" style="margin-top:0;">Employee Information</h3>
@@ -674,11 +675,11 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
         <div class="container">
             <!-- Success/Error Messages -->
             <?php if (isset($success_message)): ?>
-                    <div class="alert alert-success"><?php echo $success_message; ?></div>
+                <div class="alert alert-success"><?php echo $success_message; ?></div>
             <?php endif; ?>
 
             <?php if (isset($error_message)): ?>
-                    <div class="alert alert-error"><?php echo $error_message; ?></div>
+                <div class="alert alert-error"><?php echo $error_message; ?></div>
             <?php endif; ?>
 
             <div class="nav-tabs">
@@ -745,19 +746,19 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                     </thead>
                     <tbody id="employeesTableBody">
                         <?php foreach ($employees as $employee): ?>
-                                <tr>
-                                    <td>E-<?php echo str_pad($employee['id'], 3, '0', STR_PAD_LEFT); ?></td>
-                                    <td><?php echo htmlspecialchars($employee['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($employee['position']); ?></td>
-                                    <td><?php echo htmlspecialchars($employee['email']); ?></td>
-                                    <td><?php echo htmlspecialchars($employee['phone']); ?></td>
-                                    <td>
-                                        <button class="action-btn view-btn" data-type="employee-view"
-                                            data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>View</button>
-                                        <button class="action-btn" data-type="employee-edit"
-                                            data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>Edit</button>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td>E-<?php echo str_pad($employee['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td><?php echo htmlspecialchars($employee['name']); ?></td>
+                                <td><?php echo htmlspecialchars($employee['position']); ?></td>
+                                <td><?php echo htmlspecialchars($employee['email']); ?></td>
+                                <td><?php echo htmlspecialchars($employee['phone']); ?></td>
+                                <td>
+                                    <button class="action-btn view-btn" data-type="employee-view"
+                                        data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>View</button>
+                                    <button class="action-btn" data-type="employee-edit"
+                                        data-emp='<?php echo htmlspecialchars(json_encode($employee)); ?>'>Edit</button>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -781,31 +782,31 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         </tr>
                     <tbody id="documentsTableBody">
                         <?php if (!empty($documents)): ?>
-                                <?php foreach ($documents as $doc): ?>
-                                        <tr>
-                                            <td>
-                                                <?php if (!empty($doc['file_path'])): ?>
-                                                        <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" target="_blank"
-                                                            rel="noopener"><?php echo htmlspecialchars($doc['name']); ?></a>
-                                                <?php else: ?>
-                                                        <?php echo htmlspecialchars($doc['name']); ?>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($doc['case_id'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($doc['uploaded_at'] ?? 'now'))); ?>
-                                            </td>
-                                            <td>
-                                                <button class="action-btn view-btn" data-type="doc-edit"
-                                                    data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Edit</button>
-                                                <button class="action-btn" data-type="doc-delete"
-                                                    data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Delete</button>
-                                            </td>
-                                        </tr>
-                                <?php endforeach; ?>
-                        <?php else: ?>
+                            <?php foreach ($documents as $doc): ?>
                                 <tr>
-                                    <td colspan="4" style="text-align:center;color:#666;padding:20px;">No documents found.</td>
+                                    <td>
+                                        <?php if (!empty($doc['file_path'])): ?>
+                                            <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" target="_blank"
+                                                rel="noopener"><?php echo htmlspecialchars($doc['name']); ?></a>
+                                        <?php else: ?>
+                                            <?php echo htmlspecialchars($doc['name']); ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($doc['case_id'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($doc['uploaded_at'] ?? 'now'))); ?>
+                                    </td>
+                                    <td>
+                                        <button class="action-btn view-btn" data-type="doc-edit"
+                                            data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Edit</button>
+                                        <button class="action-btn" data-type="doc-delete"
+                                            data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Delete</button>
+                                    </td>
                                 </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" style="text-align:center;color:#666;padding:20px;">No documents found.</td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -831,29 +832,29 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                     </thead>
                     <tbody id="billingTableBody">
                         <?php if (!empty($billing)): ?>
-                                <?php foreach ($billing as $b): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($b['invoice_number'] ?? $b['id']); ?></td>
-                                            <td><?php echo htmlspecialchars($b['client'] ?? 'N/A'); ?></td>
-                                            <td>₱<?php echo number_format($b['amount'] ?? 0, 2); ?></td>
-                                            <td><?php echo htmlspecialchars(!empty($b['due_date']) ? date('Y-m-d', strtotime($b['due_date'])) : 'N/A'); ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars(ucfirst($b['status'] ?? 'unknown')); ?></td>
-                                            <td>
-                                                <button class="action-btn view-btn" data-type="invoice-view"
-                                                    data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>View</button>
-                                                <button class="action-btn"
-                                                    style="background:#16a34a;color:#fff;border-radius:8px;padding:6px 10px;"
-                                                    data-type="invoice-pay"
-                                                    data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>Pay</button>
-                                            </td>
-                                        </tr>
-                                <?php endforeach; ?>
-                        <?php else: ?>
+                            <?php foreach ($billing as $b): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align:center;color:#666;padding:20px;">No billing records found.
+                                    <td><?php echo htmlspecialchars($b['invoice_number'] ?? $b['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($b['client'] ?? 'N/A'); ?></td>
+                                    <td>₱<?php echo number_format($b['amount'] ?? 0, 2); ?></td>
+                                    <td><?php echo htmlspecialchars(!empty($b['due_date']) ? date('Y-m-d', strtotime($b['due_date'])) : 'N/A'); ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars(ucfirst($b['status'] ?? 'unknown')); ?></td>
+                                    <td>
+                                        <button class="action-btn view-btn" data-type="invoice-view"
+                                            data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>View</button>
+                                        <button class="action-btn"
+                                            style="background:#16a34a;color:#fff;border-radius:8px;padding:6px 10px;"
+                                            data-type="invoice-pay"
+                                            data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>Pay</button>
                                     </td>
                                 </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6" style="text-align:center;color:#666;padding:20px;">No billing records found.
+                                </td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -950,30 +951,30 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             $risk_factors = json_decode($contract['risk_factors'] ?? '[]', true);
                             $recommendations = json_decode($contract['recommendations'] ?? '[]', true);
                             ?>
-                                <tr>
-                                    <td>
-                                        <?php if (!empty($contract['file_path'])): ?>
-                                                <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" target="_blank"
-                                                    rel="noopener"><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?></a>
-                                        <?php else: ?>
-                                                <?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($contract['case_id']); ?></td>
-                                    <td>
-                                        <span class="status-badge status-<?php echo strtolower($contract['risk_level']); ?>">
-                                            <?php echo htmlspecialchars($contract['risk_level']); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($contract['risk_score']); ?>/100</td>
-                                    <td><?php echo date('Y-m-d', strtotime($contract['created_at'])); ?></td>
-                                    <td>
-                                        <button class="action-btn view-btn" data-type="contract-view"
-                                            data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
-                                        <button class="action-btn analyze-btn" data-type="contract-analyze"
-                                            data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td>
+                                    <?php if (!empty($contract['file_path'])): ?>
+                                        <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" target="_blank"
+                                            rel="noopener"><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?></a>
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($contract['case_id']); ?></td>
+                                <td>
+                                    <span class="status-badge status-<?php echo strtolower($contract['risk_level']); ?>">
+                                        <?php echo htmlspecialchars($contract['risk_level']); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($contract['risk_score']); ?>/100</td>
+                                <td><?php echo date('Y-m-d', strtotime($contract['created_at'])); ?></td>
+                                <td>
+                                    <button class="action-btn view-btn" data-type="contract-view"
+                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
+                                    <button class="action-btn analyze-btn" data-type="contract-analyze"
+                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -1000,14 +1001,14 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         return (isset($c['risk_level']) && strtolower($c['risk_level']) === 'high');
                     });
                     if (!empty($highContracts)): ?>
-                            <h4 style="margin-top:12px;">Top High-Risk Contracts</h4>
-                            <ul>
-                                <?php foreach (array_slice($highContracts, 0, 5) as $hc): ?>
-                                        <li><?php echo htmlspecialchars($hc['contract_name'] ?? 'Untitled'); ?> —
-                                            <?php echo htmlspecialchars($hc['risk_score'] ?? 'N/A'); ?>/100
-                                        </li>
-                                <?php endforeach; ?>
-                            </ul>
+                        <h4 style="margin-top:12px;">Top High-Risk Contracts</h4>
+                        <ul>
+                            <?php foreach (array_slice($highContracts, 0, 5) as $hc): ?>
+                                <li><?php echo htmlspecialchars($hc['contract_name'] ?? 'Untitled'); ?> —
+                                    <?php echo htmlspecialchars($hc['risk_score'] ?? 'N/A'); ?>/100
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1043,7 +1044,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Details Modal -->
     <div id="detailsModal"
         style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(2,6,23,0.4); align-items:center; justify-content:center; z-index:1000;">
-        <div style="background:#ffffff; width:90%; max-width:700px; border-radius:28px; padding:35px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:90%; max-width:700px; border-radius:28px; padding:35px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
             <button id="closeDetails"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 id="detailsTitle">Details</h3>
@@ -1096,12 +1098,12 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             </form>
         </div>
     </div>
-    </div>
 
     <!-- Edit Employee Modal -->
     <div id="editEmployeeModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1200;">
-        <div style="background:#ffffff; width:92%; max-width:560px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:92%; max-width:560px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
             <button type="button" id="closeEditEmployee"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Edit Employee</h3>
@@ -1147,7 +1149,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Employee Form Modal wrapper -->
     <div id="employeeFormModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
             <button type="button" id="closeEmployeeFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="employeeFormContainer"></div>
@@ -1156,7 +1159,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Document Form Modal wrapper -->
     <div id="documentFormModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
             <button type="button" id="closeDocumentFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="documentFormContainer">
@@ -1187,7 +1191,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Edit Document Modal -->
     <div id="editDocumentModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1200;">
-        <div style="background:#ffffff; width:92%; max-width:560px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:92%; max-width:560px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
             <button type="button" id="closeEditDocument"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Edit Document</h3>
@@ -1212,7 +1217,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Invoice Form Modal wrapper -->
     <div id="invoiceFormModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:94%; max-width:720px; border-radius:32px; padding:35px; position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
             <button type="button" id="closeInvoiceFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="invoiceFormContainer">
@@ -1271,7 +1277,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <!-- Contract: Upload Supporting Document Modal -->
     <div id="contractDocsModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:1500;">
-        <div style="background:#ffffff; width:94%; max-width:640px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
+        <div
+            style="background:#ffffff; width:94%; max-width:640px; border-radius:24px; padding:30px; position:relative; box-shadow:0 25px 50px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
             <button type="button" id="closeContractDocsModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Upload Contract Document</h3>
@@ -1307,12 +1314,12 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             const pinInputs = pwdModal.querySelectorAll('.pin-digit');
             const pwdError = document.getElementById('pwdError');
             const pwdCancel = document.getElementById('pwdCancel');
-            const PASSWORD = '123';
+            const PASSWORD = '1234';
 
             // Password gate helper — shows password modal and calls callback on successful entry.
             function withPasswordGate(cb) {
                 if (typeof cb !== 'function') return;
-                if (!pwdModal || !pwdForm || !pwdInput) { cb(); return; }
+                if (!pwdModal || !pwdForm || !pinInputs.length) { cb(); return; }
 
                 // Close/hide other modals and remember previous display states
                 const modalsToHide = [detailsModal, empInfoModal, contractFormModal, employeeFormModal, documentFormModal, editModal, editDocModal, invoiceFormModal, payConfirmModal, contractDocsModal];
@@ -1336,8 +1343,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 setTimeout(() => pinInputs[0]?.focus(), 100);
 
                 // Auto-focus logic for PIN
-                const onPinInput = function(e) { e.target.value = e.target.value.replace(/[^0-9]/g, ''); if(e.target.value && e.target.nextElementSibling) e.target.nextElementSibling.focus(); };
-                const onPinKeydown = function(e) { if(e.key==='Backspace' && !e.target.value && e.target.previousElementSibling) e.target.previousElementSibling.focus(); };
+                const onPinInput = function (e) { e.target.value = e.target.value.replace(/[^0-9]/g, ''); if (e.target.value && e.target.nextElementSibling) e.target.nextElementSibling.focus(); };
+                const onPinKeydown = function (e) { if (e.key === 'Backspace' && !e.target.value && e.target.previousElementSibling) e.target.previousElementSibling.focus(); };
                 pinInputs.forEach(input => {
                     input.addEventListener('input', onPinInput);
                     input.addEventListener('keydown', onPinKeydown);
