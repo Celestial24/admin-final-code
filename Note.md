@@ -71,3 +71,21 @@ Password: `123` (hashed)
 INSERT INTO `users` (`full_name`, `username`, `email`, `password_hash`) VALUES
 ('admin', 'admin', 'atiera41001@gmail.com', '$2y$10$bgK1qBmMkUhTXD7vpn7LzerdFk/ELZfeBjRGAeJy9zIzzW6xA8kDu');
 ```
+
+#### 3. Create Table `maintenance_logs`
+```sql
+CREATE TABLE `maintenance_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `maintenance_date` date NOT NULL,
+  `assigned_staff` varchar(255) NOT NULL,
+  `contact_number` varchar(50) DEFAULT NULL,
+  `status` enum('pending','in-progress','completed') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_maintenance_date` (`maintenance_date`),
+  KEY `idx_maintenance_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```

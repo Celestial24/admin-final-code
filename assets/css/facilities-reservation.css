@@ -1147,15 +1147,19 @@ body {
 }
 
 .management-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.9rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
-    flex: 1;
-    max-width: 200px;
+    flex: 0 0 auto;
+    /* Don't grow/shrink too much */
+    min-width: 180px;
+    /* Ensure enough width for text */
+    white-space: nowrap;
+    /* Keep text on one line */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .management-btn i {

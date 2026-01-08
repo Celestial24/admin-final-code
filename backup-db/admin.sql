@@ -262,6 +262,14 @@ CREATE TABLE `maintenance_logs` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `maintenance_logs`
+--
+
+INSERT INTO `maintenance_logs` (`id`, `item_name`, `description`, `maintenance_date`, `assigned_staff`, `contact_number`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'Executive Boardroom AC', 'Airconditioning unit is not cooling properly.', '2025-01-08', 'John Doe', '09123456789', 'pending', '2025-01-08 11:45:00', '2025-01-08 11:45:00'),
+(2, 'Grand Ballroom Lighting', 'Several bulb replacements needed in the main chandelier.', '2025-01-09', 'Jane Smith', '09223334444', 'in-progress', '2025-01-08 12:00:00', '2025-01-08 12:00:00');
+
 -- --------------------------------------------------------
 
 --
