@@ -119,7 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmt->execute([$username, $email, $full_name, password_hash($password, PASSWORD_DEFAULT)]);
                             $newUserId = $pdo->lastInsertId();
 
-                            // 2. Send Direct Email with Password
+                            // 2. Generate and save verification code
+                            $code = (string) random_int(100000, 999999);
+                            $expiresAt = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
+                            $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (?, ?, ?)');
+                            $stmt->execute([$newUserId, $code, $expiresAt]);
+
+                            // 3. Send Email (Picture 1 Style + Activation Code & Link)
                             $mail = new PHPMailer(true);
                             $mail->isSMTP();
                             $mail->Host = SMTP_HOST;
@@ -128,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->Password = SMTP_PASS;
                             $mail->Port = SMTP_PORT;
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-
                             $mail->SMTPOptions = array(
                                 'ssl' => array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)
                             );
@@ -138,21 +143,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->isHTML(true);
                             $mail->Subject = 'New Account Created: ATIERA Admin Panel';
 
-                            $loginUrl = $baseUrl . "/auth/login.php";
+                            $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
 
                             $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
                                 <h2 style=\"color: #0f172a;\">Welcome to ATIERA</h2>
-                                <p>Hello {$full_name},</p>
+                                <p>Hello " . htmlspecialchars($full_name) . ",</p>
                                 <p>An account has been created for you. Here are your credentials:</p>
                                 <div style=\"background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;\">
-                                    <p style=\"margin: 0;\"><strong>Username:</strong> {$username}</p>
-                                    <p style=\"margin: 5px 0 0;\"><strong>Password:</strong> <span style=\"color: #1e40af; font-weight: bold;\">{$password}</span></p>
+                                    <p style=\"margin: 0;\"><strong>Username:</strong> " . htmlspecialchars($username) . "</p>
+                                    <p style=\"margin: 5px 0 0;\"><strong>Password:</strong> <span style=\"color: #1e40af; font-weight: bold;\">" . htmlspecialchars($password) . "</span></p>
                                 </div>
-                                <p>You can log in at:</p>
+                                <p>To complete your registration and set your <strong>New Password</strong>, please use the code below:</p>
+                                <div style=\"text-align: center; margin: 25px 0; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #e2e8f0;\">
+                                    <span style=\"font-size: 28px; font-weight: bold; letter-spacing: 8px; color: #1e40af;\">{$code}</span>
+                                </div>
                                 <div style=\"margin: 20px 0; text-align: center;\">
-                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Go to Login Page</a>
+                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Activate & Login</a>
                                 </div>
+                                <p style=\"font-size: 11px; color: #64748b; text-align: center;\">This security link and code expires in 24 hours.</p>
                             </div>
                         ";
                             $mail->send();
@@ -178,7 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->Password = SMTP_PASS;
                             $mail->Port = SMTP_PORT;
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-
                             $mail->SMTPOptions = array(
                                 'ssl' => array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)
                             );
@@ -193,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
                                 <h2 style=\"color: #0f172a;\">Setup Your Password</h2>
-                                <p>Hello {$full_name},</p>
+                                <p>Hello " . htmlspecialchars($full_name) . ",</p>
                                 <p>You have been added as an administrator. To complete your account setup, please set your <strong>New Password</strong> using the code below:</p>
                                 <div style=\"text-align: center; margin: 30px 0; background: #f8fafc; padding: 20px; border-radius: 8px; border: 2px dashed #e2e8f0;\">
                                     <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #1e40af;\">{$code}</span>
@@ -429,7 +437,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             placeholder="user@example.com">
                     </div>
 
-                    <div class="form-group" id="passwordGroup" style="display: none;">
+                    <div class="form-group" id="passwordGroup">
                         <label>Password <small style="font-weight: 400; color: #718096;">(Leave blank to keep
                                 unchanged)</small></label>
                         <input type="password" name="password" class="form-control" placeholder="Enter new password">
@@ -487,7 +495,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('fullName').value = user.full_name;
             document.getElementById('userName').value = user.username;
             document.getElementById('userEmail').value = user.email;
-            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('passwordGroup').style.display = 'block';
 
             document.getElementById('userModal').classList.add('active');
         }
@@ -498,7 +506,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('userId').value = '';
             document.getElementById('userForm').reset();
             document.getElementById('userEmail').value = ''; // Ensure email is empty
-            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('passwordGroup').style.display = 'block';
 
             document.getElementById('userModal').classList.add('active');
         }
