@@ -53,6 +53,23 @@ document.addEventListener('DOMContentLoaded', function () {
             // Successful login
             loginScreen.style.display = 'none';
             dashboard.style.display = 'block';
+
+            // Show Loading Animation Overlay
+            const loader = document.getElementById('loadingOverlay');
+            if (loader) {
+                loader.style.display = 'block';
+                loader.style.opacity = '1';
+                // Restart animation
+                const iframe = loader.querySelector('iframe');
+                if (iframe) iframe.src = iframe.src;
+
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }, 3000);
+            }
             // Activate default tab (Employees) to ensure correct visibility
             const defaultTab = document.querySelector('.nav-tab[data-target="employees"]');
             if (defaultTab) defaultTab.click();
