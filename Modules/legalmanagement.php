@@ -617,7 +617,6 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 <input type="password" maxlength="1" class="pin-digit" id="pin4">
             </div>
             <button class="login-btn" id="loginBtn">Login</button>
-            <a href="http://localhost/admin-final-code/Modules/facilities-reservation.php" class="back-btn">Back</a>
             <div class="error-message" id="errorMessage">Invalid PIN. Please try again.</div>
         </div>
     </div>
