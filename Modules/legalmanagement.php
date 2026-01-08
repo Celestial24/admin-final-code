@@ -382,7 +382,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $query = "INSERT INTO contracts (contract_name, case_id, description, file_path, risk_level, risk_score, risk_factors, recommendations, analysis_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO contracts (name, case_id, description, file_path, risk_level, risk_score, risk_factors, recommendations, analysis_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $db->prepare($query);
 
         $risk_factors_json = json_encode($riskAnalysis['risk_factors']);
@@ -420,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = 'legal2025'; // Password para sa PDF Report (Simulasyon)
 
         // Kunin ang lahat ng data ng kontrata para sa ulat
-        $query = "SELECT contract_name, risk_level, risk_score, analysis_summary FROM contracts ORDER BY created_at DESC";
+        $query = "SELECT name as contract_name, risk_level, risk_score, analysis_summary FROM contracts ORDER BY created_at DESC";
         $stmt = $db->prepare($query);
         $stmt->execute();
         $contracts_to_report = $stmt->fetchAll(PDO::FETCH_ASSOC);
