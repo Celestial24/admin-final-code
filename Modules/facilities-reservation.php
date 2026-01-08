@@ -1111,6 +1111,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div id="logout-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; padding-bottom: 0.5rem; border-bottom: none;">
+                <h3
+                    style="margin: 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); width: 100%; text-align: center;">
+                    Logout Confirmation</h3>
+            </div>
+            <div style="padding: 1rem 0 1.5rem;">
+                <p style="margin: 0;">Are you sure you want to exit this part of the system?</p>
+            </div>
+            <div class="d-flex justify-between" style="gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('logout-modal')"
+                    style="flex: 1; justify-content: center;">Cancel</button>
+                <button class="btn btn-danger" onclick="window.location.href='../auth/login.php?logout=1'"
+                    style="flex: 1; justify-content: center; white-space: nowrap;">
+                    <span class="icon-img-placeholder">🚪</span> Confirm Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="../assets/Javascript/facilities-reservation.js"></script>
 
