@@ -1,15 +1,15 @@
 // Tab navigation (make it globally accessible)
-   window.switchTab = function(tabName) {
+window.switchTab = function (tabName) {
     // Remove active class from all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Remove active class from all nav links
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.classList.remove('active');
     });
-    
+
     // Activate the selected tab
     const targetTab = document.getElementById(tabName);
     if (targetTab) {
@@ -17,13 +17,13 @@
     } else {
         console.warn(`Tab with id "${tabName}" not found`);
     }
-    
+
     // Activate the corresponding nav link
     const navLink = document.querySelector(`[data-tab="${tabName}"]`);
     if (navLink) {
         navLink.classList.add('active');
     }
-    
+
     // Update page title
     const titles = {
         'dashboard': 'Facilities Reservation Dashboard',
@@ -33,7 +33,7 @@
         'management': 'System Management',
         'reports': 'Reports & Analytics'
     };
-    
+
     const subtitles = {
         'dashboard': 'Manage hotel facilities and reservations efficiently',
         'facilities': 'Browse and manage all hotel facilities',
@@ -42,38 +42,38 @@
         'management': 'System configuration and reports',
         'reports': 'Generate reports and export data'
     };
-    
+
     const pageTitleEl = document.getElementById('page-title');
     const pageSubtitleEl = document.getElementById('page-subtitle');
-    
+
     if (pageTitleEl) pageTitleEl.textContent = titles[tabName] || 'Facilities Reservation System';
     if (pageSubtitleEl) pageSubtitleEl.textContent = subtitles[tabName] || 'Manage hotel facilities and reservations';
-    
+
     // Save active tab to sessionStorage
     sessionStorage.setItem('activeTab', tabName);
 }
 
 // Restore active tab on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const activeTab = sessionStorage.getItem('activeTab') || 'dashboard';
     switchTab(activeTab);
-    
+
     // Initialize date fields (if they exist)
     const eventDateField = document.getElementById('event_date');
     const startTimeField = document.getElementById('start_time');
     const endTimeField = document.getElementById('end_time');
-    
+
     if (eventDateField) {
         const today = new Date().toISOString().split('T')[0];
         eventDateField.value = today;
     }
-    
+
     if (startTimeField) startTimeField.value = '09:00';
     if (endTimeField) endTimeField.value = '12:00';
-    
+
     // Add event listeners to nav links (for redundancy with onclick handlers)
     document.querySelectorAll('.nav-links a').forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
             const tab = this.getAttribute('data-tab');
             const onclick = this.getAttribute('onclick');
@@ -118,26 +118,26 @@ function openReservationModal(facilityId) {
 }
 
 // BAGONG FUNCTION: Logout Modal Handler
-window.openLogoutModal = function() {
+window.openLogoutModal = function () {
     openModal('logout-modal');
 }
 
 // BAGONG FUNCTION: Confirmed Logout Redirect
-window.confirmLogout = function() {
+window.confirmLogout = function () {
     // I-close ang modal at i-redirect sa login page na may logout flag
     closeModal('logout-modal');
     window.location.href = '../auth/login.php?logout=1';
 }
 
 // Close modal when clicking outside
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
     if (event.target.classList.contains('modal')) {
         closeModal(event.target.id);
     }
 });
 
 // Close modal with Escape key
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
         document.querySelectorAll('.modal').forEach(modal => {
             closeModal(modal.id);
@@ -150,15 +150,15 @@ function updateFacilityDetails() {
     const facilitySelect = document.getElementById('facility_id');
     const selectedOption = facilitySelect.options[facilitySelect.selectedIndex];
     const detailsDiv = document.getElementById('facility-details');
-    
+
     if (selectedOption.value) {
         const rate = selectedOption.getAttribute('data-rate');
         const capacity = selectedOption.getAttribute('data-capacity');
-        
+
         document.getElementById('capacity-display').textContent = capacity;
         document.getElementById('rate-display').textContent = rate;
         detailsDiv.style.display = 'block';
-        
+
         calculateTotal();
         checkAvailability();
     } else {
@@ -171,15 +171,15 @@ function calculateTotal() {
     const startTime = document.getElementById('start_time').value;
     const endTime = document.getElementById('end_time').value;
     const totalCost = document.getElementById('total-cost');
-    
+
     if (facilitySelect.value && startTime && endTime) {
         const rate = parseFloat(facilitySelect.options[facilitySelect.selectedIndex].getAttribute('data-rate'));
         const start = new Date('2000-01-01 ' + startTime);
         const end = new Date('2000-01-01 ' + endTime);
-        
+
         let hours = (end - start) / (1000 * 60 * 60);
         if (hours < 0) hours += 24; // Handle overnight
-        
+
         const total = hours * rate;
         totalCost.innerHTML = `<span class="icon-img-placeholder">🧮</span> Estimated Total: ₱${total.toFixed(2)} (${Math.ceil(hours)} hours)`;
     }
@@ -189,7 +189,7 @@ function checkCapacity() {
     const facilitySelect = document.getElementById('facility_id');
     const guests = document.getElementById('guests_count').value;
     const warning = document.getElementById('capacity-warning');
-    
+
     if (facilitySelect.value && guests) {
         const capacity = parseInt(facilitySelect.options[facilitySelect.selectedIndex].getAttribute('data-capacity'));
         if (parseInt(guests) > capacity) {
@@ -204,32 +204,32 @@ async function checkAvailability() {
     const facilityId = document.getElementById('facility_id').value;
     const eventDate = document.getElementById('event_date').value;
     const warningDiv = document.getElementById('availability-warning');
-    
+
     if (!facilityId || !eventDate) return;
-    
+
     try {
         const formData = new FormData();
         formData.append('action', 'check_availability');
         formData.append('facility_id', facilityId);
         formData.append('event_date', eventDate);
-        
+
         const response = await fetch('', {
             method: 'POST',
             body: formData
         });
-        
+
         const bookedSlots = await response.json();
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
-        
+
         if (startTime && endTime) {
             const conflict = bookedSlots.some(slot => {
                 return (startTime < slot.end_time && endTime > slot.start_time);
             });
-            
+
             if (conflict) {
                 warningDiv.style.display = 'block';
-                document.getElementById('availability-message').textContent = 
+                document.getElementById('availability-message').textContent =
                     'Warning: This time slot may conflict with existing reservations.';
             } else {
                 warningDiv.style.display = 'none';
@@ -242,13 +242,13 @@ async function checkAvailability() {
 
 // Form submissions with validation
 document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
-        
+
         // Basic validation
         const requiredFields = form.querySelectorAll('[required]');
         let valid = true;
-        
+
         requiredFields.forEach(field => {
             if (!field.value.trim()) {
                 valid = false;
@@ -257,44 +257,44 @@ document.querySelectorAll('form').forEach(form => {
                 field.style.borderColor = '';
             }
         });
-        
+
         if (!valid) {
             // Pinalitan ang alert() ng console.log() dahil bawal ang alert()
             console.error('Please fill in all required fields.');
             return;
         }
-        
+
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="icon-img-placeholder">🔄</span> Processing...';
         submitBtn.disabled = true;
-        
+
         const formData = new FormData(this);
-        
+
         fetch('', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.text())
-        .then(data => {
-            location.reload();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // Pinalitan ang alert() ng console.error()
-            console.error('Error saving data. Please try again.');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
+            .then(response => response.text())
+            .then(data => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Pinalitan ang alert() ng console.error()
+                console.error('Error saving data. Please try again.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
     });
 });
 
 // Update reservation status
 function updateReservationStatus(reservationId, status) {
-    const statusText = status === 'confirmed' ? 'confirm' : 
-                     status === 'cancelled' ? 'cancel' : 'complete';
-                     
+    const statusText = status === 'confirmed' ? 'confirm' :
+        status === 'cancelled' ? 'cancel' : 'complete';
+
     // Pinalitan ang confirm() ng simulated UI behavior
     if (true) { // Assuming a custom modal confirms the action instead of built-in confirm()
         console.log(`SIMULATION: User confirmed action to ${statusText} reservation #${reservationId}`);
@@ -303,28 +303,87 @@ function updateReservationStatus(reservationId, status) {
         formData.append('action', 'update_reservation_status');
         formData.append('reservation_id', reservationId);
         formData.append('status', status);
-        
+
         fetch('', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.text())
-        .then(data => {
-            location.reload();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // Pinalitan ang alert() ng console.error()
-            console.error('Error updating reservation status.');
-        });
+            .then(response => response.text())
+            .then(data => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Pinalitan ang alert() ng console.error()
+                console.error('Error updating reservation status.');
+            });
     }
 }
 
 // View reservation details
-function viewReservationDetails(reservationId) {
-    // Pinalitan ang alert() ng console.log()
-    console.log(`Viewing details for reservation #${reservationId}. This would typically open a detailed view modal.`);
-    // Implementation for detailed view would go here
+function viewReservationDetails(data) {
+    if (!data) return;
+
+    // Convert to object if it's a string (though we passed object in PHP)
+    const reservation = typeof data === 'string' ? JSON.parse(data) : data;
+
+    const body = document.getElementById('reservation-details-body');
+    if (!body) return;
+
+    // Status color mapping
+    const statusColors = {
+        'pending': '#744210',
+        'confirmed': '#22543d',
+        'cancelled': '#c53030',
+        'completed': '#1a365d'
+    };
+
+    const statusBg = {
+        'pending': '#fefcbf',
+        'confirmed': '#c6f6d5',
+        'cancelled': '#fed7d7',
+        'completed': '#bee3f8'
+    };
+
+    body.innerHTML = `
+        <div style="background: ${statusBg[reservation.status] || '#f7fafc'}; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.05);">
+            <span style="font-weight: 700; color: ${statusColors[reservation.status] || '#2d3748'};">Status: ${reservation.status.toUpperCase()}</span>
+            <span style="font-size: 0.85rem; color: #4a5568;">ID: #${reservation.id}</span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <h4 style="margin-bottom: 8px; font-size: 0.9rem; color: #718096; text-transform: uppercase;">Customer Info</h4>
+                <p><strong><span class="icon-img-placeholder">👤</span> Name:</strong> ${reservation.customer_name}</p>
+                <p><strong><span class="icon-img-placeholder">📧</span> Email:</strong> ${reservation.customer_email || 'N/A'}</p>
+                <p><strong><span class="icon-img-placeholder">📞</span> Phone:</strong> ${reservation.customer_phone || 'N/A'}</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 8px; font-size: 0.9rem; color: #718096; text-transform: uppercase;">Event Details</h4>
+                <p><strong><span class="icon-img-placeholder">🏢</span> Facility:</strong> ${reservation.facility_name}</p>
+                <p><strong><span class="icon-img-placeholder">🎭</span> Type:</strong> ${reservation.event_type}</p>
+                <p><strong><span class="icon-img-placeholder">👥</span> Guests:</strong> ${reservation.guests_count} people</p>
+            </div>
+        </div>
+        
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-bottom: 20px;">
+            <h4 style="margin-bottom: 8px; font-size: 0.9rem; color: #718096; text-transform: uppercase;">Schedule & Cost</h4>
+            <div style="display: flex; gap: 30px;">
+                <p><strong><span class="icon-img-placeholder">📅</span> Date:</strong> ${reservation.event_date}</p>
+                <p><strong><span class="icon-img-placeholder">⌚</span> Time:</strong> ${reservation.start_time} - ${reservation.end_time}</p>
+            </div>
+            <p style="font-size: 1.1rem; color: #38a169; margin-top: 10px;"><strong><span class="icon-img-placeholder">💰</span> Total Amount:</strong> ₱${parseFloat(reservation.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #3182ce;">
+            <h4 style="margin-bottom: 5px; font-size: 0.9rem; color: #4a5568;">Special Requirements</h4>
+            <p style="margin: 0; color: #4a5568; font-style: ${reservation.special_requirements ? 'normal' : 'italic'};">
+                ${reservation.special_requirements || 'No special requirements specified.'}
+            </p>
+        </div>
+    `;
+
+    openModal('details-modal');
 }
 
 // Generate report
@@ -360,9 +419,9 @@ setInterval(() => {
 
 /* --- START: Added tab helpers moved from inline PHP --- */
 
-(function(){
+(function () {
     // Expose openTab globally so existing inline onclick handlers still work
-    window.openTab = function(tabId) {
+    window.openTab = function (tabId) {
         // Prefer centralized switchTab if available
         if (typeof window.switchTab === 'function') {
             try {
@@ -391,14 +450,14 @@ setInterval(() => {
         }
 
         // Persist selection
-        try { sessionStorage.setItem('activeTab', tabId); } catch(e) { /* ignore */ }
+        try { sessionStorage.setItem('activeTab', tabId); } catch (e) { /* ignore */ }
     };
 
     // Make elements with data-open-tab clickable (optional: add data-open-tab in PHP to turn whole card clickable)
     function attachDataOpenTab() {
-        document.querySelectorAll('[data-open-tab]').forEach(function(el){
+        document.querySelectorAll('[data-open-tab]').forEach(function (el) {
             el.style.cursor = 'pointer';
-            el.addEventListener('click', function(e){
+            el.addEventListener('click', function (e) {
                 // avoid double-activation if inner clickable elements exist
                 if (e.target && (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('button'))) return;
                 var tab = el.getAttribute('data-open-tab');
@@ -408,7 +467,7 @@ setInterval(() => {
     }
 
     // Initialize on DOMContentLoaded: restore last active tab (or dashboard)
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function () {
         // Attach data-open-tab handlers
         attachDataOpenTab();
 
@@ -416,7 +475,7 @@ setInterval(() => {
         try {
             var stored = sessionStorage.getItem('activeTab');
             if (stored) active = stored;
-        } catch(e){ /* ignore storage errors */ }
+        } catch (e) { /* ignore storage errors */ }
 
         // If switchTab exists prefer it (keeps nav link state in sync)
         if (typeof window.switchTab === 'function') {
@@ -443,7 +502,7 @@ const MOCK_CONTRACTS_DATA = [
     { contract_name: 'Lease Agreement', case_id: 'F-005', risk_level: 'Medium', risk_score: 40, upload_date: '2023-09-15', file_path: 'contract_f005.pdf', analysis_summary: 'Standard commercial lease with a few negotiable points in the maintenance section.', risk_factors: '[]', recommendations: '["Ensure maintenance responsibilities are fully covered by tenant."]' }
 ];
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const pinInputs = document.querySelectorAll('.pin-digit');
     const loginBtn = document.getElementById('loginBtn');
     const errorMessage = document.getElementById('errorMessage');
@@ -459,10 +518,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Move to next input when a digit is entered
     pinInputs.forEach((input, index) => {
-        input.addEventListener('input', function() {
+        input.addEventListener('input', function () {
             // Only allow numbers and max 1 digit (ADDED VALIDATION)
             this.value = this.value.replace(/[^0-9]/g, '').slice(0, 1);
-            
+
             if (this.value.length === 1 && index < pinInputs.length - 1) {
                 pinInputs[index + 1].focus();
             }
@@ -472,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Allow backspace to move to previous input
-        input.addEventListener('keydown', function(e) {
+        input.addEventListener('keydown', function (e) {
             if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
                 pinInputs[index - 1].focus();
             }
@@ -480,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Login functionality
-    loginBtn?.addEventListener('click', function() {
+    loginBtn?.addEventListener('click', function () {
         const enteredPIN = Array.from(pinInputs).map(input => input.value).join('');
 
         if (enteredPIN === correctPIN) {
@@ -492,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // tabs are properly initialized IF the user is on the legal management page.
             // Since we don't have the context of the current page (facilities vs legal), we can skip 
             // the default tab setting here if the legal management page isn't active.
-            
+
             // Initialize dashboard data
             initializeDashboard();
         } else {
@@ -506,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Logout functionality
-    logoutBtn?.addEventListener('click', function() {
+    logoutBtn?.addEventListener('click', function () {
         dashboard.style.display = 'none';
         loginScreen.style.display = 'flex';
 
@@ -527,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const contentSections = document.querySelectorAll('.content-section');
 
     navTabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
+        tab.addEventListener('click', function (e) {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');
 
@@ -744,21 +803,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const contractFormData = document.getElementById('contractFormData');
 
         if (addContractBtn && contractForm) {
-            addContractBtn.addEventListener('click', function() {
+            addContractBtn.addEventListener('click', function () {
                 contractForm.style.display = 'block';
                 contractForm.scrollIntoView({ behavior: 'smooth' });
             });
         }
 
         if (cancelContractBtn && contractForm) {
-            cancelContractBtn.addEventListener('click', function() {
+            cancelContractBtn.addEventListener('click', function () {
                 contractForm.style.display = 'none';
                 resetContractForm();
             });
         }
 
         if (contractFormData) {
-            contractFormData.addEventListener('submit', function(e) {
+            contractFormData.addEventListener('submit', function (e) {
                 e.preventDefault();
                 if (validateContractForm()) {
                     console.log('SUCCESS: Form submitted with data:', new FormData(this));
@@ -847,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // FIX: Replaced alert() with console.log() and simulated UI behavior
-        document.getElementById('addDocumentBtn')?.addEventListener('click', function() {
+        document.getElementById('addDocumentBtn')?.addEventListener('click', function () {
             console.log('SIMULATION: Document upload form would appear here.');
             // Show a simple confirmation message on the screen instead of alert()
             const button = this;
@@ -855,14 +914,14 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => button.textContent = 'Add New Document', 1500);
         });
 
-        document.getElementById('addInvoiceBtn')?.addEventListener('click', function() {
+        document.getElementById('addInvoiceBtn')?.addEventListener('click', function () {
             console.log('SIMULATION: Invoice creation form would appear here.');
             const button = this;
             button.textContent = 'Form Shown!';
             setTimeout(() => button.textContent = 'Create New Invoice', 1500);
         });
 
-        document.getElementById('addMemberBtn')?.addEventListener('click', function() {
+        document.getElementById('addMemberBtn')?.addEventListener('click', function () {
             console.log('SIMULATION: Team member addition form would appear here.');
             const button = this;
             button.textContent = 'Form Shown!';
@@ -870,10 +929,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // FIX: Replaced confirm() with console.log and simulated UI behavior
-        document.getElementById('exportPdfBtn')?.addEventListener('click', function() {
-            const password = 'legal2025'; 
+        document.getElementById('exportPdfBtn')?.addEventListener('click', function () {
+            const password = 'legal2025';
             console.log("SIMULATION: Download confirmation required. Password for Secured PDF: " + password);
-            
+
             // --- Custom Modal Simulation (Replacing confirm) ---
             const modal = document.getElementById('detailsModal');
             document.getElementById('detailsTitle').innerText = 'Secure Report Export';
@@ -894,9 +953,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const confirmDownloadBtn = document.createElement('button');
             confirmDownloadBtn.textContent = 'Confirm Download';
             confirmDownloadBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ml-3';
-            confirmDownloadBtn.addEventListener('click', function() {
+            confirmDownloadBtn.addEventListener('click', function () {
                 console.log("DOWNLOAD START: Simulating download of secured_legal_report.txt (Password: " + password + ")");
-                
+
                 // Actual file download simulation (creating a blob and downloading)
                 const data = "Secured Legal Report (Password: legal2025)\n\n" + JSON.stringify(MOCK_CONTRACTS_DATA, null, 2);
                 const blob = new Blob([data], { type: 'text/plain' });
@@ -908,7 +967,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 // Clean up modal
                 modal.style.display = 'none';
                 footer.removeChild(confirmDownloadBtn);
@@ -920,7 +979,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Global click listener for view, analyze, and modal close
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const detailsModal = document.getElementById('detailsModal');
 
     // Close modal button/overlay
@@ -929,7 +988,7 @@ document.addEventListener('click', function(e) {
         // Restore original close button in case a temp confirm button was added
         const footer = detailsModal.querySelector('.mt-4.pt-3.border-t.flex.justify-end');
         const confirmBtn = footer.querySelector('.bg-green-600');
-        if(confirmBtn) {
+        if (confirmBtn) {
             confirmBtn.remove();
             footer.querySelector('button').textContent = 'Close';
         }
@@ -977,7 +1036,7 @@ document.addEventListener('click', function(e) {
             console.error("Error parsing recommendations:", e);
             recommendationsHtml = '<div class="recommendation-item text-gray-500 italic">No specific recommendations available.</div>';
         }
-        
+
         const statusClass = `status-${contractData.risk_level.toLowerCase()}`;
         const html = `
             <div style="line-height:1.6;">
@@ -1024,7 +1083,7 @@ document.addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('download-btn')) {
         const filePath = e.target.getAttribute('data-file');
         console.log(`SIMULATION: Initiating download for file path: ${filePath}`);
-        
+
         // Simulation: create a dummy link to show the file name
         if (filePath) {
             const tempLink = document.createElement('a');
@@ -1032,7 +1091,7 @@ document.addEventListener('click', function(e) {
             tempLink.textContent = `Downloading ${filePath}... (Check console)`;
             tempLink.className = 'text-green-600 text-sm block mt-2';
             e.target.parentNode.appendChild(tempLink);
-            
+
             setTimeout(() => {
                 tempLink.remove();
             }, 2000);
@@ -1041,7 +1100,7 @@ document.addEventListener('click', function(e) {
 });
 
 // Real-time AI analysis preview
-document.getElementById('contractDescription')?.addEventListener('input', function(e) {
+document.getElementById('contractDescription')?.addEventListener('input', function (e) {
     const description = e.target.value;
     const previewDiv = document.getElementById('aiAnalysisPreview');
 
@@ -1056,7 +1115,7 @@ document.getElementById('contractDescription')?.addEventListener('input', functi
             preview.className = 'text-sm text-gray-600 italic mt-2 p-2 bg-blue-50 rounded';
             document.getElementById('contractDescription').parentNode.appendChild(preview);
         }
-        
+
         // Simple mock logic for preview
         let risk = description.toLowerCase().includes('liability') || description.toLowerCase().includes('breach') ? 'Medium/High' : 'Low';
         preview.innerHTML = `AI Preview: <span class="font-semibold text-blue-700">${risk} Risk</span> predicted. Focus on clause structure and duration.`;
@@ -1066,31 +1125,31 @@ document.getElementById('contractDescription')?.addEventListener('input', functi
 });
 
 /* --- START: Management card toggles --- */
-(function(){
-    function showManagementCard(type){
-        document.querySelectorAll('.management-card').forEach(function(el){
+(function () {
+    function showManagementCard(type) {
+        document.querySelectorAll('.management-card').forEach(function (el) {
             el.style.display = 'none';
         });
         var sel = document.querySelector('.management-card.management-' + type);
-        if(sel) sel.style.display = 'block';
+        if (sel) sel.style.display = 'block';
         // update active button styling (simple)
         var a = document.getElementById('show-facilities-card');
         var b = document.getElementById('show-reports-card');
-        if(a && b){
+        if (a && b) {
             a.classList.toggle('active', type === 'facilities');
             b.classList.toggle('active', type === 'reports');
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function () {
         // wire buttons if present
         var bf = document.getElementById('show-facilities-card');
         var br = document.getElementById('show-reports-card');
-        if(bf) bf.addEventListener('click', function(){ showManagementCard('facilities'); });
-        if(br) br.addEventListener('click', function(){ showManagementCard('reports'); });
+        if (bf) bf.addEventListener('click', function () { showManagementCard('facilities'); });
+        if (br) br.addEventListener('click', function () { showManagementCard('reports'); });
 
         // initial state: show facilities card by default
         showManagementCard('facilities');
     });
 })();
- /* --- END: Management card toggles --- */
+/* --- END: Management card toggles --- */

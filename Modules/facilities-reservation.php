@@ -598,7 +598,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <tr>
                                         <td colspan="9" style="text-align: center; padding: 20px;">
                                             <div style="color: #718096; font-style: italic;">
-                                                <i class="fa-regular fa-folder-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                                                <i class="fa-regular fa-folder-open"
+                                                    style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
                                                 No reservations found in the database.
                                                 <!-- DEBUG: Count is <?= count($dashboard_data['reservations']) ?> -->
                                             </div>
@@ -639,29 +640,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </td>
                                             <td>
                                                 <div class="d-flex gap-1" style="flex-wrap: nowrap; justify-content: center;">
+                                                    <button class="btn btn-outline btn-sm btn-icon"
+                                                        onclick="viewReservationDetails(<?= htmlspecialchars(json_encode($reservation)) ?>)"
+                                                        title="View Details" aria-label="View Details">
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </button>
                                                     <?php if ($reservation['status'] == 'pending'): ?>
                                                         <button class="btn btn-success btn-sm btn-icon"
                                                             onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'confirmed')"
-                                                            title="Confirm" aria-label="Confirm">
+                                                            title="Confirm Reservation" aria-label="Confirm">
                                                             <i class="fa-solid fa-check"></i>
                                                         </button>
                                                         <button class="btn btn-danger btn-sm btn-icon"
                                                             onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'cancelled')"
-                                                            title="Cancel" aria-label="Cancel">
+                                                            title="Cancel Reservation" aria-label="Cancel">
                                                             <i class="fa-solid fa-xmark"></i>
                                                         </button>
                                                     <?php elseif ($reservation['status'] == 'confirmed'): ?>
                                                         <button class="btn btn-warning btn-sm btn-icon"
                                                             onclick="updateReservationStatus(<?= $reservation['id'] ?>, 'completed')"
-                                                            title="Complete" aria-label="Complete">
+                                                            title="Mark as Completed" aria-label="Complete">
                                                             <i class="fa-solid fa-flag-checkered"></i>
                                                         </button>
                                                     <?php endif; ?>
-                                                    <button class="btn btn-outline btn-sm btn-icon"
-                                                        onclick="viewReservationDetails(<?= $reservation['id'] ?>)"
-                                                        title="View Details" aria-label="View Details">
-                                                        <i class="fa-solid fa-eye"></i>
-                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -759,28 +760,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <td>₱<?= number_format($rr['total_amount'] ?? 0, 2) ?></td>
                                         <td><?= htmlspecialchars($rr['status']) ?></td>
                                         <td>
-                                            <form method="post" style="display:inline">
-                                                <input type="hidden" name="action" value="update_status">
-                                                <input type="hidden" name="reservation_id" value="<?= $rr['id'] ?>">
-                                                <?php if ($rr['status'] !== 'confirmed'): ?>
-                                                    <button class="btn btn-icon" name="status" value="confirmed" title="Confirm"
-                                                        aria-label="Confirm">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <?php if ($rr['status'] !== 'cancelled'): ?>
-                                                    <button class="btn btn-danger btn-icon" name="status" value="cancelled"
-                                                        title="Cancel" aria-label="Cancel">
-                                                        <i class="fa-solid fa-xmark"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <?php if ($rr['status'] !== 'completed'): ?>
-                                                    <button class="btn btn-icon" name="status" value="completed"
-                                                        title="Complete" aria-label="Complete">
-                                                        <i class="fa-solid fa-flag-checkered"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                            </form>
+                                            <div class="d-flex gap-1" style="justify-content: center;">
+                                                <button type="button" class="btn btn-outline btn-sm btn-icon"
+                                                    onclick="viewReservationDetails(<?= htmlspecialchars(json_encode($rr)) ?>)"
+                                                    title="View Details">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                                <form method="post" style="display:inline-flex; gap: 4px;">
+                                                    <input type="hidden" name="action" value="update_status">
+                                                    <input type="hidden" name="reservation_id" value="<?= $rr['id'] ?>">
+                                                    <?php if ($rr['status'] === 'pending'): ?>
+                                                        <button class="btn btn-success btn-icon" name="status" value="confirmed"
+                                                            title="Confirm" aria-label="Confirm">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-icon" name="status" value="cancelled"
+                                                            title="Cancel" aria-label="Cancel">
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
+                                                    <?php elseif ($rr['status'] === 'confirmed'): ?>
+                                                        <button class="btn btn-warning btn-icon" name="status" value="completed"
+                                                            title="Mark as Completed" aria-label="Complete">
+                                                            <i class="fa-solid fa-flag-checkered"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-icon" name="status" value="cancelled"
+                                                            title="Cancel" aria-label="Cancel">
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -1086,24 +1095,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal (Galing sa JS file) -->
-    <div id="logout-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; padding-bottom: 0.5rem; border-bottom: none;">
-                <h3
-                    style="margin: 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); width: 100%; text-align: center;">
-                    Logout Confirmation</h3>
+    <!-- Reservation Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3>Reservation Details</h3>
+                <span class="close" onclick="closeModal('details-modal')">&times;</span>
             </div>
-            <div style="padding: 1rem 0 1.5rem;">
-                <p style="margin: 0;">Are you sure you want to exit this part of the system?</p>
+            <div id="reservation-details-body" style="line-height: 1.8;">
+                <!-- Filled via JS -->
             </div>
-            <div class="d-flex justify-between" style="gap: 1rem;">
-                <button class="btn btn-outline" onclick="closeModal('logout-modal')"
-                    style="flex: 1; justify-content: center;">Cancel</button>
-                <button class="btn btn-danger" onclick="window.location.href='../auth/login.php?logout=1'"
-                    style="flex: 1; justify-content: center; white-space: nowrap;">
-                    <span class="icon-img-placeholder">🚪</span> Confirm Logout
-                </button>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button class="btn btn-outline" onclick="closeModal('details-modal')">Close</button>
             </div>
         </div>
     </div>
