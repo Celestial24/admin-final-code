@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
               $mail->Host = 'smtp.gmail.com';
               $mail->SMTPAuth = true;
               $mail->Username = 'atiera41001@gmail.com';
-              $mail->Password = 'pjln rqjf revf ryic'; // Update with app-specific password
+              $mail->Password = 'jqxr wuwi shyb tzzp'; // Update with app-specific password
               $mail->Port = 587;
               $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
               $mail->Timeout = 10;
@@ -927,8 +927,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       const email = vemail.value.trim();
       const code = vcode.value.trim();
       const submitBtn = document.getElementById('verifySubmitBtn');
-      const regPassFields = document.getElementById('regPassFields');
-      const isReg = !regPassFields.classList.contains('hidden');
 
       if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
         verifyMsg.textContent = 'Please enter a valid 6-digit code.';
@@ -937,56 +935,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         return;
       }
 
-      let extraParams = {};
-      if (isReg) {
-          const p = document.getElementById('regPass').value;
-          const pc = document.getElementById('regPassConfirm').value;
-          if (!p || p.length < 6) {
-              verifyMsg.textContent = 'Password must be at least 6 characters.';
-              verifyMsg.className = 'text-xs text-red-600';
-              return;
-          }
-          if (p !== pc) {
-              verifyMsg.textContent = 'Passwords do not match.';
-              verifyMsg.className = 'text-xs text-red-600';
-              return;
-          }
-          extraParams = { action: 'complete_registration', new_password: p, confirm_password: pc };
-      } else {
-          extraParams = { action: 'verify' };
-      }
-
       submitBtn.disabled = true;
-      const originalBtnText = submitBtn.textContent;
-      submitBtn.textContent = 'Processing...';
-      verifyMsg.textContent = 'Processing...';
+      submitBtn.textContent = 'Verifying...';
+      verifyMsg.textContent = 'Verifying code...';
       verifyMsg.className = 'text-xs text-slate-500';
 
       try {
         const res = await fetch('verify.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ ...extraParams, email, code })
+          body: new URLSearchParams({ action: 'verify', email, code })
         });
         const data = await res.json();
 
         if (data?.ok) {
-          verifyMsg.textContent = data.message || 'Success! Redirecting...';
+          verifyMsg.textContent = data.message || 'Verification successful! Redirecting...';
           verifyMsg.className = 'text-xs text-green-600';
+
+          // Redirect to dashboard
           setTimeout(() => {
-            window.location.href = data.redirect || '../Modules/facilities-reservation.php';
+            if (data.redirect) {
+              window.location.href = data.redirect;
+            } else {
+              window.location.href = '../Modules/facilities-reservation.php';
+            }
           }, 1000);
         } else {
-          verifyMsg.textContent = data?.message || 'Invalid or expired code.';
+          verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
           verifyMsg.className = 'text-xs text-red-600';
           submitBtn.disabled = false;
-          submitBtn.textContent = originalBtnText;
+          submitBtn.textContent = 'Verify';
+          vcode.value = '';
+          vcode.focus();
         }
       } catch (err) {
         verifyMsg.textContent = 'Network error. Please try again.';
         verifyMsg.className = 'text-xs text-red-600';
         submitBtn.disabled = false;
-        submitBtn.textContent = originalBtnText;
+        submitBtn.textContent = 'Verify';
       }
     });
   </script>

@@ -16,7 +16,7 @@ use PHPMailer\PHPMailer\Exception;
 const SMTP_HOST = 'smtp.gmail.com';
 const SMTP_PORT = 587;
 const SMTP_USER = 'atiera41001@gmail.com';
-const SMTP_PASS = 'lozy tkmh fzpv lycj';
+const SMTP_PASS = 'jqxr wuwi shyb tzzp';
 const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
 const SMTP_FROM_NAME = 'ATIERA Hotel';
 
@@ -170,10 +170,44 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             justify-content: center;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
+            z-index: 1000;
         }
 
         .modal.active {
             display: flex;
+        }
+
+        /* Loading Overlay Style */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .modal-content {
@@ -344,8 +378,22 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <h3 style="margin: 0; font-weight: 600; letter-spacing: 0.5px;">Sending Invitation...</h3>
+        <p style="opacity: 0.8; margin-top: 10px;">Please wait while we set up the account.</p>
+    </div>
+
     <script src="../assets/Javascript/facilities-reservation.js"></script>
     <script>
+        // Form submission loading state
+        document.getElementById('userForm').addEventListener('submit', function (e) {
+            const action = document.getElementById('formAction').value;
+            if (action === 'create_user') {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+        });
         function openEditModal(user) {
             document.getElementById('modalTitle').innerText = 'Edit User';
             document.getElementById('formAction').value = 'update_user';
