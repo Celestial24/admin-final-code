@@ -863,7 +863,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             </div>
 
             <!-- Contracts Section -->
-            <div class="content-section" id="contracts" style="display:none;">
+            <div class="content-section" id="contracts">
                 <div class="section-header">
                     <h2 class="section-title">Contracts <span class="ai-badge">AI-Powered Analysis</span></h2>
                     <div style="display: flex; gap: 10px;">
