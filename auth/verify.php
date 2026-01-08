@@ -51,6 +51,16 @@ function send_email($to, $name, $code)
         $mail->Password = SMTP_PASS;
         $mail->Port = SMTP_PORT;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+        // SSL Bypass
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
+
         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
         $mail->addAddress($to, $name);
         $mail->isHTML(true);
@@ -69,6 +79,7 @@ function send_email($to, $name, $code)
         $mail->send();
         return true;
     } catch (Exception $e) {
+        error_log("PHPMailer Error: " . $mail->ErrorInfo);
         return false;
     }
 }

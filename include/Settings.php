@@ -108,6 +108,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $pdo->beginTransaction();
 
+                    // Detect Base URL dynamically
+                    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+                    $host = $_SERVER['HTTP_HOST'];
+                    $scriptPath = $_SERVER['SCRIPT_NAME'];
+                    // Get project root (parent of 'include' dir)
+                    $projectRoot = dirname(dirname($scriptPath));
+                    if ($projectRoot === DIRECTORY_SEPARATOR || $projectRoot === '.')
+                        $projectRoot = '';
+                    $baseUrl = $protocol . "://" . $host . $projectRoot;
+
                     if (!empty($password)) {
                         // 1. Insert user with manual password
                         $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, ?)");
@@ -123,12 +133,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Password = SMTP_PASS;
                         $mail->Port = SMTP_PORT;
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+                        // SSL Bypass for common hosting issues
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+
                         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                         $mail->addAddress($email, $full_name);
                         $mail->isHTML(true);
                         $mail->Subject = 'Welcome to ATIERA Admin Panel';
 
-                        $loginUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]/admin-final-code/auth/login.php";
+                        $loginUrl = $baseUrl . "/auth/login.php";
 
                         $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
@@ -168,13 +188,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Password = SMTP_PASS;
                         $mail->Port = SMTP_PORT;
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+
                         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                         $mail->addAddress($email, $full_name);
                         $mail->isHTML(true);
                         $mail->Subject = 'Verify Your ATIERA Account';
 
-                        $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
-                        $loginUrl = $baseUrl . "/admin-final-code/auth/login.php?verify_new=1&email=" . urlencode($email);
+                        $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
 
                         $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
@@ -197,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = "User created successfully!";
                 } catch (\Exception $e) {
                     $pdo->rollBack();
-                    $error = "Error: " . $e->getMessage();
+                    $error = "Error: " . $e->getMessage() . (isset($mail) ? " (Mailer: " . $mail->ErrorInfo . ")" : "");
                 }
             }
         }

@@ -106,6 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
               $mail->Port = 587;
               $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
               $mail->Timeout = 10;
+
+              // SSL Bypass
+              $mail->SMTPOptions = array(
+                'ssl' => array(
+                  'verify_peer' => false,
+                  'verify_peer_name' => false,
+                  'allow_self_signed' => true
+                )
+              );
+
               $mail->setFrom('atiera41001@gmail.com', 'ATIERA Hotel');
               $mail->addAddress($user['email'], $user['full_name'] ?: $user['email']);
               $mail->isHTML(true);
@@ -123,9 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
               $mail->AltBody = "Your ATIERA verification code is: {$code}\nThis code expires in 15 minutes.";
               $mail->send();
             } catch (\Exception $e) {
-              // Email sending failed, but continue to show modal
-              // User can still use resend button
-              error_log("Email send failed during login for {$user['email']}: " . $e->getMessage());
+              error_log("Email send failed during login for {$user['email']}: " . $e->getMessage() . " (Mailer info: " . $mail->ErrorInfo . ")");
+              $error_message = "Could not send verification email. Mailer error: " . $mail->ErrorInfo;
             }
           } catch (\Exception $e) {
             // Code generation or database insert failed
