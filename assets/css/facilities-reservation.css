@@ -1144,22 +1144,26 @@ body {
     margin-top: 1rem;
     display: flex;
     gap: 1rem;
+    flex-wrap: nowrap;
+    /* Force straight line container */
+    overflow-x: auto;
+    /* allow scroll on mobile if too many */
+    padding-bottom: 5px;
 }
 
 .management-btn {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.85rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
     flex: 0 0 auto;
-    /* Don't grow/shrink too much */
-    min-width: 180px;
-    /* Ensure enough width for text */
-    white-space: nowrap;
-    /* Keep text on one line */
+    min-width: fit-content;
+    /* Adjust to content */
+    white-space: nowrap !important;
+    /* ABSOLUTELY NO WRAPPING */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .management-btn i {

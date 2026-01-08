@@ -88,4 +88,9 @@ CREATE TABLE `maintenance_logs` (
   KEY `idx_maintenance_date` (`maintenance_date`),
   KEY `idx_maintenance_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Sample Data to populate the table
+INSERT INTO `maintenance_logs` (`id`, `item_name`, `description`, `maintenance_date`, `assigned_staff`, `contact_number`, `status`) VALUES
+(1, 'Executive Boardroom AC', 'Airconditioning unit is not cooling properly.', '2025-01-08', 'John Doe', '09123456789', 'pending'),
+(2, 'Grand Ballroom Lighting', 'Several bulb replacements needed in the main chandelier.', '2025-01-09', 'Jane Smith', '09223334444', 'in-progress');
 ```
