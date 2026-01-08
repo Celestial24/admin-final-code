@@ -557,7 +557,11 @@ document.addEventListener('click', function (e) {
                         <p class="mb-1"><strong>Case ID:</strong> ${contractData.case_id}</p>
                         <p class="mb-1"><strong>Risk Level:</strong> <span class="status-badge ${statusClass}">${contractData.risk_level.toUpperCase()}</span></p>
                         <p class="mb-1"><strong>Risk Score:</strong> <span class="font-bold text-lg">${contractData.risk_score}/100</span></p>
-                        <p class="mt-2 text-sm italic border-t pt-2"><strong>Summary:</strong> ${contractData.analysis_summary || 'No summary available'}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(59, 130, 246, 0.2); padding-bottom:5px;">
+                            <h4 style="margin:0; color:#1e40af;">Analysis Summary</h4>
+                            ${contractData.file_path ? `<a href="${contractData.file_path}" target="_blank" style="font-size:0.8rem; color:#3b82f6; text-decoration:none; font-weight:700;">📄 View Contract</a>` : ''}
+                        </div>
+                        <p class="mt-2 text-sm italic"><strong>Summary:</strong> ${contractData.analysis_summary || 'No summary available'}</p>
                     </div>
                     
                     <div class="ai-analysis-section mb-6">

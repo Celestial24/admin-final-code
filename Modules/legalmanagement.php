@@ -1758,18 +1758,13 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <div style="height:100%; width:${Number(score) || 0}%; background:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; transition: width 0.5s ease;"></div>
                                 </div>
                                 
-                                    <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
-                                    <h4 style="margin: 0 0 8px; color: #1e40af;">Analysis Summary</h4>
-                                    <p style="margin: 0; color: #334155; line-height: 1.5;">${summary}</p>
-                                </div>
-
-                                ${c.file_path ? `
-                                <div style="margin-bottom: 20px;">
-                                    <a href="${c.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
-                                        📄 View Original Contract
-                                    </a>
-                                </div>
-                                ` : ''}
+                                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                            <h4 style="margin: 0; color: #1e40af;">Analysis Summary</h4>
+                                            ${c.file_path ? `<a href="${c.file_path}" target="_blank" style="font-size: 0.85rem; color: #4a6cf7; text-decoration: none; font-weight: 700; background: #eff6ff; padding: 4px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">📄 View Contract</a>` : ''}
+                                        </div>
+                                        <p style="margin: 0; color: #334155; line-height: 1.5;">${summary}</p>
+                                    </div>
 
                                 <div style="margin-bottom: 15px;">
                                     <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Key Risk Factors</h4>
