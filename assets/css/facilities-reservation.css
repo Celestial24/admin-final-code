@@ -1197,6 +1197,75 @@ body {
     /* Ensure wrapper doesn't overflow */
 }
 
+/* ========== MANAGEMENT SECTION STYLES ========== */
+
+/* Management Header */
+.management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.management-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Management Buttons Container */
+.management-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Management Button Styles */
+.management-btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    background: white;
+    border: 2px solid var(--border);
+    color: var(--dark);
+}
+
+.management-btn:hover {
+    background: var(--light);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2);
+}
+
+.management-btn.active {
+    background: var(--accent) !important;
+    color: white !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+.management-btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.management-btn:hover i {
+    transform: scale(1.1);
+}
+
 /* Update management cards and table styling */
 .management-cards {
     display: grid;
@@ -1211,6 +1280,15 @@ body {
     width: 100%;
     max-width: 100% !important;
     /* Override previous max-width */
+    /* Hide all management cards by default */
+    display: none !important;
+    visibility: hidden;
+}
+
+/* Show the active management card */
+.management-card[style*="display: block"] {
+    display: block !important;
+    visibility: visible;
 }
 
 /* Ensure tables take full width */

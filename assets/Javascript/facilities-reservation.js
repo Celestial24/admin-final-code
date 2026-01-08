@@ -251,9 +251,11 @@ window.showManagementCard = function (type) {
         }
     } else {
         console.error('CRITICAL ERROR: Management card not found for type:', type);
+        console.log('Available cards:', Array.from(allCards).map(c => c.className));
         // Fallback: try finding by data attribute if exists
         const fallback = document.querySelector(`[data-card-type="${type}"]`);
         if (fallback) {
+            console.log('Found fallback card with data attribute');
             fallback.style.setProperty('display', 'block', 'important');
             fallback.style.visibility = 'visible';
         }
@@ -278,6 +280,8 @@ window.showManagementCard = function (type) {
                 btn.style.background = '';
                 btn.style.color = '';
             }
+        } else {
+            console.warn(`Button not found for: ${key}`);
         }
     });
 };
