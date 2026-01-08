@@ -114,13 +114,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $pdo->beginTransaction();
 
-                        // Detect Base URL dynamically
+                        // Reliable Base URL detection
                         $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
                         $host = $_SERVER['HTTP_HOST'];
-                        $scriptPath = $_SERVER['SCRIPT_NAME'];
-                        // Get project root (parent of 'include' dir)
-                        $projectRoot = dirname(dirname($scriptPath));
-                        if ($projectRoot === DIRECTORY_SEPARATOR || $projectRoot === '.')
+                        // Get the path to the current directory and go up one level to reach project root
+                        $currentDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+                        $projectRoot = str_replace('\\', '/', dirname($currentDir));
+                        if ($projectRoot === '/')
                             $projectRoot = '';
                         $baseUrl = $protocol . "://" . $host . $projectRoot;
 
@@ -140,19 +140,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->Port = SMTP_PORT;
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-                            // SSL Bypass for common hosting issues
                             $mail->SMTPOptions = array(
-                                'ssl' => array(
-                                    'verify_peer' => false,
-                                    'verify_peer_name' => false,
-                                    'allow_self_signed' => true
-                                )
+                                'ssl' => array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)
                             );
 
                             $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                             $mail->addAddress($email, $full_name);
                             $mail->isHTML(true);
-                            $mail->Subject = 'Welcome to ATIERA Admin Panel';
+                            $mail->Subject = 'New Account Created: ATIERA Admin Panel';
 
                             $loginUrl = $baseUrl . "/auth/login.php";
 
@@ -160,32 +155,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
                                 <h2 style=\"color: #0f172a;\">Welcome to ATIERA</h2>
                                 <p>Hello {$full_name},</p>
-                                <p>You have been added as an administrator. Here are your login credentials:</p>
+                                <p>An account has been created for you. Here are your credentials:</p>
                                 <div style=\"background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;\">
-                                    <p style=\"margin: 0; font-size: 14px;\"><strong>Username:</strong> {$username}</p>
-                                    <p style=\"margin: 5px 0 0; font-size: 14px;\"><strong>Password:</strong> <span style=\"color: #1e40af; font-weight: bold;\">{$password}</span></p>
+                                    <p style=\"margin: 0;\"><strong>Username:</strong> {$username}</p>
+                                    <p style=\"margin: 5px 0 0;\"><strong>Password:</strong> <span style=\"color: #1e40af; font-weight: bold;\">{$password}</span></p>
                                 </div>
-                                <p>Please login and change your password as soon as possible.</p>
+                                <p>You can log in at:</p>
                                 <div style=\"margin: 20px 0; text-align: center;\">
-                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Login Now</a>
+                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Go to Login Page</a>
                                 </div>
                             </div>
                         ";
                             $mail->send();
+                            $message = "User created! Login details sent to <strong>" . htmlspecialchars($email) . "</strong>";
                         } else {
                             // 1. Insert user (placeholder password)
                             $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, 'PENDING_REGISTRATION')");
                             $stmt->execute([$username, $email, $full_name]);
                             $newUserId = $pdo->lastInsertId();
 
-                            // 2. Generate Verification Code (6 digits)
+                            // 2. Generate Verification Code
                             $code = (string) random_int(100000, 999999);
                             $expiresAt = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
-
                             $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (?, ?, ?)');
                             $stmt->execute([$newUserId, $code, $expiresAt]);
 
-                            // 3. Send Invitation Email
+                            // 3. Send Invitation
                             $mail = new PHPMailer(true);
                             $mail->isSMTP();
                             $mail->Host = SMTP_HOST;
@@ -196,47 +191,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
                             $mail->SMTPOptions = array(
-                                'ssl' => array(
-                                    'verify_peer' => false,
-                                    'verify_peer_name' => false,
-                                    'allow_self_signed' => true
-                                )
+                                'ssl' => array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)
                             );
 
                             $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                             $mail->addAddress($email, $full_name);
                             $mail->isHTML(true);
-                            $mail->Subject = 'Verify Your ATIERA Account';
+                            $mail->Subject = 'Invitation to join ATIERA Admin Panel';
 
                             $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
 
                             $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
-                                <h2 style=\"color: #0f172a;\">Account Verification</h2>
+                                <h2 style=\"color: #0f172a;\">Account Invitation</h2>
                                 <p>Hello {$full_name},</p>
-                                <p>You have been added as an administrator. Please use the verification code below to set your password and complete your registration:</p>
+                                <p>You have been invited to join ATIERA. Please use the code below to complete your registration:</p>
                                 <div style=\"text-align: center; margin: 30px 0; background: #f8fafc; padding: 20px; border-radius: 8px; border: 2px dashed #e2e8f0;\">
                                     <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #1e40af;\">{$code}</span>
                                 </div>
-                                <p>Once you have the code, click the link below to complete your registration:</p>
+                                <p>Click the link below to set your password:</p>
                                 <div style=\"margin: 20px 0; text-align: center;\">
-                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Complete Registration</a>
+                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Activate Account</a>
                                 </div>
                                 <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Code expires in 24 hours.</p>
                             </div>
                         ";
                             $mail->send();
+                            $message = "Invitation sent to <strong>" . htmlspecialchars($email) . "</strong>! They can now activate their account.";
                         }
                         $pdo->commit();
-                        if (!empty($password)) {
-                            $message = "User created successfully! Login details sent to <strong>" . htmlspecialchars($email) . "</strong>";
-                        } else {
-                            $message = "Invitation sent to <strong>" . htmlspecialchars($email) . "</strong>! They can now set their password.";
-                        }
                     }
                 } catch (\Exception $e) {
-                    $pdo->rollBack();
-                    $error = "Error: " . $e->getMessage() . (isset($mail) ? " (Mailer: " . $mail->ErrorInfo . ")" : "");
+                    if ($pdo->inTransaction())
+                        $pdo->rollBack();
+                    $error = "Mailer Error: " . (isset($mail) ? $mail->ErrorInfo : $e->getMessage());
                 }
             }
         }
