@@ -1415,7 +1415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
         // Final insurance to ensure Management functions are ready
-            document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
             if (sessionStorage.getItem('activeTab') === 'management') {
                 setTimeout(function () {
                     if (typeof window.showManagementCard === 'function') {
@@ -1425,16 +1425,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-            function showLoadingAndRedirect(url) {
+        // Initial Page Load Animation
+        window.addEventListener('DOMContentLoaded', function () {
             const loader = document.getElementById('loadingOverlay');
-            if(loader) {
+            if (loader) {
                 loader.style.display = 'block';
-            loader.style.opacity = '1';
-            const iframe = loader.querySelector('iframe');
-            if(iframe) iframe.src = iframe.src;
-                
+                loader.style.opacity = '1';
+                const iframe = loader.querySelector('iframe');
+                if (iframe) iframe.src = iframe.src;
+
                 setTimeout(() => {
-                window.location.href = url;
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }, 2500);
+            }
+        });
+
+        function showLoadingAndRedirect(url) {
+            const loader = document.getElementById('loadingOverlay');
+            if (loader) {
+                loader.style.display = 'block';
+                loader.style.opacity = '1';
+                const iframe = loader.querySelector('iframe');
+                if (iframe) iframe.src = iframe.src;
+
+                setTimeout(() => {
+                    window.location.href = url;
                 }, 3000); // 3s animation
             } else {
                 window.location.href = url;
