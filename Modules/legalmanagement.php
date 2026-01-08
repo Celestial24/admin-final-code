@@ -1047,7 +1047,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
 
 
-    <script src="../assets/Javascript/legalmanagemet.js"></script>
+    <script src="../assets/Javascript/legalmanagemet.js?v=<?php echo time(); ?>"></script>
 
     <!-- Details Modal -->
     <div id="detailsModal"
