@@ -5,7 +5,7 @@ $is_dashboard = ($current_page == 'facilities-reservation.php');
 function get_nav_link($tab, $is_dashboard)
 {
     if ($is_dashboard) {
-        return "#\" onclick=\"event.preventDefault(); if(typeof switchTab === 'function') switchTab('$tab'); return false;\"";
+        return "#\" onclick=\"event.preventDefault(); handleSidebarNav('$tab'); return false;\"";
     } else {
         return "../Modules/facilities-reservation.php?tab=$tab\"";
     }
@@ -69,3 +69,69 @@ function get_nav_link($tab, $is_dashboard)
         </ul>
     </div>
 </nav>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 1. Inject Overlay if missing (Avoid duplicates)
+        if (!document.getElementById('loadingOverlay')) {
+            const div = document.createElement('div');
+            div.id = 'loadingOverlay';
+            div.style.cssText = 'display:none; position:fixed; inset:0; z-index:99999; background:#000; transition: opacity 0.5s ease; opacity: 1;';
+            div.innerHTML = '<iframe src="../animation/loading.html" style="width:100%; height:100%; border:none;"></iframe>';
+            document.body.appendChild(div);
+        }
+
+        // 2. Define Global Loader Function
+        window.runLoadingAnimation = function (callback, isRedirect = false) {
+            const loader = document.getElementById('loadingOverlay');
+            if (loader) {
+                loader.style.display = 'block';
+                loader.style.opacity = '1';
+                const iframe = loader.querySelector('iframe');
+                if (iframe) iframe.src = iframe.src;
+
+                setTimeout(() => {
+                    if (callback) callback();
+                    if (!isRedirect) {
+                        // Fade out if staying on page
+                        loader.style.opacity = '0';
+                        setTimeout(() => { loader.style.display = 'none'; }, 500);
+                    }
+                }, 3000); // 3s Duration
+            } else {
+                if (callback) callback();
+            }
+        };
+
+        // 3. Intercept Normal URL Links in Sidebar
+        const links = document.querySelectorAll('.sidebar a');
+        links.forEach(a => {
+            const href = a.getAttribute('href');
+            const onclick = a.getAttribute('onclick');
+
+            // If it's a direct URL link (not hash, not handled by onclick)
+            if (href && href !== '#' && !href.startsWith('javascript') && !onclick) {
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (typeof window.runLoadingAnimation === 'function') {
+                        window.runLoadingAnimation(() => {
+                            window.location.href = href;
+                        }, true);
+                    } else {
+                        window.location.href = href;
+                    }
+                });
+            }
+        });
+    });
+
+    // 4. Handle Tab Switching (Called by onclick)
+    window.handleSidebarNav = function (tab) {
+        if (typeof window.runLoadingAnimation === 'function') {
+            window.runLoadingAnimation(() => {
+                if (typeof switchTab === 'function') switchTab(tab);
+            }, false);
+        } else {
+            if (typeof switchTab === 'function') switchTab(tab);
+        }
+    };
+</script>
