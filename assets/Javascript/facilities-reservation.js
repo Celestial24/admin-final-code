@@ -1130,22 +1130,28 @@ document.getElementById('contractDescription')?.addEventListener('input', functi
         document.querySelectorAll('.management-card').forEach(function (el) {
             el.style.display = 'none';
         });
+
         var sel = document.querySelector('.management-card.management-' + type);
         if (sel) sel.style.display = 'block';
-        // update active button styling (simple)
-        var a = document.getElementById('show-facilities-card');
-        var b = document.getElementById('show-reports-card');
-        if (a && b) {
-            a.classList.toggle('active', type === 'facilities');
-            b.classList.toggle('active', type === 'reports');
-        }
+
+        // update active button styling
+        var bf = document.getElementById('show-facilities-card');
+        var bm = document.getElementById('show-maintenance-card');
+        var br = document.getElementById('show-reports-card');
+
+        if (bf) bf.classList.toggle('active', type === 'facilities');
+        if (bm) bm.classList.toggle('active', type === 'maintenance');
+        if (br) br.classList.toggle('active', type === 'reports');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         // wire buttons if present
         var bf = document.getElementById('show-facilities-card');
+        var bm = document.getElementById('show-maintenance-card');
         var br = document.getElementById('show-reports-card');
+
         if (bf) bf.addEventListener('click', function () { showManagementCard('facilities'); });
+        if (bm) bm.addEventListener('click', function () { showManagementCard('maintenance'); });
         if (br) br.addEventListener('click', function () { showManagementCard('reports'); });
 
         // initial state: show facilities card by default

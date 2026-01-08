@@ -119,6 +119,34 @@ class ReservationSystem
         }
     }
 
+    public function addMaintenanceLog($data)
+    {
+        $pdo = $this->pdo;
+        try {
+            $stmt = $pdo->prepare("INSERT INTO maintenance_logs (item_name, description, maintenance_date, assigned_staff, contact_number, status) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                htmlspecialchars($data['item_name']),
+                htmlspecialchars($data['description'] ?? ''),
+                $data['maintenance_date'],
+                htmlspecialchars($data['assigned_staff']),
+                htmlspecialchars($data['contact_number'] ?? ''),
+                $data['status'] ?? 'pending'
+            ]);
+            return ['success' => true, 'message' => "Maintenance log added successfully!"];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => "Error adding maintenance log: " . $e->getMessage()];
+        }
+    }
+
+    public function fetchMaintenanceLogs()
+    {
+        try {
+            return $this->pdo->query("SELECT * FROM maintenance_logs ORDER BY maintenance_date DESC, created_at DESC")->fetchAll();
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
     public function fetchDashboardData()
     {
         $pdo = $this->pdo;
@@ -143,7 +171,6 @@ class ReservationSystem
                 LIMIT 50
             ")->fetchAll();
 
-            // Today's schedule
             $data['today_schedule'] = $pdo->query("
                 SELECT r.*, f.name as facility_name 
                 FROM reservations r 
@@ -151,6 +178,10 @@ class ReservationSystem
                 WHERE r.event_date = CURDATE() AND r.status = 'confirmed' 
                 ORDER BY r.start_time
             ")->fetchAll();
+
+            // Maintenance data
+            $data['maintenance_logs'] = $this->fetchMaintenanceLogs();
+            $data['pending_maintenance'] = $pdo->query("SELECT COUNT(*) FROM maintenance_logs WHERE status != 'completed'")->fetchColumn();
 
         } catch (PDOException $e) {
             $data['error'] = "Error fetching data: " . $e->getMessage();
@@ -216,6 +247,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'add_facility':
                 $result = $reservationSystem->addFacility($_POST);
+                if ($result['success']) {
+                    $success_message = $result['message'];
+                } else {
+                    $error_message = $result['message'];
+                }
+                break;
+
+            case 'add_maintenance':
+                $result = $reservationSystem->addMaintenanceLog($_POST);
                 if ($result['success']) {
                     $success_message = $result['message'];
                 } else {
@@ -846,6 +886,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <button id="show-facilities-card" class="btn btn-outline management-btn">
                                 <span class="icon-img-placeholder">🏢</span> Facility Card
                             </button>
+                            <button id="show-maintenance-card" class="btn btn-outline management-btn">
+                                <span class="icon-img-placeholder">🛠️</span> Maintenance & Status
+                            </button>
                             <button id="show-reports-card" class="btn btn-outline management-btn">
                                 <span class="icon-img-placeholder">📊</span> Reports Card
                             </button>
@@ -886,6 +929,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Maintenance & Status Card -->
+                        <div class="card management-card management-maintenance">
+                            <div class="card-header">
+                                <h3><span class="icon-img-placeholder">🛠️</span> Maintenance & Deployed Staff</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="d-flex justify-between align-center mb-1">
+                                    <button class="btn btn-primary" onclick="openModal('maintenance-modal')">
+                                        <span class="icon-img-placeholder">➕</span> Log Maintenance Issue
+                                    </button>
+                                    <div
+                                        style="background: #fff3cd; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                        <strong><span class="icon-img-placeholder">⚠️</span> Pending Tasks:</strong>
+                                        <?= $dashboard_data['pending_maintenance'] ?? 0 ?>
+                                    </div>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table class="table management-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item/Area</th>
+                                                <th>Issue/Description</th>
+                                                <th>Scheduled Date</th>
+                                                <th>Deployed Staff</th>
+                                                <th>Contact</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (empty($dashboard_data['maintenance_logs'])): ?>
+                                                <tr>
+                                                    <td colspan="6"
+                                                        style="text-align: center; padding: 2rem; color: #718096; font-style: italic;">
+                                                        No maintenance logs found.
+                                                    </td>
+                                                </tr>
+                                            <?php else: ?>
+                                                <?php foreach ($dashboard_data['maintenance_logs'] as $log): ?>
+                                                    <tr>
+                                                        <td><strong><?= htmlspecialchars($log['item_name']) ?></strong></td>
+                                                        <td style="font-size: 0.85rem;">
+                                                            <?= htmlspecialchars($log['description']) ?></td>
+                                                        <td><?= date('M d, Y', strtotime($log['maintenance_date'])) ?></td>
+                                                        <td><?= htmlspecialchars($log['assigned_staff']) ?></td>
+                                                        <td><?= htmlspecialchars($log['contact_number']) ?></td>
+                                                        <td>
+                                                            <span class="status-badge status-<?= $log['status'] ?>">
+                                                                <?= ucfirst($log['status']) ?>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1090,6 +1192,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <button type="submit" class="btn btn-primary btn-block">
                     <span class="icon-img-placeholder">➕</span> Add Facility
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Maintenance Modal -->
+    <div id="maintenance-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Log Maintenance/Repair</h3>
+                <span class="close" onclick="closeModal('maintenance-modal')">&times;</span>
+            </div>
+            <form id="maintenance-form" method="POST">
+                <input type="hidden" name="action" value="add_maintenance">
+
+                <div class="form-group">
+                    <label for="item_name">Item or Area to Fix</label>
+                    <input type="text" id="item_name" name="item_name" class="form-control"
+                        placeholder="e.g., Aircon Unit A, Room 302, Hallway Light" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Issue/Problem Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"
+                        placeholder="Describe what's wrong..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="maintenance_date">Target Repair Date</label>
+                    <input type="date" id="maintenance_date" name="maintenance_date" class="form-control" required
+                        min="<?= date('Y-m-d') ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="assigned_staff">Deployed Staff (Assigned To)</label>
+                    <input type="text" id="assigned_staff" name="assigned_staff" class="form-control"
+                        placeholder="Name of person to fix it" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact_number">Contact Number</label>
+                    <input type="tel" id="contact_number" name="contact_number" class="form-control"
+                        placeholder="Staff contact info">
+                </div>
+
+                <div class="form-group">
+                    <label for="mnt_status">Initial Status</label>
+                    <select id="mnt_status" name="status" class="form-control">
+                        <option value="pending">Pending (Not Started)</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span class="icon-img-placeholder">💾</span> Save Maintenance Log
                 </button>
             </form>
         </div>

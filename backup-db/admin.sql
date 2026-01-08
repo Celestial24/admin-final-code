@@ -247,6 +247,24 @@ INSERT INTO `facilities` (`id`, `name`, `type`, `capacity`, `location`, `descrip
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `maintenance_logs`
+--
+
+CREATE TABLE `maintenance_logs` (
+  `id` int(11) NOT NULL,
+  `item_name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `maintenance_date` date NOT NULL,
+  `assigned_staff` varchar(255) NOT NULL,
+  `contact_number` varchar(50) DEFAULT NULL,
+  `status` enum('pending','in-progress','completed') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `financial_records`
 --
 
@@ -791,6 +809,14 @@ ALTER TABLE `reservations`
   ADD KEY `idx_reservations_facility_date` (`facility_id`,`event_date`);
 
 --
+-- Indexes for table `maintenance_logs`
+--
+ALTER TABLE `maintenance_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_maintenance_date` (`maintenance_date`),
+  ADD KEY `idx_maintenance_status` (`status`);
+
+--
 -- Indexes for table `restaurant_reservations`
 --
 ALTER TABLE `restaurant_reservations`
@@ -883,6 +909,12 @@ ALTER TABLE `guests`
 --
 ALTER TABLE `inventory`
   MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `maintenance_logs`
+--
+ALTER TABLE `maintenance_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `menu_categories`
