@@ -40,6 +40,13 @@ if (isset($_GET['email_failed']) && $_GET['email_failed'] === '1') {
   $error_message = 'Email could not be sent, but your verification code was saved. Please use the "Resend code" button in the verification modal.';
 }
 
+// Handle invitation link
+if (isset($_GET['verify_new']) && isset($_GET['email'])) {
+  $prefill_email = $_GET['email'];
+  $show_verify_modal = true;
+  $success_message = 'Please enter the 6-digit code from your email and set your password.';
+}
+
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
   $username = trim($_POST['username']);
@@ -743,6 +750,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     const showInfo = (msg) => { infoBox.textContent = msg; infoBox.classList.remove('hidden'); };
     const hideInfo = () => infoBox.classList.add('hidden');
 
+    // Auto-open verify modal if needed
+    window.addEventListener('load', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('verify_new') === '1' || <?php echo $show_verify_modal ? 'true' : 'false'; ?>) {
+        verifyBackdrop.classList.remove('hidden');
+        verifyModal.classList.remove('hidden');
+        if (urlParams.get('verify_new') === '1') {
+          $('#regPassFields').classList.remove('hidden');
+          $('#verifySubmitBtn').textContent = 'Complete Registration';
+        }
+      }
+    });
+
     /* ---------- Caps Lock chip ---------- */
     function caps(e) {
       const on = e.getModifierState && e.getModifierState('CapsLock');
@@ -935,6 +955,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       e.preventDefault();
       const email = vemail.value.trim();
       const code = vcode.value.trim();
+      const regPassFields = $('#regPassFields');
+      const isReg = !regPassFields.classList.contains('hidden');
       const submitBtn = document.getElementById('verifySubmitBtn');
 
       if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
@@ -942,6 +964,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         verifyMsg.className = 'text-xs text-red-600';
         vcode.focus();
         return;
+      }
+
+      const params = { action: isReg ? 'complete_registration' : 'verify', email, code };
+
+      if (isReg) {
+        const pass = $('#regPass').value;
+        const conf = $('#regPassConfirm').value;
+        if (!pass || pass.length < 6) {
+          verifyMsg.textContent = 'Password must be at least 6 characters.';
+          verifyMsg.className = 'text-xs text-red-600';
+          return;
+        }
+        if (pass !== conf) {
+          verifyMsg.textContent = 'Passwords do not match.';
+          verifyMsg.className = 'text-xs text-red-600';
+          return;
+        }
+        params.new_password = pass;
       }
 
       submitBtn.disabled = true;
@@ -953,7 +993,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         const res = await fetch('verify.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ action: 'verify', email, code })
+          body: new URLSearchParams(params)
         });
         const data = await res.json();
 
@@ -973,7 +1013,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
           verifyMsg.className = 'text-xs text-red-600';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Verify';
+          submitBtn.textContent = isReg ? 'Complete Registration' : 'Verify';
           vcode.value = '';
           vcode.focus();
         }
@@ -981,7 +1021,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         verifyMsg.textContent = 'Network error. Please try again.';
         verifyMsg.className = 'text-xs text-red-600';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Verify';
+        submitBtn.textContent = isReg ? 'Complete Registration' : 'Verify';
       }
     });
   </script>

@@ -392,7 +392,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <th style="text-align: center;">FULL NAME</th>
                                     <th style="text-align: center;">USERNAME</th>
                                     <th style="text-align: center;">EMAIL</th>
-                                    <th style="text-align: center;"></th>
                                 </tr>
                             </thead>
                             <tbody>

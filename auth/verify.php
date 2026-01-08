@@ -27,17 +27,19 @@ function json_out($data, $status = 200)
     exit;
 }
 
-// 1. Validate Session Context
-// We expect 'temp_email' and 'temp_user_id' to be set by login.php
-if (empty($_SESSION['temp_user_id']) || empty($_SESSION['temp_email'])) {
-    json_out(['ok' => false, 'message' => 'Session expired. Please login again.'], 401);
-}
-
-$userId = $_SESSION['temp_user_id'];
-$email = $_SESSION['temp_email'];
+// 1. Context variables
+$userId = $_SESSION['temp_user_id'] ?? null;
+$email = $_SESSION['temp_email'] ?? null;
 $name = $_SESSION['temp_name'] ?? 'Admin';
 
 $action = $_POST['action'] ?? 'verify';
+
+// Validate session only for actions that depend on it
+if ($action === 'verify' || $action === 'resend') {
+    if (empty($userId) || empty($email)) {
+        json_out(['ok' => false, 'message' => 'Session expired. Please login again.'], 401);
+    }
+}
 
 // --- HELPER: Send Email ---
 function send_email($to, $name, $code)
