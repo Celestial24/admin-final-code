@@ -1053,11 +1053,17 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <div id="detailsModal"
         style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(2,6,23,0.4); align-items:center; justify-content:center; z-index:1000;">
         <div
-            style="background:#ffffff; width:90%; max-width:700px; border-radius:28px; padding:35px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0;">
-            <button id="closeDetails"
-                style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
-            <h3 id="detailsTitle">Details</h3>
-            <div id="detailsBody">
+            style="background:#ffffff; width:90%; max-width:700px; border-radius:24px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid #e2e8f0; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div
+                style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; background: #fff;">
+                <h3 id="detailsTitle" style="margin:0; font-size: 1.25rem; color: #1e293b; font-weight: 700;">Details
+                </h3>
+                <button id="closeDetails"
+                    style="background:#f1f5f9; color:#64748b; border:none; width: 32px; height: 32px; border-radius: 50%; cursor:pointer; display: grid; place-items: center; transition: all 0.2s; font-size: 1.1rem;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="detailsBody" style="padding: 24px; overflow-y: auto;">
                 <!-- Fallback content shown if no dynamic content is provided -->
                 <form id="genericModalForm" style="display:block">
                     <div
