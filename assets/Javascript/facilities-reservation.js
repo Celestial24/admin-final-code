@@ -281,6 +281,54 @@ window.showManagementCard = function (type) {
     });
 };
 
+// --- FACILITY ACTIONS ---
+window.viewFacilityDetails = function (facility) {
+    const body = document.getElementById('facility-details-body');
+    if (!body || !facility) return;
+
+    body.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div style="text-align: center; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <i class="fa-solid fa-building" style="font-size: 3rem; color: #3b82f6; margin-bottom: 10px;"></i>
+                <h2 style="margin: 0; color: #1e293b;">${facility.name}</h2>
+                <span class="status-badge status-${facility.status}" style="display: inline-block; margin-top: 10px;">
+                    ${facility.status.toUpperCase()}
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <h4 style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Type</h4>
+                    <p style="margin: 0; font-weight: 600;">${facility.type.charAt(0).toUpperCase() + facility.type.slice(1)}</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <h4 style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Capacity</h4>
+                    <p style="margin: 0; font-weight: 600;">${facility.capacity} Guests</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <h4 style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Hourly Rate</h4>
+                    <p style="margin: 0; font-weight: 600; color: #059669;">₱${parseFloat(facility.hourly_rate).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <h4 style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Location</h4>
+                    <p style="margin: 0; font-weight: 600;">${facility.location}</p>
+                </div>
+            </div>
+
+            <div style="background: #fdf2f2; padding: 15px; border-radius: 10px; border-left: 4px solid #ef4444;">
+                <h4 style="font-size: 0.8rem; color: #991b1b; font-weight: 700; margin-bottom: 5px;">Facility Description</h4>
+                <p style="margin: 0; color: #b91c1c; font-size: 0.9rem; line-height: 1.5;">${facility.description || 'No description available for this facility.'}</p>
+            </div>
+            
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 10px; border-left: 4px solid #22c55e;">
+                <h4 style="font-size: 0.8rem; color: #166534; font-weight: 700; margin-bottom: 5px;">Amenities</h4>
+                <p style="margin: 0; color: #15803d; font-size: 0.9rem;">${facility.amenities || 'Standard hotel amenities included.'}</p>
+            </div>
+        </div>
+    `;
+    window.openModal('facility-details-modal');
+};
+
 // --- MAINTENANCE ACTIONS ---
 window.viewMaintenanceDetails = function (log) {
     const body = document.getElementById('maintenance-details-body');

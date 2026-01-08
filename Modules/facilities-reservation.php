@@ -958,23 +958,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <table class="table management-table">
                                         <thead>
                                             <tr>
-                                                <th>Name</th>
+                                                <th style="text-align: left !important;">Name</th>
                                                 <th>Type</th>
                                                 <th>Rate</th>
                                                 <th>Status</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($dashboard_data['facilities'] as $facility): ?>
                                                 <tr>
-                                                    <td><?= htmlspecialchars($facility['name']) ?></td>
-                                                    <td><?= htmlspecialchars($facility['type']) ?></td>
-                                                    <td>₱<?= number_format($facility['hourly_rate'], 2) ?></td>
+                                                    <td style="font-weight: 600; text-align: left !important;">
+                                                        <?= htmlspecialchars($facility['name']) ?></td>
+                                                    <td><?= ucfirst(htmlspecialchars($facility['type'])) ?></td>
+                                                    <td style="font-weight: 500;">
+                                                        ₱<?= number_format($facility['hourly_rate'], 2) ?></td>
                                                     <td>
                                                         <span
                                                             class="status-badge status-<?= $facility['status'] ?? 'active' ?>">
                                                             <?= ucfirst($facility['status'] ?? 'active') ?>
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex gap-1" style="justify-content: center;">
+                                                            <button class="btn btn-outline btn-sm btn-icon"
+                                                                onclick="viewFacilityDetails(<?= htmlspecialchars(json_encode($facility)) ?>)"
+                                                                title="View Facility Info">
+                                                                <i class="fa-solid fa-eye"></i>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -1339,6 +1351,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div style="margin-top: 1.5rem; text-align: right;">
                 <button class="btn btn-outline" onclick="closeModal('details-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facility Details Modal -->
+    <div id="facility-details-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-building"></i> Facility Information</h3>
+                <span class="close" onclick="closeModal('facility-details-modal')">&times;</span>
+            </div>
+            <div id="facility-details-body">
+                <!-- Filled via JS -->
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right; pt: 1rem; border-top: 1px solid #eee;">
+                <button class="btn btn-outline" onclick="closeModal('facility-details-modal')">Close Details</button>
             </div>
         </div>
     </div>
