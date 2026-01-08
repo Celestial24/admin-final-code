@@ -908,13 +908,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2><span class="icon-img-placeholder">⚙️</span> Facilities Management</h2>
                         <div class="management-buttons">
                             <button id="show-facilities-card" class="btn btn-outline management-btn">
-                                <span class="icon-img-placeholder">🏢</span> Facility Card
+                                <i class="fa-solid fa-building"></i> Facility Card
                             </button>
                             <button id="show-maintenance-card" class="btn btn-outline management-btn">
-                                <span class="icon-img-placeholder">🛠️</span> Maintenance & Status
+                                <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance & System
                             </button>
                             <button id="show-reports-card" class="btn btn-outline management-btn">
-                                <span class="icon-img-placeholder">📊</span> Reports Card
+                                <i class="fa-solid fa-chart-line"></i> Reports Card
                             </button>
                         </div>
                     </div>
