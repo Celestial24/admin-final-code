@@ -5,7 +5,7 @@
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
 define('SMTP_USER', 'atiera41001@gmail.com'); // Put your random email here
-define('SMTP_PASS', 'jqxr wuwi shyb tzzp');    // Put your random email App Password here
+define('SMTP_PASS', 'fisp itfh njdu jqpm');    // Put your random email App Password here
 define('SMTP_FROM_EMAIL', 'atiera41001@gmail.com');
 define('SMTP_FROM_NAME', 'ATIERA Hotel');
 
