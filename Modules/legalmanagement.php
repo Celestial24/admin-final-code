@@ -563,6 +563,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal Management System - Hotel & Restaurant</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="../assets/image/logo2.png">
     <link rel="stylesheet" href="../assets/css/legalmanagement.css">
     <style>
@@ -1735,7 +1736,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                     const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
                     withPasswordGate(() => {
                         detailsTitle.textContent = 'AI Risk Analysis';
-                        detailsBody.innerHTML = `<div style="padding:10px;color:#64748b;">Loading analysis…</div>`;
+                        detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:10px;"></i><br>Generating analysis report...</div>`;
                         openModal(detailsModal);
                         try {
                             const score = c.risk_score ?? 'N/A';
@@ -1744,52 +1745,86 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
                             const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
 
+                            // Determine Icon and Color based on Level
+                            let iconClass = 'fa-check-circle';
+                            let colorClass = '#22c55e'; // Green
+                            let bgClass = '#dcfce7';
+                            let levelText = 'Low Risk';
+
+                            if (level === 'High') {
+                                iconClass = 'fa-triangle-exclamation';
+                                colorClass = '#ef4444'; // Red
+                                bgClass = '#fee2e2';
+                                levelText = 'High Risk';
+                            } else if (level === 'Medium') {
+                                iconClass = 'fa-circle-exclamation';
+                                colorClass = '#f59e0b'; // Amber
+                                bgClass = '#fef3c7';
+                                levelText = 'Medium Risk';
+                            }
+
                             detailsBody.innerHTML = `
+                                <div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+                                    <div style="width: 80px; height: 80px; background: ${bgClass}; border-radius: 50%; display: inline-grid; place-items: center; margin-bottom: 15px; margin-left: auto; margin-right: auto;">
+                                        <i class="fa-solid ${iconClass}" style="font-size: 36px; color: ${colorClass};"></i>
+                                    </div>
+                                    <h2 style="margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800;">${levelText} Detected</h2>
+                                    <p style="margin: 5px 0 0; color: #64748b; font-size: 1.1rem;">Risk Score: <strong style="color: ${colorClass}; font-weight: 700;">${score}/100</strong></p>
+                                </div>
+
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 25px; position: relative; overflow: hidden;">
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: ${colorClass};"></div>
+                                    <h4 style="margin: 0 0 10px; color: #334155; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Analysis Summary</h4>
+                                    <p style="margin: 0; color: #475569; line-height: 1.6; font-size: 0.95rem;">${summary}</p>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                                    <div>
+                                        <h4 style="margin: 0 0 15px; color: #dc2626; display: flex; align-items: center; gap: 8px; font-size: 1rem; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">
+                                            <i class="fa-solid fa-bug"></i> Risk Factors
+                                        </h4>
+                                        <ul style="margin: 0; padding: 0; list-style: none;">
+                                            ${rf.length > 0 ? rf.map(r => `
+                                                <li style="background: #fff; border: 1px solid #fee2e2; border-left: 3px solid #ef4444; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                                    <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; margin-top: 3px; font-size: 0.8rem;"></i>
+                                                    <div>
+                                                        ${r.category ? `<strong style="display:block; font-size: 0.75rem; color: #ef4444; text-transform: uppercase;">${r.category.replace('_', ' ')}</strong>` : ''}
+                                                        ${r.factor || 'Unknown Factor'}
+                                                    </div>
+                                                </li>
+                                            `).join('') : '<li style="color: #94a3b8; font-style: italic; text-align: center; padding: 10px;">No significant risks detected.</li>'}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0 0 15px; color: #059669; display: flex; align-items: center; gap: 8px; font-size: 1rem; border-bottom: 2px solid #dcfce7; padding-bottom: 8px;">
+                                            <i class="fa-solid fa-lightbulb"></i> Recommendations
+                                        </h4>
+                                        <ul style="margin: 0; padding: 0; list-style: none;">
+                                            ${rec.length > 0 ? rec.map(x => `
+                                                <li style="background: #fff; border: 1px solid #dcfce7; border-left: 3px solid #22c55e; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                                    <i class="fa-solid fa-check" style="color: #22c55e; margin-top: 3px; font-size: 0.8rem;"></i>
+                                                    <span style="flex: 1;">${x}</span>
+                                                </li>
+                                            `).join('') : '<li style="color: #94a3b8; font-style: italic; text-align: center; padding: 10px;">Standard review recommended.</li>'}
+                                        </ul>
+                                    </div>
+                                </div>
+
                                 ${c.file_path ? `
-                                <div style="margin-bottom: 20px; text-align: center;">
-                                    <a href="${c.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2); transition: all 0.2s;">
-                                        📄 View Original PDF Contract
+                                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
+                                    <a href="${c.file_path}" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);">
+                                        <i class="fa-solid fa-file-pdf" style="font-size: 1.1rem;"></i> View Original Contract PDF
                                     </a>
                                 </div>
                                 ` : ''}
-                                <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
-                                    <div style="width:64px; height:64px; border-radius:50%; background:#eef2ff; display:grid; place-items:center; color:#4338ca; border: 2px solid #cbd5e1;">
-                                        <span style="font-size:20px; font-weight:700;">${score}</span>
-                                    </div>
-                                    <div>
-                                        <div style="font-weight:700; font-size: 1.1rem; color: #0f172a;">Risk Score</div>
-                                        <div style="color:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; font-weight: 600;">Level: ${level}</div>
-                                    </div>
-                                </div>
-                                <div style="height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-bottom: 20px;">
-                                    <div style="height:100%; width:${Number(score) || 0}%; background:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; transition: width 0.5s ease;"></div>
-                                </div>
-                                
-                                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                                            <h4 style="margin: 0; color: #1e40af;">Analysis Summary</h4>
-                                            ${c.file_path ? `<a href="${c.file_path}" target="_blank" style="font-size: 0.85rem; color: #4a6cf7; text-decoration: none; font-weight: 700; background: #eff6ff; padding: 4px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">📄 View Contract</a>` : ''}
-                                        </div>
-                                        <p style="margin: 0; color: #334155; line-height: 1.5;">${summary}</p>
-                                    </div>
 
-                                <div style="margin-bottom: 15px;">
-                                    <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Key Risk Factors</h4>
-                                    <ul style="margin: 0; padding-left: 20px; color: #475569;">
-                                        ${rf.map(r => `<li style="margin-bottom: 4px;"><strong>${r.category ? r.category.replace('_', ' ').toUpperCase() + ': ' : ''}</strong>${r.factor || ''}</li>`).join('') || '<li>No significant risk factors detected.</li>'}
-                                    </ul>
+                                <div style="text-align:center; margin-top: 20px;">
+                                     <button onclick="document.getElementById('closeDetails').click()" style="background:none; border:none; color: #94a3b8; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Close Analysis</button>
                                 </div>
-
-                                <div style="margin-bottom: 15px;">
-                                    <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Recommendations</h4>
-                                    <ul style="margin: 0; padding-left: 20px; color: #16a34a;">
-                                        ${rec.map(x => `<li style="margin-bottom: 4px;">${x}</li>`).join('') || '<li>Standard review recommended.</li>'}
-                                    </ul>
-                                </div>
-
-                                <p style="margin-top:20px; color:#94a3b8; font-size: 0.8rem; text-align: center; border-top: 1px solid #f1f5f9; pt: 10px;">End of AI Analysis Report</p>`;
+                            `;
                         } catch (err) {
-                            detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load analysis. Please try again.</div>`;
+                            console.error(err);
+                            detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;"><i class="fa-solid fa-circle-xmark" style="font-size:3rem;margin-bottom:15px;"></i><br>Unable to load analysis. Data might be corrupted.</div>`;
                         }
                     });
                 });
