@@ -28,12 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 if (!empty($password)) {
                     // Update with password
-                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=?, password_hash=?, updated_at=NOW() WHERE id=?");
+                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=?, password_hash=? WHERE id=?");
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT); // Adjust if using plain or other hash
                     $stmt->execute([$username, $email, $full_name, $role, $status, $hashed_password, $id]);
                 } else {
                     // Update without password
-                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=?, updated_at=NOW() WHERE id=?");
+                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=? WHERE id=?");
                     $stmt->execute([$username, $email, $full_name, $role, $status, $id]);
                 }
                 $message = "User updated successfully!";
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!empty($username) && !empty($password)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, role, status, password_hash, created_at) VALUES (?, ?, ?, ?, 'active', ?, NOW())");
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, role, status, password_hash) VALUES (?, ?, ?, ?, 'active', ?)");
                     $stmt->execute([$username, $email, $full_name, $role, password_hash($password, PASSWORD_DEFAULT)]);
                     $message = "User created successfully!";
                 } catch (PDOException $e) {
@@ -77,12 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch Users
-$stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+$stmt = $pdo->query("SELECT * FROM users ORDER BY id DESC");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +99,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             --text-color: #2d3748;
             --border-color: #e2e8f0;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -109,36 +110,50 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         .main-content {
             flex: 1;
-            margin-left: 260px; /* Sidebar width from common css */
+            margin-left: 260px;
+            /* Sidebar width from common css */
             padding: 20px;
         }
 
-        .header-title { margin-bottom: 2rem; }
-        .header-title h1 { color: var(--primary-color); margin: 0; }
-        .header-title p { color: #718096; margin: 5px 0 0; }
+        .header-title {
+            margin-bottom: 2rem;
+        }
+
+        .header-title h1 {
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .header-title p {
+            color: #718096;
+            margin: 5px 0 0;
+        }
 
         .card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 20px;
             margin-bottom: 20px;
         }
 
-        .table-container { overflow-x: auto; }
-        
+        .table-container {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
         }
-        
-        th, td {
+
+        th,
+        td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         th {
             background-color: #f8fafc;
             color: var(--primary-color);
@@ -158,16 +173,38 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             gap: 5px;
         }
 
-        .btn-primary { background: var(--primary-color); color: white; }
-        .btn-primary:hover { background: var(--secondary-color); }
-        
-        .btn-danger { background: #e53e3e; color: white; }
-        .btn-danger:hover { background: #c53030; }
-        
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-outline:hover { background: #f1f5f9; }
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
 
-        .btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.85rem;
+        }
 
         .badge {
             padding: 4px 8px;
@@ -175,8 +212,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-size: 0.8rem;
             font-weight: 600;
         }
-        .badge-active { background: #def7ec; color: #03543f; }
-        .badge-inactive { background: #fde8e8; color: #9b1c1c; }
+
+        .badge-active {
+            background: #def7ec;
+            color: #03543f;
+        }
+
+        .badge-inactive {
+            background: #fde8e8;
+            color: #9b1c1c;
+        }
 
         /* Modal */
         .modal {
@@ -186,12 +231,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
-        .modal.active { display: flex; }
+
+        .modal.active {
+            display: flex;
+        }
+
         .modal-content {
             background: white;
             border-radius: 12px;
@@ -200,6 +249,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             padding: 24px;
             position: relative;
         }
+
         .close-modal {
             position: absolute;
             top: 20px;
@@ -208,9 +258,17 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             cursor: pointer;
             color: #a0aec0;
         }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
         .form-control {
             width: 100%;
             padding: 10px;
@@ -224,18 +282,38 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .alert-success { background: #def7ec; color: #03543f; }
-        .alert-error { background: #fde8e8; color: #9b1c1c; }
-        
+
+        .alert-success {
+            background: #def7ec;
+            color: #03543f;
+        }
+
+        .alert-error {
+            background: #fde8e8;
+            color: #9b1c1c;
+        }
+
         /* Sidebar inclusion fix */
-        nav.sidebar { position: fixed; height: 100vh; width: 260px; left: 0; top: 0; background: white; border-right: 1px solid var(--border-color); overflow-y: auto; }
+        nav.sidebar {
+            position: fixed;
+            height: 100vh;
+            width: 260px;
+            left: 0;
+            top: 0;
+            background: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
 
         /* Icon fixes */
-        .icon-img-placeholder { display: inline-block; }
+        .icon-img-placeholder {
+            display: inline-block;
+        }
     </style>
     <!-- Include existing sidebar CSS if needed, but styling inline for simplicity check -->
-    <link rel="stylesheet" href="../assets/css/facilities-reservation.css"> 
+    <link rel="stylesheet" href="../assets/css/facilities-reservation.css">
 </head>
+
 <body>
 
     <?php include 'sidebar.php'; ?>
@@ -247,10 +325,10 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </header>
 
         <?php if ($message): ?>
-                <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
         <?php endif; ?>
         <?php if ($error): ?>
-                <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
         <div class="card">
@@ -260,7 +338,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <i class="fa fa-plus"></i> Add User
                 </button>
             </div>
-            
+
             <div class="table-container">
                 <table>
                     <thead>
@@ -281,14 +359,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?= htmlspecialchars($user['full_name']) ?></td>
                                 <td><?= htmlspecialchars($user['username']) ?></td>
                                 <td><?= htmlspecialchars($user['email']) ?></td>
-                                <td><span style="text-transform: capitalize;"><?= htmlspecialchars($user['role']) ?></span></td>
+                                <td><span style="text-transform: capitalize;"><?= htmlspecialchars($user['role']) ?></span>
+                                </td>
                                 <td>
                                     <span class="badge badge-<?= $user['status'] ?>">
                                         <?= ucfirst($user['status']) ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-outline btn-sm" onclick='openEditModal(<?= json_encode($user) ?>)'>
+                                    <button class="btn btn-outline btn-sm"
+                                        onclick='openEditModal(<?= json_encode($user) ?>)'>
                                         <i class="fa fa-edit"></i> Edit
                                     </button>
                                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal(<?= $user['id'] ?>)">
@@ -311,12 +391,12 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <form method="POST" id="userForm">
                 <input type="hidden" name="action" id="formAction" value="update_user">
                 <input type="hidden" name="user_id" id="userId">
-                
+
                 <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" name="full_name" id="fullName" class="form-control" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Username</label>
                     <input type="text" name="username" id="userName" class="form-control" required>
@@ -382,7 +462,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('userRole').value = user.role;
             document.getElementById('userStatus').value = user.status;
             // Disable status for self if needed, assuming admin is smart
-            
+
             document.getElementById('userModal').classList.add('active');
         }
 
@@ -393,7 +473,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('userForm').reset();
             document.getElementById('userStatus').value = 'active'; // Default
             document.getElementById('userRole').value = 'staff'; // Default
-            
+
             document.getElementById('userModal').classList.add('active');
         }
 
@@ -407,11 +487,12 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         // Close modal on outside click
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (event.target.classList.contains('modal')) {
                 event.target.classList.remove('active');
             }
         }
     </script>
 </body>
+
 </html>
