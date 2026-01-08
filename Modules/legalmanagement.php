@@ -415,58 +415,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Update Contract
-    if (isset($_POST['update_contract'])) {
-        $contract_id = intval($_POST['contract_id'] ?? 0);
-        $contract_name = $_POST['contract_name'] ?? '';
-        $case_id = $_POST['contract_case'] ?? '';
-        $description = $_POST['contract_description'] ?? '';
-
-        if ($contract_id > 0) {
-            // Check if new file uploaded
-            $file_update_sql = "";
-            $params = [$contract_name, $case_id, $description];
-
-            if (isset($_FILES['contract_file']) && $_FILES['contract_file']['error'] === UPLOAD_ERR_OK) {
-                $upload_dir = 'uploads/contracts/';
-                if (!is_dir($upload_dir))
-                    mkdir($upload_dir, 0777, true);
-
-                $file_tmp_name = $_FILES['contract_file']['tmp_name'];
-                $file_original_name = $_FILES['contract_file']['name'];
-                $file_extension = pathinfo($file_original_name, PATHINFO_EXTENSION);
-                $file_name = uniqid() . '_' . $contract_name . '.' . $file_extension;
-                $file_path = $upload_dir . $file_name;
-
-                if (move_uploaded_file($file_tmp_name, $file_path)) {
-                    $file_update_sql = ", file_path = ?";
-                    $params[] = $file_path;
-
-                    // Re-analyze since file changed
-                    $analyzer = new ContractRiskAnalyzer();
-                    $riskAnalysis = $analyzer->analyzeContract(['contract_name' => $contract_name, 'description' => $description]);
-
-                    $file_update_sql .= ", risk_level = ?, risk_score = ?, risk_factors = ?, recommendations = ?, analysis_summary = ?";
-                    $params[] = $riskAnalysis['risk_level'];
-                    $params[] = $riskAnalysis['risk_score'];
-                    $params[] = json_encode($riskAnalysis['risk_factors']);
-                    $params[] = json_encode($riskAnalysis['recommendations']);
-                    $params[] = $riskAnalysis['analysis_summary'];
-                }
-            }
-
-            $query = "UPDATE contracts SET name = ?, case_id = ?, description = ? $file_update_sql WHERE id = ?";
-            $params[] = $contract_id;
-
-            $stmt = $db->prepare($query);
-            if ($stmt->execute($params)) {
-                $success_message = "Contract updated successfully!";
-            } else {
-                $error_message = "Failed to update contract.";
-            }
-        }
-    }
-
     // Handle PDF Export (Idinagdag para sa PDF Report na may Password)
     if (isset($_POST['action']) && $_POST['action'] === 'export_pdf') {
         $password = 'legal2025'; // Password para sa PDF Report (Simulasyon)
@@ -674,8 +622,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Employee Information Modal (Create/Update) -->
     <div id="employeeInfoModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1250;">
-        <div style="background:white; width:92%; max-width:600px; border-radius:12px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1250;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:92%; max-width:600px; border-radius:16px; padding:25px; position:relative; box-shadow: 0 20px 50px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeEmployeeInfo"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 id="employeeInfoTitle" style="margin-top:0;">Employee Information</h3>
@@ -1003,7 +952,13 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             $recommendations = json_decode($contract['recommendations'] ?? '[]', true);
                             ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
+                                <td>
+                                    <?php if (!empty($contract['file_path'])): ?>
+                                        <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" target="_blank"
+                                            rel="noopener"><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?></a>
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($contract['case_id']); ?></td>
                                 <td>
@@ -1016,14 +971,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                 <td>
                                     <button class="action-btn view-btn" data-type="contract-view"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
-                                    <button class="action-btn" style="background:#f59e0b;" data-type="contract-edit"
-                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Edit</button>
                                     <button class="action-btn analyze-btn" data-type="contract-analyze"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
-                                    <?php if (!empty($contract['file_path'])): ?>
-                                        <button class="action-btn download-btn"
-                                            data-file="<?php echo htmlspecialchars($contract['file_path']); ?>">Download</button>
-                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -1094,8 +1043,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
 
     <!-- Details Modal -->
     <div id="detailsModal"
-        style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
-        <div style="background:white; width:90%; max-width:600px; border-radius:8px; padding:20px; position:relative;">
+        style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(2,6,23,0.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1000;">
+        <div
+            style="background:rgba(255,255,255,0.8); backdrop-filter: blur(20px); width:90%; max-width:600px; border-radius:20px; padding:25px; position:relative; box-shadow: 0 15px 45px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5);">
             <button id="closeDetails"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 id="detailsTitle">Details</h3>
@@ -1119,10 +1069,10 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Password Gate Modal -->
     <div id="passwordModal"
-        style="display:none; position:fixed; inset:0; background:rgba(2,6,23,.55); backdrop-filter: blur(2px); align-items:center; justify-content:center; z-index:2000;">
+        style="display:none; position:fixed; inset:0; background:rgba(2,6,23,.4); backdrop-filter: blur(8px); align-items:center; justify-content:center; z-index:2000;">
         <div
-            style="background:linear-gradient(180deg,#ffffff,#f8fafc); width:92%; max-width:420px; border-radius:14px; padding:22px 18px; position:relative; box-shadow:0 16px 48px rgba(2,6,23,.25); border:1px solid #e2e8f0;">
-            <h3 style="margin:0 0 8px; font-weight:800; color:#0f172a;">Security Check</h3>
+            style="background:rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); width:92%; max-width:420px; border-radius:24px; padding:30px 25px; position:relative; box-shadow:0 25px 60px rgba(2,6,23,0.15); border:1px solid rgba(255, 255, 255, 0.45);">
+            <h3 style="margin:0 0 8px; font-weight:800; color:#0f172a; letter-spacing:-0.5px;">Security Check</h3>
             <p style="margin:0 0 10px; color:#475569;">Enter password to continue </p>
             <form id="passwordForm">
                 <input type="password" id="pwdInput" class="form-control" placeholder="Enter password "
@@ -1139,8 +1089,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
 
     <!-- Edit Employee Modal -->
     <div id="editEmployeeModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1200;">
-        <div style="background:white; width:92%; max-width:560px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1200;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:92%; max-width:560px; border-radius:20px; padding:25px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeEditEmployee"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Edit Employee</h3>
@@ -1173,8 +1124,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
 
     <!-- Contract Form Modal wrapper -->
     <div id="contractFormModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter: blur(6px); align-items:center; justify-content:center; z-index:1150;">
+        <div
+            style="background:rgba(255,255,255,0.9); backdrop-filter: blur(20px); width:94%; max-width:720px; border-radius:20px; padding:30px; position:relative; box-shadow:0 30px 70px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.5);">
             <button type="button" id="closeContractFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="contractFormContainer">
@@ -1184,8 +1136,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Employee Form Modal wrapper -->
     <div id="employeeFormModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1150;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:94%; max-width:720px; border-radius:20px; padding:30px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeEmployeeFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="employeeFormContainer"></div>
@@ -1193,8 +1146,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Document Form Modal wrapper -->
     <div id="documentFormModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1150;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:94%; max-width:720px; border-radius:20px; padding:30px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeDocumentFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="documentFormContainer">
@@ -1224,8 +1178,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Edit Document Modal -->
     <div id="editDocumentModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1200;">
-        <div style="background:white; width:92%; max-width:560px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1200;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:92%; max-width:560px; border-radius:20px; padding:25px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeEditDocument"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Edit Document</h3>
@@ -1249,8 +1204,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Invoice Form Modal wrapper -->
     <div id="invoiceFormModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1150;">
-        <div style="background:white; width:94%; max-width:720px; border-radius:10px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1150;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:94%; max-width:720px; border-radius:20px; padding:30px; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeInvoiceFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="invoiceFormContainer">
@@ -1291,9 +1247,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Pay confirmation modal -->
     <div id="payConfirmModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1600;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1600;">
         <div
-            style="background:white; width:92%; max-width:420px; border-radius:14px; padding:20px; position:relative; box-shadow:0 16px 48px rgba(2,6,23,.25); border:1px solid #e2e8f0;">
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:92%; max-width:420px; border-radius:24px; padding:25px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.45);">
             <h3 style="margin:0 0 8px;">Confirm Payment</h3>
             <p id="payConfirmText" style="margin:0 0 14px; color:#475569;">Do you want to pay this invoice?</p>
             <div style="display:flex; gap:10px; justify-content:flex-end;">
@@ -1308,8 +1264,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </div>
     <!-- Contract: Upload Supporting Document Modal -->
     <div id="contractDocsModal"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1500;">
-        <div style="background:white; width:94%; max-width:640px; border-radius:12px; padding:20px; position:relative;">
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter: blur(4px); align-items:center; justify-content:center; z-index:1500;">
+        <div
+            style="background:rgba(255,255,255,0.85); backdrop-filter: blur(16px); width:94%; max-width:640px; border-radius:20px; padding:25px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.4);">
             <button type="button" id="closeContractDocsModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <h3 style="margin-top:0;">Upload Contract Document</h3>
@@ -1739,6 +1696,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <div><strong>Case</strong></div><div>${c.case_id || ''}</div>
                                     <div><strong>Risk</strong></div><div>${(c.risk_level || 'N/A')} — ${c.risk_score || 'N/A'}/100</div>
                                     <div><strong>Uploaded</strong></div><div>${uploaded}</div>
+                                    ${c.file_path ? `<div style="grid-column:1/-1; margin-top:10px;"><a href="${c.file_path}" target="_blank" style="color:#4a6cf7; text-decoration:none; font-weight:600;">📄 View Original Contract</a></div>` : ''}
                                     <div style="grid-column:1/-1"><strong>Risk Factors</strong><ul style="margin:.4rem 0 0 1rem;">${rf.map(r => `<li>${(r.factor || '')}</li>`).join('') || '<li>None</li>'}</ul></div>
                                     <div style="grid-column:1/-1"><strong>Recommendations</strong><ul style="margin:.4rem 0 0 1rem;">${rec.map(x => `<li>${x}</li>`).join('') || '<li>None</li>'}</ul></div>
                                 </div>`;
@@ -1776,10 +1734,18 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <div style="height:100%; width:${Number(score) || 0}%; background:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; transition: width 0.5s ease;"></div>
                                 </div>
                                 
-                                <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+                                    <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
                                     <h4 style="margin: 0 0 8px; color: #1e40af;">Analysis Summary</h4>
                                     <p style="margin: 0; color: #334155; line-height: 1.5;">${summary}</p>
                                 </div>
+
+                                ${c.file_path ? `
+                                <div style="margin-bottom: 20px;">
+                                    <a href="${c.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                                        📄 View Original Contract
+                                    </a>
+                                </div>
+                                ` : ''}
 
                                 <div style="margin-bottom: 15px;">
                                     <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Key Risk Factors</h4>
@@ -1799,56 +1765,6 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         } catch (err) {
                             detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load analysis. Please try again.</div>`;
                         }
-                    });
-                });
-            });
-
-            document.querySelectorAll('[data-type="contract-edit"]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
-                    withPasswordGate(() => {
-                        // Render edit form in modal
-                        contractFormContainer.innerHTML = `
-                            <h3>Edit Contract</h3>
-                            <form method="POST" enctype="multipart/form-data">
-                                <input type="hidden" name="update_contract" value="1">
-                                <input type="hidden" name="contract_id" value="${c.id}">
-                                <div class="form-group">
-                                    <label for="edit_contractName">Contract Name</label>
-                                    <input type="text" id="edit_contractName" name="contract_name" class="form-control" value="${c.contract_name || c.name || ''}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit_contractCase">Case ID</label>
-                                    <input type="text" id="edit_contractCase" name="contract_case" class="form-control" value="${c.case_id || ''}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit_contractDescription">Contract Description</label>
-                                    <textarea id="edit_contractDescription" name="contract_description" class="form-control" rows="4">${c.description || ''}</textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit_contractFile">Update Contract File (Optional)</label>
-                                    <input type="file" id="edit_contractFile" name="contract_file" class="form-control" accept=".pdf,.doc,.docx">
-                                    <div class="file-info">Leave blank to keep current file: ${c.file_path ? c.file_path.split('/').pop() : 'None'}</div>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="button" class="cancel-btn" id="cancelEditContractBtn">Cancel</button>
-                                    <button type="submit" class="save-btn">Update Contract</button>
-                                </div>
-                            </form>
-                        `;
-                        const cancelBtn = contractFormContainer.querySelector('#cancelEditContractBtn');
-                        cancelBtn?.addEventListener('click', () => closeModal(contractFormModal));
-                        openModal(contractFormModal);
-                    });
-                });
-            });
-            // Contract: upload supporting document
-            document.querySelectorAll('[data-type="contract-upload-doc"]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
-                    withPasswordGate(() => {
-                        contractDocsContractId.value = c.id || '';
-                        openModal(contractDocsModal);
                     });
                 });
             });

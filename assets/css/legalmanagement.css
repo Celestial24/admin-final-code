@@ -7,9 +7,10 @@
             }
 
             body {
-                background-color: #f5f7fa;
-                color: #333;
+                background: linear-gradient(135deg, #e0e7ff, #f8fafc);
+                color: #0f172a;
                 line-height: 1.6;
+                min-height: 100vh;
             }
 
             .container {
@@ -28,18 +29,27 @@
             }
 
             .login-form {
-                background: white;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 padding: 40px;
-                border-radius: 10px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                border-radius: 20px;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.18);
                 width: 100%;
                 max-width: 400px;
                 text-align: center;
+                color: white;
             }
 
             .login-form h2 {
                 margin-bottom: 30px;
-                color: #333;
+                color: white;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+            .login-form p {
+                color: rgba(255, 255, 255, 0.8);
             }
 
             .pin-input {
@@ -128,11 +138,13 @@
             /* Navigation */
             .nav-tabs {
                 display: flex;
-                background: white;
-                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(8px);
+                border-radius: 12px;
                 overflow: hidden;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                margin-bottom: 25px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
 
             .nav-tab {
@@ -145,10 +157,10 @@
             }
 
             .nav-tab.active {
-                background: #f0f4ff;
+                background: rgba(74, 108, 247, 0.1);
                 border-bottom: 3px solid #4a6cf7;
                 color: #4a6cf7;
-                font-weight: bold;
+                font-weight: 700;
             }
 
             .nav-tab:hover:not(.active) {
@@ -158,10 +170,12 @@
             /* Content Sections */
             .content-section {
                 display: none;
-                background: white;
-                padding: 20px;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                background: rgba(255, 255, 255, 0.5);
+                backdrop-filter: blur(10px);
+                padding: 25px;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.4);
             }
 
             .content-section.active {
@@ -211,8 +225,12 @@
             }
 
             .data-table th {
-                background: #f8f9fa;
-                font-weight: 600;
+                background: rgba(248, 249, 250, 0.6);
+                font-weight: 700;
+                color: #475569;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.05em;
             }
 
             .data-table tr:hover {
@@ -233,11 +251,13 @@
 
             /* Forms */
             .form-container {
-                background: white;
-                padding: 20px;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                margin-bottom: 20px;
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(12px);
+                padding: 25px;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                margin-bottom: 25px;
                 display: none;
             }
 
