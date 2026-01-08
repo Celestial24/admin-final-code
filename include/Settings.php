@@ -186,23 +186,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                             $mail->addAddress($email, $full_name);
                             $mail->isHTML(true);
-                            $mail->Subject = 'Invitation to join ATIERA Admin Panel';
+                            $mail->Subject = 'Setup Your ATIERA Account Password';
 
                             $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
 
                             $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
-                                <h2 style=\"color: #0f172a;\">Account Invitation</h2>
+                                <h2 style=\"color: #0f172a;\">Setup Your Password</h2>
                                 <p>Hello {$full_name},</p>
-                                <p>You have been invited to join ATIERA. Please use the code below to complete your registration:</p>
+                                <p>You have been added as an administrator. To complete your account setup, please set your <strong>New Password</strong> using the code below:</p>
                                 <div style=\"text-align: center; margin: 30px 0; background: #f8fafc; padding: 20px; border-radius: 8px; border: 2px dashed #e2e8f0;\">
                                     <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #1e40af;\">{$code}</span>
                                 </div>
-                                <p>Click the link below to set your password:</p>
                                 <div style=\"margin: 20px 0; text-align: center;\">
-                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Activate Account</a>
+                                    <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Set New Password</a>
                                 </div>
-                                <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Code expires in 24 hours.</p>
+                                <p style=\"font-size: 13px; color: #64748b; text-align: center;\">This security link and code will expire in 24 hours.</p>
                             </div>
                         ";
                             $mail->send();
@@ -430,7 +429,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             placeholder="user@example.com">
                     </div>
 
-                    <div class="form-group" id="passwordGroup">
+                    <div class="form-group" id="passwordGroup" style="display: none;">
                         <label>Password <small style="font-weight: 400; color: #718096;">(Leave blank to keep
                                 unchanged)</small></label>
                         <input type="password" name="password" class="form-control" placeholder="Enter new password">
@@ -488,7 +487,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('fullName').value = user.full_name;
             document.getElementById('userName').value = user.username;
             document.getElementById('userEmail').value = user.email;
-            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('passwordGroup').style.display = 'none';
 
             document.getElementById('userModal').classList.add('active');
         }
@@ -499,7 +498,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('userId').value = '';
             document.getElementById('userForm').reset();
             document.getElementById('userEmail').value = ''; // Ensure email is empty
-            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('passwordGroup').style.display = 'none';
 
             document.getElementById('userModal').classList.add('active');
         }
