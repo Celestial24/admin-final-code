@@ -273,18 +273,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
                                         <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
-                                        <td style="text-align: center;">
-                                            <div style="display: flex; gap: 8px; justify-content: center;">
-                                                <button class="btn btn-outline btn-sm"
-                                                    onclick='openEditModal(<?= json_encode($user) ?>)'>
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-sm"
-                                                    onclick="openDeleteModal(<?= $user['id'] ?>)">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
