@@ -415,6 +415,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Update Contract
+    if (isset($_POST['update_contract'])) {
+        $contract_id = intval($_POST['contract_id'] ?? 0);
+        $contract_name = $_POST['contract_name'] ?? '';
+        $case_id = $_POST['contract_case'] ?? '';
+        $description = $_POST['contract_description'] ?? '';
+
+        if ($contract_id > 0) {
+            // Check if new file uploaded
+            $file_update_sql = "";
+            $params = [$contract_name, $case_id, $description];
+
+            if (isset($_FILES['contract_file']) && $_FILES['contract_file']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = 'uploads/contracts/';
+                if (!is_dir($upload_dir))
+                    mkdir($upload_dir, 0777, true);
+
+                $file_tmp_name = $_FILES['contract_file']['tmp_name'];
+                $file_original_name = $_FILES['contract_file']['name'];
+                $file_extension = pathinfo($file_original_name, PATHINFO_EXTENSION);
+                $file_name = uniqid() . '_' . $contract_name . '.' . $file_extension;
+                $file_path = $upload_dir . $file_name;
+
+                if (move_uploaded_file($file_tmp_name, $file_path)) {
+                    $file_update_sql = ", file_path = ?";
+                    $params[] = $file_path;
+
+                    // Re-analyze since file changed
+                    $analyzer = new ContractRiskAnalyzer();
+                    $riskAnalysis = $analyzer->analyzeContract(['contract_name' => $contract_name, 'description' => $description]);
+
+                    $file_update_sql .= ", risk_level = ?, risk_score = ?, risk_factors = ?, recommendations = ?, analysis_summary = ?";
+                    $params[] = $riskAnalysis['risk_level'];
+                    $params[] = $riskAnalysis['risk_score'];
+                    $params[] = json_encode($riskAnalysis['risk_factors']);
+                    $params[] = json_encode($riskAnalysis['recommendations']);
+                    $params[] = $riskAnalysis['analysis_summary'];
+                }
+            }
+
+            $query = "UPDATE contracts SET name = ?, case_id = ?, description = ? $file_update_sql WHERE id = ?";
+            $params[] = $contract_id;
+
+            $stmt = $db->prepare($query);
+            if ($stmt->execute($params)) {
+                $success_message = "Contract updated successfully!";
+            } else {
+                $error_message = "Failed to update contract.";
+            }
+        }
+    }
+
     // Handle PDF Export (Idinagdag para sa PDF Report na may Password)
     if (isset($_POST['action']) && $_POST['action'] === 'export_pdf') {
         $password = 'legal2025'; // Password para sa PDF Report (Simulasyon)
@@ -964,6 +1016,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                 <td>
                                     <button class="action-btn view-btn" data-type="contract-view"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
+                                    <button class="action-btn" style="background:#f59e0b;" data-type="contract-edit"
+                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Edit</button>
                                     <button class="action-btn analyze-btn" data-type="contract-analyze"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
                                     <?php if (!empty($contract['file_path'])): ?>
@@ -1414,6 +1468,21 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             function openModal(el) { el.style.display = 'flex'; }
             function closeModal(el) { el.style.display = 'none'; }
 
+            // Download handler
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const filePath = btn.getAttribute('data-file');
+                    if (filePath) {
+                        const link = document.createElement('a');
+                        link.href = filePath;
+                        link.download = filePath.split('/').pop();
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                });
+            });
+
             closeDetails.addEventListener('click', () => closeModal(detailsModal));
             // Default submit handler for generic modal content
             document.addEventListener('submit', (e) => {
@@ -1689,23 +1758,87 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         try {
                             const score = c.risk_score ?? 'N/A';
                             const level = c.risk_level ?? 'Unknown';
+                            const summary = c.analysis_summary || 'No analysis summary available.';
+                            const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
+                            const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
+
                             detailsBody.innerHTML = `
                                 <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
-                                    <div style="width:64px; height:64px; border-radius:50%; background:#eef2ff; display:grid; place-items:center; color:#4338ca;">
+                                    <div style="width:64px; height:64px; border-radius:50%; background:#eef2ff; display:grid; place-items:center; color:#4338ca; border: 2px solid #cbd5e1;">
                                         <span style="font-size:20px; font-weight:700;">${score}</span>
                                     </div>
                                     <div>
-                                        <div style="font-weight:700;">Risk Score</div>
-                                        <div style="color:#64748b;">Level: ${level}</div>
+                                        <div style="font-weight:700; font-size: 1.1rem; color: #0f172a;">Risk Score</div>
+                                        <div style="color:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; font-weight: 600;">Level: ${level}</div>
                                     </div>
                                 </div>
-                                <div style="height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden;">
-                                    <div style="height:100%; width:${Number(score) || 0}%; background:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')};"></div>
+                                <div style="height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-bottom: 20px;">
+                                    <div style="height:100%; width:${Number(score) || 0}%; background:${level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e')}; transition: width 0.5s ease;"></div>
                                 </div>
-                                <p style="margin-top:10px; color:#64748b;">Password protected analysis view.</p>`;
+                                
+                                <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+                                    <h4 style="margin: 0 0 8px; color: #1e40af;">Analysis Summary</h4>
+                                    <p style="margin: 0; color: #334155; line-height: 1.5;">${summary}</p>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Key Risk Factors</h4>
+                                    <ul style="margin: 0; padding-left: 20px; color: #475569;">
+                                        ${rf.map(r => `<li style="margin-bottom: 4px;"><strong>${r.category ? r.category.replace('_', ' ').toUpperCase() + ': ' : ''}</strong>${r.factor || ''}</li>`).join('') || '<li>No significant risk factors detected.</li>'}
+                                    </ul>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <h4 style="margin: 0 0 8px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Recommendations</h4>
+                                    <ul style="margin: 0; padding-left: 20px; color: #16a34a;">
+                                        ${rec.map(x => `<li style="margin-bottom: 4px;">${x}</li>`).join('') || '<li>Standard review recommended.</li>'}
+                                    </ul>
+                                </div>
+
+                                <p style="margin-top:20px; color:#94a3b8; font-size: 0.8rem; text-align: center; border-top: 1px solid #f1f5f9; pt: 10px;">End of AI Analysis Report</p>`;
                         } catch (err) {
                             detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load analysis. Please try again.</div>`;
                         }
+                    });
+                });
+            });
+
+            document.querySelectorAll('[data-type="contract-edit"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const c = JSON.parse(btn.getAttribute('data-contract') || '{}');
+                    withPasswordGate(() => {
+                        // Render edit form in modal
+                        contractFormContainer.innerHTML = `
+                            <h3>Edit Contract</h3>
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="update_contract" value="1">
+                                <input type="hidden" name="contract_id" value="${c.id}">
+                                <div class="form-group">
+                                    <label for="edit_contractName">Contract Name</label>
+                                    <input type="text" id="edit_contractName" name="contract_name" class="form-control" value="${c.contract_name || c.name || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit_contractCase">Case ID</label>
+                                    <input type="text" id="edit_contractCase" name="contract_case" class="form-control" value="${c.case_id || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit_contractDescription">Contract Description</label>
+                                    <textarea id="edit_contractDescription" name="contract_description" class="form-control" rows="4">${c.description || ''}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit_contractFile">Update Contract File (Optional)</label>
+                                    <input type="file" id="edit_contractFile" name="contract_file" class="form-control" accept=".pdf,.doc,.docx">
+                                    <div class="file-info">Leave blank to keep current file: ${c.file_path ? c.file_path.split('/').pop() : 'None'}</div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="cancel-btn" id="cancelEditContractBtn">Cancel</button>
+                                    <button type="submit" class="save-btn">Update Contract</button>
+                                </div>
+                            </form>
+                        `;
+                        const cancelBtn = contractFormContainer.querySelector('#cancelEditContractBtn');
+                        cancelBtn?.addEventListener('click', () => closeModal(contractFormModal));
+                        openModal(contractFormModal);
                     });
                 });
             });
