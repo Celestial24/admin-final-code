@@ -55,6 +55,10 @@
             <li><a href="#" data-tab="reports" onclick="event.preventDefault(); switchTab('reports'); return false;">
                     <span class="icon-img-placeholder">📈</span> Reports
                 </a></li>
+            <li><a href="../include/Settings.php">
+                    <span class="icon-img-placeholder">⚙️</span> Settings
+                </a></li>
+
         </ul>
     </div>
 </nav>
