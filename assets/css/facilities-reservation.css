@@ -1116,10 +1116,7 @@ body {
 }
 
 /* Center the visible card inside the management area */
-#management>div[style]
-
-/* fallback if your markup uses inline wrapper */
-,
+#management>div[style],
 #management .card {
     margin-left: 0;
 }

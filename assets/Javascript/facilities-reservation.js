@@ -1,5 +1,7 @@
 // --- TAB NAVIGATION ---
 window.switchTab = function (tabName) {
+    console.log('Switching main tab to:', tabName);
+
     // Remove active class from all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -222,21 +224,38 @@ window.viewReservationDetails = function (data) {
 
 // --- MANAGEMENT CARD TOGGLES (BULLETPROOF) ---
 window.showManagementCard = function (type) {
-    console.log('Switching to management card:', type);
+    console.log('CRITICAL: Attempting to show management card:', type);
 
     // Hide all cards
-    document.querySelectorAll('.management-card').forEach(el => {
-        el.style.display = 'none';
+    const allCards = document.querySelectorAll('.management-card');
+    console.log('Found management cards:', allCards.length);
+
+    allCards.forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
         el.style.visibility = 'hidden';
     });
 
     // Show selected card
-    const sel = document.querySelector('.management-card.management-' + type);
+    const targetSelector = `.management-card.management-${type}`;
+    const sel = document.querySelector(targetSelector);
+
     if (sel) {
-        sel.style.display = 'block';
+        console.log('Target card found:', targetSelector);
+        sel.style.setProperty('display', 'block', 'important');
         sel.style.visibility = 'visible';
+
+        // Ensure parent container doesn't hide it
+        if (sel.parentElement) {
+            sel.parentElement.style.display = 'block';
+        }
     } else {
-        console.warn('Management card not found for type:', type);
+        console.error('CRITICAL ERROR: Management card not found for type:', type);
+        // Fallback: try finding by data attribute if exists
+        const fallback = document.querySelector(`[data-card-type="${type}"]`);
+        if (fallback) {
+            fallback.style.setProperty('display', 'block', 'important');
+            fallback.style.visibility = 'visible';
+        }
     }
 
     // Update active button styling
@@ -247,15 +266,16 @@ window.showManagementCard = function (type) {
     };
 
     Object.keys(btns).forEach(key => {
-        if (btns[key]) {
-            btns[key].classList.toggle('active', key === type);
-            // Backup for CSS: manually set style if active
+        const btn = btns[key];
+        if (btn) {
             if (key === type) {
-                btns[key].style.background = '#3182ce';
-                btns[key].style.color = 'white';
+                btn.classList.add('active');
+                btn.style.setProperty('background', '#3182ce', 'important');
+                btn.style.setProperty('color', 'white', 'important');
             } else {
-                btns[key].style.background = '';
-                btns[key].style.color = '';
+                btn.classList.remove('active');
+                btn.style.background = '';
+                btn.style.color = '';
             }
         }
     });
@@ -263,13 +283,15 @@ window.showManagementCard = function (type) {
 
 // --- INITIALIZATION ---
 function initializePage() {
+    console.log('Initializing Facilities Reservation Page...');
+
     // Tab wiring
     const activeTab = sessionStorage.getItem('activeTab') || 'dashboard';
-    switchTab(activeTab);
+    window.switchTab(activeTab);
 
     // Initial state for management
     if (activeTab === 'management') {
-        showManagementCard('facilities');
+        window.showManagementCard('facilities');
     }
 
     // Nav links listeners (for sidebar)
@@ -280,7 +302,7 @@ function initializePage() {
             if (!href || href === '#' || href.startsWith('javascript:')) {
                 if (tab) {
                     e.preventDefault();
-                    switchTab(tab);
+                    window.switchTab(tab);
                 }
             }
         });
@@ -288,13 +310,22 @@ function initializePage() {
 
     // Global click-to-close behavior
     window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) closeModal(e.target.id);
+        if (e.target.classList.contains('modal')) window.closeModal(e.target.id);
     });
 }
 
-// Ensure execution
+// Ensure execution no matter what
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePage);
 } else {
     initializePage();
 }
+
+// Second insurance for slow loading scripts
+window.addEventListener('load', () => {
+    console.log('Page fully loaded, performing final check...');
+    const activeTab = sessionStorage.getItem('activeTab') || 'dashboard';
+    if (!document.querySelector('.tab-content.active')) {
+        window.switchTab(activeTab);
+    }
+});

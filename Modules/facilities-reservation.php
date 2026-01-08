@@ -908,15 +908,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2><span class="icon-img-placeholder">⚙️</span> Facilities Management</h2>
                         <div class="management-buttons">
                             <button id="show-facilities-card" class="btn btn-outline management-btn active"
-                                onclick="showManagementCard('facilities')">
+                                onclick="event.preventDefault(); window.showManagementCard('facilities')">
                                 <i class="fa-solid fa-building"></i> Facility Card
                             </button>
                             <button id="show-maintenance-card" class="btn btn-outline management-btn"
-                                onclick="showManagementCard('maintenance')">
+                                onclick="event.preventDefault(); window.showManagementCard('maintenance')">
                                 <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance & System
                             </button>
                             <button id="show-reports-card" class="btn btn-outline management-btn"
-                                onclick="showManagementCard('reports')">
+                                onclick="event.preventDefault(); window.showManagementCard('reports')">
                                 <i class="fa-solid fa-chart-line"></i> Reports Card
                             </button>
                         </div>
@@ -1323,7 +1323,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../assets/Javascript/facilities-reservation.js"></script>
 
     <script>
-
+        // Final insurance to ensure Management functions are ready
+        document.addEventListener('DOMContentLoaded', function () {
+            if (sessionStorage.getItem('activeTab') === 'management') {
+                setTimeout(function () {
+                    if (typeof window.showManagementCard === 'function') {
+                        window.showManagementCard('facilities');
+                    }
+                }, 100);
+            }
+        });
     </script>
 </body>
 
