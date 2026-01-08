@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
         populateTable('contractsTableBody', MOCK_CONTRACTS_DATA, 'contract');
 
         // Find the logout button handler and update it:
-        document.getElementById('logoutBtn').addEventListener('click', function () {
+        document.getElementById('backDashboardBtn').addEventListener('click', function () {
             // Redirect to facilities reservation dashboard
             window.location.href = 'facilities-reservation.php';
         });
@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Ensure logout button redirects to facilities-reservation.php (if present)
-    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutBtn = document.getElementById('backDashboardBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
