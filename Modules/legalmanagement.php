@@ -1943,10 +1943,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     </script>
     <!-- Loading Overlay -->
     <div id="loadingOverlay"
-        style="display:none; position:fixed; inset:0; z-index:99999; background:#000; transition: opacity 0.5s ease; opacity: 1;">
+        style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); transition: opacity 0.5s ease; opacity: 1;">
         <iframe src="../animation/loading.html" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 </body>
 
 </html>
-```

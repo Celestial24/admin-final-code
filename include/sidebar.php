@@ -75,7 +75,7 @@ function get_nav_link($tab, $is_dashboard)
         if (!document.getElementById('loadingOverlay')) {
             const div = document.createElement('div');
             div.id = 'loadingOverlay';
-            div.style.cssText = 'display:none; position:fixed; inset:0; z-index:99999; background:#000; transition: opacity 0.5s ease; opacity: 1;';
+            div.style.cssText = 'display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); transition: opacity 0.5s ease; opacity: 1;';
             div.innerHTML = '<iframe src="../animation/loading.html" style="width:100%; height:100%; border:none;"></iframe>';
             document.body.appendChild(div);
         }
