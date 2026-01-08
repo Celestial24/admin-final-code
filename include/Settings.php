@@ -21,20 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim($_POST['username']);
             $email = trim($_POST['email']);
             $full_name = trim($_POST['full_name']);
-            $role = $_POST['role'];
-            $status = $_POST['status'];
             $password = $_POST['password'];
 
             try {
                 if (!empty($password)) {
                     // Update with password
-                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=?, password_hash=? WHERE id=?");
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT); // Adjust if using plain or other hash
-                    $stmt->execute([$username, $email, $full_name, $role, $status, $hashed_password, $id]);
+                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, password_hash=? WHERE id=?");
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt->execute([$username, $email, $full_name, $hashed_password, $id]);
                 } else {
                     // Update without password
-                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=?, role=?, status=? WHERE id=?");
-                    $stmt->execute([$username, $email, $full_name, $role, $status, $id]);
+                    $stmt = $pdo->prepare("UPDATE users SET username=?, email=?, full_name=? WHERE id=?");
+                    $stmt->execute([$username, $email, $full_name, $id]);
                 }
                 $message = "User updated successfully!";
             } catch (PDOException $e) {
@@ -60,13 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim($_POST['username']);
             $email = trim($_POST['email']);
             $full_name = trim($_POST['full_name']);
-            $role = $_POST['role'];
             $password = $_POST['password'];
 
             if (!empty($username) && !empty($password)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, role, status, password_hash) VALUES (?, ?, ?, ?, 'active', ?)");
-                    $stmt->execute([$username, $email, $full_name, $role, password_hash($password, PASSWORD_DEFAULT)]);
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, ?)");
+                    $stmt->execute([$username, $email, $full_name, password_hash($password, PASSWORD_DEFAULT)]);
                     $message = "User created successfully!";
                 } catch (PDOException $e) {
                     $error = "Error creating user: " . $e->getMessage();
@@ -347,8 +344,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <th>Full Name</th>
                             <th>Username</th>
                             <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -359,13 +354,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?= htmlspecialchars($user['full_name']) ?></td>
                                 <td><?= htmlspecialchars($user['username']) ?></td>
                                 <td><?= htmlspecialchars($user['email']) ?></td>
-                                <td><span style="text-transform: capitalize;"><?= htmlspecialchars($user['role']) ?></span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-<?= $user['status'] ?>">
-                                        <?= ucfirst($user['status']) ?>
-                                    </span>
-                                </td>
                                 <td>
                                     <button class="btn btn-outline btn-sm"
                                         onclick='openEditModal(<?= json_encode($user) ?>)'>
@@ -408,23 +396,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <div class="form-group">
-                    <label>Role</label>
-                    <select name="role" id="userRole" class="form-control">
-                        <option value="staff">Staff</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Status</label>
-                    <select name="status" id="userStatus" class="form-control">
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
                     <label>Password <small>(Leave blank to keep unchanged)</small></label>
                     <input type="password" name="password" class="form-control" placeholder="New Password">
                 </div>
@@ -459,9 +430,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('fullName').value = user.full_name;
             document.getElementById('userName').value = user.username;
             document.getElementById('userEmail').value = user.email;
-            document.getElementById('userRole').value = user.role;
-            document.getElementById('userStatus').value = user.status;
-            // Disable status for self if needed, assuming admin is smart
 
             document.getElementById('userModal').classList.add('active');
         }
@@ -471,8 +439,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('formAction').value = 'create_user';
             document.getElementById('userId').value = '';
             document.getElementById('userForm').reset();
-            document.getElementById('userStatus').value = 'active'; // Default
-            document.getElementById('userRole').value = 'staff'; // Default
 
             document.getElementById('userModal').classList.add('active');
         }
