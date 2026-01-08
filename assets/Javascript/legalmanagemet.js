@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.upload_date}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
                             <button class="action-btn analyze-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-xs" data-contract="${contractDataString}">AI Analyze</button>
-                            <button class="action-btn download-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-xs" data-file="${item.file_path}">Download</button>
+                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn download-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
                         </td>
                     `;
             }
