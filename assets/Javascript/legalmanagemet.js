@@ -603,18 +603,55 @@ document.addEventListener('click', function (e) {
                         </div>
                     </div>
 
-                    ${c.file_path ? `
                     <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
-                        <a href="${c.file_path}" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);">
-                            <i class="fa-solid fa-file-pdf" style="font-size: 1.1rem;"></i> View Original Contract PDF
-                        </a>
+                        <button id="downloadAnalysisBtn" type="button" style="display: inline-flex; align-items: center; gap: 10px; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 12px; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); border: none; cursor: pointer;">
+                            <i class="fa-solid fa-file-pdf" style="font-size: 1.1rem;"></i> Download Analysis Report
+                        </button>
                     </div>
-                    ` : ''}
 
                     <div style="text-align:center; margin-top: 20px;">
                             <button type="button" onclick="document.getElementById('closeDetails').click()" style="background:none; border:none; color: #94a3b8; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Close Analysis</button>
                     </div>
                 `;
+
+                // Add PDF Download Listener
+                setTimeout(() => {
+                    const dlBtn = document.getElementById('downloadAnalysisBtn');
+                    if (dlBtn) {
+                        dlBtn.addEventListener('click', function () {
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
+                            this.style.opacity = '0.7';
+
+                            // Hide buttons for PDF capture
+                            this.style.display = 'none';
+                            const closeBtn = document.querySelector('#detailsBody button[onclick*="closeDetails"]');
+                            if (closeBtn) closeBtn.style.display = 'none';
+
+                            const element = document.getElementById('detailsBody');
+                            const opt = {
+                                margin: [10, 10], // Top/Bottom margin
+                                filename: `Risk_Analysis_${c.contract_name ? c.contract_name.replace(/[^a-z0-9]/gi, '_') : 'Report'}.pdf`,
+                                image: { type: 'jpeg', quality: 0.98 },
+                                html2canvas: { scale: 2, useCORS: true, logging: false },
+                                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                            };
+
+                            html2pdf().set(opt).from(element).save().then(() => {
+                                // Restore UI
+                                dlBtn.style.display = 'inline-flex';
+                                if (closeBtn) closeBtn.style.display = 'inline-block';
+                                dlBtn.innerHTML = originalText;
+                                dlBtn.style.opacity = '1';
+                            }).catch(err => {
+                                console.error(err);
+                                dlBtn.style.display = 'inline-flex';
+                                if (closeBtn) closeBtn.style.display = 'inline-block';
+                                dlBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                            });
+                        });
+                    }
+                }, 100);
             } catch (err) {
                 console.error(err);
                 detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;"><i class="fa-solid fa-circle-xmark" style="font-size:3rem;margin-bottom:15px;"></i><br>Unable to load analysis. Data might be corrupted.</div>`;
