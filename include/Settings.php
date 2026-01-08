@@ -7,6 +7,19 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../db/db.php';
+require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+const SMTP_HOST = 'smtp.gmail.com';
+const SMTP_PORT = 587;
+const SMTP_USER = 'atiera41001@gmail.com';
+const SMTP_PASS = 'lozy tkmh fzpv lycj';
+const SMTP_FROM_EMAIL = 'atiera41001@gmail.com';
+const SMTP_FROM_NAME = 'ATIERA Hotel';
+
 $pdo = get_pdo();
 
 $message = '';
@@ -54,19 +67,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        /* Create User (Optional but good to have) */ elseif ($_POST['action'] === 'create_user') {
+        /* Create User */ elseif ($_POST['action'] === 'create_user') {
             $username = trim($_POST['username']);
             $email = trim($_POST['email']);
             $full_name = trim($_POST['full_name']);
-            $password = $_POST['password'];
 
-            if (!empty($username) && !empty($password)) {
+            if (!empty($username) && !empty($email)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, ?)");
-                    $stmt->execute([$username, $email, $full_name, password_hash($password, PASSWORD_DEFAULT)]);
-                    $message = "User created successfully!";
-                } catch (PDOException $e) {
-                    $error = "Error creating user: " . $e->getMessage();
+                    $pdo->beginTransaction();
+
+                    // 1. Insert user (placeholder password)
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, 'PENDING_REGISTRATION')");
+                    $stmt->execute([$username, $email, $full_name]);
+                    $newUserId = $pdo->lastInsertId();
+
+                    // 2. Generate Verification Code (6 digits)
+                    $code = (string) random_int(100000, 999999);
+                    $expiresAt = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
+
+                    $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (?, ?, ?)');
+                    $stmt->execute([$newUserId, $code, $expiresAt]);
+
+                    // 3. Send Invitation Email
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    $mail->Host = SMTP_HOST;
+                    $mail->SMTPAuth = true;
+                    $mail->Username = SMTP_USER;
+                    $mail->Password = SMTP_PASS;
+                    $mail->Port = SMTP_PORT;
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+                    $mail->addAddress($email, $full_name);
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Verify Your ATIERA Account';
+
+                    $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
+                    $loginUrl = $baseUrl . "/admin-final-code/auth/login.php?verify_new=1&email=" . urlencode($email);
+
+                    $mail->Body = "
+                        <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
+                            <h2 style=\"color: #0f172a;\">Account Verification</h2>
+                            <p>Hello {$full_name},</p>
+                            <p>You have been added as an administrator. Please use the verification code below to set your password and complete your registration:</p>
+                            <div style=\"text-align: center; margin: 30px 0; background: #f8fafc; padding: 20px; border-radius: 8px; border: 2px dashed #e2e8f0;\">
+                                <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #1e40af;\">{$code}</span>
+                            </div>
+                            <p>Once you have the code, click the link below to complete your registration:</p>
+                            <div style=\"margin: 20px 0; text-align: center;\">
+                                <a href=\"{$loginUrl}\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Complete Registration</a>
+                            </div>
+                            <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Code expires in 24 hours.</p>
+                        </div>
+                    ";
+
+                    $mail->send();
+                    $pdo->commit();
+                    $message = "User created and invitation email sent!";
+                } catch (\Exception $e) {
+                    $pdo->rollBack();
+                    $error = "Error: " . $e->getMessage();
                 }
             }
         }
@@ -158,7 +218,8 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <i class="fas fa-bars"></i>
                     </button>
                     <h1>Account Settings</h1>
-                    <span style="color: #718096; margin-left: 10px; font-size: 0.9rem; font-weight: 400;">Manage Admin Accounts and System Users</span>
+                    <span style="color: #718096; margin-left: 10px; font-size: 0.9rem; font-weight: 400;">Manage Admin
+                        Accounts and System Users</span>
                 </div>
                 <div class="header-actions">
                     <div class="user-info" style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
@@ -169,18 +230,22 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="dashboard-content">
                 <?php if ($message): ?>
-                    <div class="alert alert-success" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
+                    <div class="alert alert-success"
+                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
                         <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
                     </div>
                 <?php endif; ?>
                 <?php if ($error): ?>
-                    <div class="alert alert-error" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
+                    <div class="alert alert-error"
+                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
                         <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
                     </div>
                 <?php endif; ?>
 
-                <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
+                <div class="card"
+                    style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 1.5rem;">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
                         <h3 style="color: #2d3748; font-size: 1.5rem; font-weight: 600;">Users List</h3>
                         <button class="btn btn-primary" onclick="openCreateModal()">
                             <span class="icon-img-placeholder">➕</span> Add User
@@ -192,27 +257,31 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <thead>
                                 <tr>
                                     <th style="text-align: center;">ID</th>
-                                    <th>Full Name</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th style="text-align: center;">Actions</th>
+                                    <th style="text-align: center;">FULL NAME</th>
+                                    <th style="text-align: center;">USERNAME</th>
+                                    <th style="text-align: center;">EMAIL</th>
+                                    <th style="text-align: center;"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($users as $user): ?>
                                     <tr>
-                                        <td style="text-align: center; font-weight: 600; color: #718096;">#<?= $user['id'] ?></td>
-                                        <td style="font-weight: 500;"><?= htmlspecialchars($user['full_name']) ?></td>
-                                        <td><?= htmlspecialchars($user['username']) ?></td>
-                                        <td><?= htmlspecialchars($user['email']) ?></td>
+                                        <td style="text-align: center; font-weight: 600; color: #718096;">
+                                            #<?= $user['id'] ?></td>
+                                        <td style="text-align: center; font-weight: 500;">
+                                            <?= htmlspecialchars($user['full_name']) ?>
+                                        </td>
+                                        <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
+                                        <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
                                         <td style="text-align: center;">
                                             <div style="display: flex; gap: 8px; justify-content: center;">
                                                 <button class="btn btn-outline btn-sm"
                                                     onclick='openEditModal(<?= json_encode($user) ?>)'>
-                                                    <i class="fas fa-edit"></i> Edit
+                                                    <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn btn-danger btn-sm" onclick="openDeleteModal(<?= $user['id'] ?>)">
-                                                    <i class="fas fa-trash"></i> Delete
+                                                <button class="btn btn-danger btn-sm"
+                                                    onclick="openDeleteModal(<?= $user['id'] ?>)">
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -236,21 +305,25 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     <div class="form-group">
                         <label>Full Name</label>
-                        <input type="text" name="full_name" id="fullName" class="form-control" required placeholder="Enter full name">
+                        <input type="text" name="full_name" id="fullName" class="form-control" required
+                            placeholder="Enter full name">
                     </div>
 
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" name="username" id="userName" class="form-control" required placeholder="Choose a username">
+                        <input type="text" name="username" id="userName" class="form-control" required
+                            placeholder="Choose a username">
                     </div>
 
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" name="email" id="userEmail" class="form-control" required placeholder="Enter email address">
+                        <input type="email" name="email" id="userEmail" class="form-control" required
+                            placeholder="Enter email address">
                     </div>
 
-                    <div class="form-group">
-                        <label>Password <small style="font-weight: 400; color: #718096;">(Leave blank to keep unchanged)</small></label>
+                    <div class="form-group" id="passwordGroup">
+                        <label>Password <small style="font-weight: 400; color: #718096;">(Leave blank to keep
+                                unchanged)</small></label>
                         <input type="password" name="password" class="form-control" placeholder="Enter new password">
                     </div>
 
@@ -268,7 +341,8 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <span class="icon-img-placeholder">⚠️</span>
                 </div>
                 <h3 style="margin-top: 0; color: #2d3748;">Delete User?</h3>
-                <p style="color: #718096; margin-bottom: 1.5rem;">Are you sure you want to delete this user? This action cannot be undone.</p>
+                <p style="color: #718096; margin-bottom: 1.5rem;">Are you sure you want to delete this user? This action
+                    cannot be undone.</p>
                 <form method="POST">
                     <input type="hidden" name="action" value="delete_user">
                     <input type="hidden" name="user_id" id="deleteUserId">
@@ -291,6 +365,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('fullName').value = user.full_name;
             document.getElementById('userName').value = user.username;
             document.getElementById('userEmail').value = user.email;
+            document.getElementById('passwordGroup').style.display = 'block';
 
             document.getElementById('userModal').classList.add('active');
         }
@@ -300,6 +375,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('formAction').value = 'create_user';
             document.getElementById('userId').value = '';
             document.getElementById('userForm').reset();
+            document.getElementById('passwordGroup').style.display = 'none';
 
             document.getElementById('userModal').classList.add('active');
         }

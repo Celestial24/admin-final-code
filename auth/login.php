@@ -666,10 +666,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
           <input id="vcode" name="code" type="text" inputmode="numeric" maxlength="6" required class="input"
             placeholder="123456" autocomplete="one-time-code">
         </div>
+        <div id="regPassFields" class="hidden space-y-3">
+          <div>
+            <label for="regPass" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">New
+              Password</label>
+            <input id="regPass" name="new_password" type="password" class="input" placeholder="At least 6 characters">
+          </div>
+          <div>
+            <label for="regPassConfirm"
+              class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Confirm Password</label>
+            <input id="regPassConfirm" name="confirm_password" type="password" class="input"
+              placeholder="Repeat password">
+          </div>
+        </div>
         <div id="verifyMsg" class="text-xs min-h-[20px]"></div>
         <div class="flex items-center gap-2">
           <button type="submit" class="btn !w-auto px-4 text-white" id="verifySubmitBtn"
-            style="color: white !important;">Verify</button>
+            style="color: white !important;">Verify & Complete</button>
           <button type="button" id="resendBtn" class="px-3 py-2 rounded-lg border text-sm" style="color: black;">Resend
             code</button>
         </div>
@@ -823,6 +836,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     function openVerify() {
       verifyModal.classList.remove('hidden');
       verifyBackdrop.classList.remove('hidden');
+
+      const urlParams = new URLSearchParams(location.search);
+      if (urlParams.get('verify_new') === '1') {
+        document.getElementById('regPassFields').classList.remove('hidden');
+        document.getElementById('verifySubmitBtn').textContent = 'Set Password & Login';
+      } else {
+        document.getElementById('regPassFields').classList.add('hidden');
+        document.getElementById('verifySubmitBtn').textContent = 'Verify';
+      }
+
       setTimeout(() => vcode?.focus(), 50);
     }
     function closeVerify() {
@@ -838,7 +861,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
     // Auto-open from server flag or query (when coming from register)
     const serverShowVerify = <?php echo $show_verify_modal ? 'true' : 'false'; ?>;
     const urlParams = new URLSearchParams(location.search);
-    if (serverShowVerify || urlParams.get('verify') === '1') {
+    if (serverShowVerify || urlParams.get('verify') === '1' || urlParams.get('verify_new') === '1') {
       const pre = '<?php echo htmlspecialchars($prefill_email, ENT_QUOTES); ?>' || urlParams.get('email') || '';
       if (pre) vemail.value = pre;
       openVerify();
@@ -904,6 +927,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
       const email = vemail.value.trim();
       const code = vcode.value.trim();
       const submitBtn = document.getElementById('verifySubmitBtn');
+      const regPassFields = document.getElementById('regPassFields');
+      const isReg = !regPassFields.classList.contains('hidden');
 
       if (!email || !code || code.length !== 6 || !/^\d{6}$/.test(code)) {
         verifyMsg.textContent = 'Please enter a valid 6-digit code.';
@@ -912,44 +937,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
         return;
       }
 
+      let extraParams = {};
+      if (isReg) {
+          const p = document.getElementById('regPass').value;
+          const pc = document.getElementById('regPassConfirm').value;
+          if (!p || p.length < 6) {
+              verifyMsg.textContent = 'Password must be at least 6 characters.';
+              verifyMsg.className = 'text-xs text-red-600';
+              return;
+          }
+          if (p !== pc) {
+              verifyMsg.textContent = 'Passwords do not match.';
+              verifyMsg.className = 'text-xs text-red-600';
+              return;
+          }
+          extraParams = { action: 'complete_registration', new_password: p, confirm_password: pc };
+      } else {
+          extraParams = { action: 'verify' };
+      }
+
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Verifying...';
-      verifyMsg.textContent = 'Verifying code...';
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.textContent = 'Processing...';
+      verifyMsg.textContent = 'Processing...';
       verifyMsg.className = 'text-xs text-slate-500';
 
       try {
         const res = await fetch('verify.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ action: 'verify', email, code })
+          body: new URLSearchParams({ ...extraParams, email, code })
         });
         const data = await res.json();
 
         if (data?.ok) {
-          verifyMsg.textContent = data.message || 'Verification successful! Redirecting...';
+          verifyMsg.textContent = data.message || 'Success! Redirecting...';
           verifyMsg.className = 'text-xs text-green-600';
-
-          // Redirect to dashboard
           setTimeout(() => {
-            if (data.redirect) {
-              window.location.href = data.redirect;
-            } else {
-              window.location.href = '../Modules/facilities-reservation.php';
-            }
+            window.location.href = data.redirect || '../Modules/facilities-reservation.php';
           }, 1000);
         } else {
-          verifyMsg.textContent = data?.message || 'Invalid or expired verification code.';
+          verifyMsg.textContent = data?.message || 'Invalid or expired code.';
           verifyMsg.className = 'text-xs text-red-600';
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Verify';
-          vcode.value = '';
-          vcode.focus();
+          submitBtn.textContent = originalBtnText;
         }
       } catch (err) {
         verifyMsg.textContent = 'Network error. Please try again.';
         verifyMsg.className = 'text-xs text-red-600';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Verify';
+        submitBtn.textContent = originalBtnText;
       }
     });
   </script>

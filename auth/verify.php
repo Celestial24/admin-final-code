@@ -92,7 +92,57 @@ try {
         }
     }
 
-    // --- ACTION: VERIFY ---
+    // --- ACTION: COMPLETE REGISTRATION (Set first password) ---
+    if ($action === 'complete_registration') {
+        $code = trim($_POST['code'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $newPass = $_POST['new_password'] ?? '';
+
+        if (empty($newPass) || strlen($newPass) < 6) {
+            json_out(['ok' => false, 'message' => 'Password too short.'], 400);
+        }
+
+        // Find user by code and email (using JOIN to be safe)
+        $stmt = $pdo->prepare('
+            SELECT u.id, u.username, u.full_name, ev.expires_at 
+            FROM email_verifications ev 
+            JOIN users u ON ev.user_id = u.id 
+            WHERE ev.code = ? AND u.email = ?
+            ORDER BY ev.id DESC LIMIT 1
+        ');
+        $stmt->execute([$code, $email]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            $exp = new DateTimeImmutable($row['expires_at']);
+            if ($exp > new DateTimeImmutable()) {
+                // SUCCESS: Set password and login
+                $pdo->beginTransaction();
+
+                // Update password
+                $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+                $stmt->execute([password_hash($newPass, PASSWORD_DEFAULT), $row['id']]);
+
+                // Set session
+                $_SESSION['user_id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+                $_SESSION['email'] = $email;
+                $_SESSION['name'] = $row['full_name'];
+
+                // Cleanup codes
+                $pdo->prepare('DELETE FROM email_verifications WHERE user_id = ?')->execute([$row['id']]);
+
+                $pdo->commit();
+                json_out(['ok' => true, 'message' => 'Registration complete!', 'redirect' => '../Modules/facilities-reservation.php']);
+            } else {
+                json_out(['ok' => false, 'message' => 'Code expired.'], 400);
+            }
+        } else {
+            json_out(['ok' => false, 'message' => 'Invalid code or email.'], 400);
+        }
+    }
+
+    // --- ACTION: VERIFY (Regular login) ---
     if ($action === 'verify') {
         $code = trim($_POST['code'] ?? '');
         if (!preg_match('/^\d{6}$/', $code)) {
