@@ -509,99 +509,117 @@ document.addEventListener('click', function (e) {
         return;
     }
 
-    // Analyze button handler for contracts with AI analysis
+    // Analyze button handler for contracts with AI analysis (Premium Design Fix)
     if (e.target && e.target.classList.contains('analyze-btn')) {
         const contractDataString = e.target.getAttribute('data-contract');
         if (!contractDataString) return;
 
-        // FIX: The replacement of " in the JSON string needs to be reversed for proper parsing
-        const contractData = JSON.parse(contractDataString.replace(/&quot;/g, '"'));
+        // FIX: The replacement of " in the JSON string needs to be reversed
+        const c = JSON.parse(contractDataString.replace(/&quot;/g, '"'));
 
-        let riskFactorsHtml = '';
-        let recommendationsHtml = '';
+        const detailsTitle = document.getElementById('detailsTitle');
+        const detailsBody = document.getElementById('detailsBody');
+        const detailsModal = document.getElementById('detailsModal');
 
-        // Parse risk factors
-        try {
-            const riskFactors = JSON.parse(contractData.risk_factors || '[]');
-            riskFactors.forEach(factor => {
-                // Using lucide-react equivalent icons via SVG or simple text 剥 庁
-                riskFactorsHtml += `
-                        <div class="risk-factor-item flex items-start">
-                            <span class="mr-2 text-red-500 font-bold">•</span>
-                            <div>
-                                <strong>${factor.category.replace('_', ' ').toUpperCase()}:</strong> ${factor.factor} 
-                                <span class="text-xs text-gray-500">(Weight: ${factor.weight})</span>
-                            </div>
+        if (detailsTitle) detailsTitle.textContent = 'AI Risk Analysis';
+        if (detailsModal) detailsModal.style.display = 'flex';
+
+        // Initial Loading State
+        if (detailsBody) {
+            detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:10px;"></i><br>Generating analysis report...</div>`;
+
+            try {
+                const score = c.risk_score ?? 'N/A';
+                const level = c.risk_level ?? 'Unknown';
+                const summary = c.analysis_summary || 'No analysis summary available.';
+
+                // Parse lists safely
+                const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
+                const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
+
+                // Determine Icon and Color based on Level
+                let iconClass = 'fa-check-circle';
+                let colorClass = '#22c55e'; // Green
+                let bgClass = '#dcfce7'; // Light Green
+                let levelText = 'Low Risk';
+
+                if (level === 'High') {
+                    iconClass = 'fa-triangle-exclamation';
+                    colorClass = '#ef4444'; // Red
+                    bgClass = '#fee2e2'; // Light Red
+                    levelText = 'High Risk';
+                } else if (level === 'Medium') {
+                    iconClass = 'fa-circle-exclamation';
+                    colorClass = '#f59e0b'; // Amber
+                    bgClass = '#fef3c7'; // Light Amber
+                    levelText = 'Medium Risk';
+                }
+
+                // Build HTML
+                detailsBody.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+                        <div style="width: 80px; height: 80px; background: ${bgClass}; border-radius: 50%; display: inline-grid; place-items: center; margin-bottom: 15px; margin-left: auto; margin-right: auto;">
+                            <i class="fa-solid ${iconClass}" style="font-size: 36px; color: ${colorClass};"></i>
                         </div>
-                    `;
-            });
-        } catch (e) {
-            console.error("Error parsing risk factors:", e);
-            riskFactorsHtml = '<div class="risk-factor-item text-gray-500 italic">No specific risk factors identified.</div>';
-        }
+                        <h2 style="margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800;">${levelText} Detected</h2>
+                        <p style="margin: 5px 0 0; color: #64748b; font-size: 1.1rem;">Risk Score: <strong style="color: ${colorClass}; font-weight: 700;">${score}/100</strong></p>
+                    </div>
 
-        // Parse recommendations
-        try {
-            const recommendations = JSON.parse(contractData.recommendations || '[]');
-            recommendations.forEach(rec => {
-                recommendationsHtml += `<div class="recommendation-item flex items-start"><span class="mr-2 text-green-600 font-bold">✓</span> ${rec}</div>`;
-            });
-        } catch (e) {
-            console.error("Error parsing recommendations:", e);
-            recommendationsHtml = '<div class="recommendation-item text-gray-500 italic">No specific recommendations available.</div>';
-        }
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 25px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: ${colorClass};"></div>
+                        <h4 style="margin: 0 0 10px; color: #334155; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Analysis Summary</h4>
+                        <p style="margin: 0; color: #475569; line-height: 1.6; font-size: 0.95rem;">${summary}</p>
+                    </div>
 
-        const statusClass = `status-${contractData.risk_level.toLowerCase()}`;
-        const html = `
-                <div style="line-height:1.6;">
-                    ${contractData.file_path ? `
-                    <div style="margin-bottom: 20px; text-align: center;">
-                        <a href="${contractData.file_path}" target="_blank" style="display: inline-block; background: #4a6cf7; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);">
-                            📄 View Original PDF Contract
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <div>
+                            <h4 style="margin: 0 0 15px; color: #dc2626; display: flex; align-items: center; gap: 8px; font-size: 1rem; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">
+                                <i class="fa-solid fa-bug"></i> Risk Factors
+                            </h4>
+                            <ul style="margin: 0; padding: 0; list-style: none;">
+                                ${rf.length > 0 ? rf.map(r => `
+                                    <li style="background: #fff; border: 1px solid #fee2e2; border-left: 3px solid #ef4444; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                        <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; margin-top: 3px; font-size: 0.8rem;"></i>
+                                        <div>
+                                            ${r.category ? `<strong style="display:block; font-size: 0.75rem; color: #ef4444; text-transform: uppercase;">${r.category.replace('_', ' ')}</strong>` : ''}
+                                            ${r.factor || 'Unknown Factor'}
+                                        </div>
+                                    </li>
+                                `).join('') : '<li style="color: #94a3b8; font-style: italic; text-align: center; padding: 10px;">No significant risks detected.</li>'}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0 0 15px; color: #059669; display: flex; align-items: center; gap: 8px; font-size: 1rem; border-bottom: 2px solid #dcfce7; padding-bottom: 8px;">
+                                <i class="fa-solid fa-lightbulb"></i> Recommendations
+                            </h4>
+                            <ul style="margin: 0; padding: 0; list-style: none;">
+                                ${rec.length > 0 ? rec.map(x => `
+                                    <li style="background: #fff; border: 1px solid #dcfce7; border-left: 3px solid #22c55e; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                        <i class="fa-solid fa-check" style="color: #22c55e; margin-top: 3px; font-size: 0.8rem;"></i>
+                                        <span style="flex: 1;">${x}</span>
+                                    </li>
+                                `).join('') : '<li style="color: #94a3b8; font-style: italic; text-align: center; padding: 10px;">Standard review recommended.</li>'}
+                            </ul>
+                        </div>
+                    </div>
+
+                    ${c.file_path ? `
+                    <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
+                        <a href="${c.file_path}" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);">
+                            <i class="fa-solid fa-file-pdf" style="font-size: 1.1rem;"></i> View Original Contract PDF
                         </a>
                     </div>
                     ` : ''}
-                    <div class="ai-analysis-section p-4 bg-blue-50 rounded-lg mb-6 border border-blue-200">
-                        <h4 class="flex items-center text-blue-800">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15v-6h-2v6h2zm0-8V7h-2v2h2z"/></svg>
-                            AI Risk Analysis Report
-                        </h4>
-                        <p class="mb-1"><strong>Contract:</strong> ${contractData.contract_name}</p>
-                        <p class="mb-1"><strong>Case ID:</strong> ${contractData.case_id}</p>
-                        <p class="mb-1"><strong>Risk Level:</strong> <span class="status-badge ${statusClass}">${contractData.risk_level.toUpperCase()}</span></p>
-                        <p class="mb-1"><strong>Risk Score:</strong> <span class="font-bold text-lg">${contractData.risk_score}/100</span></p>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(59, 130, 246, 0.2); padding-bottom:5px;">
-                            <h4 style="margin:0; color:#1e40af;">Analysis Summary</h4>
-                            ${contractData.file_path ? `<a href="${contractData.file_path}" target="_blank" style="font-size:0.8rem; color:#3b82f6; text-decoration:none; font-weight:700;">📄 View Contract</a>` : ''}
-                        </div>
-                        <p class="mt-2 text-sm italic"><strong>Summary:</strong> ${contractData.analysis_summary || 'No summary available'}</p>
-                    </div>
-                    
-                    <div class="ai-analysis-section mb-6">
-                        <h5 class="text-lg font-semibold text-gray-800 mb-2 border-b pb-1 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22h20zM12 8v4M12 16h.01"/></svg>
-                            Identified Risk Factors
-                        </h5>
-                        <div class="risk-factors">
-                            ${riskFactorsHtml}
-                        </div>
-                    </div>
-                    
-                    <div class="ai-analysis-section">
-                        <h5 class="text-lg font-semibold text-gray-800 mb-2 border-b pb-1 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3"/></svg>
-                            AI Recommendations
-                        </h5>
-                        <div class="recommendations">
-                            ${recommendationsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
 
-        document.getElementById('detailsTitle').innerText = `AI Risk Analysis for ${contractData.contract_name}`;
-        document.getElementById('detailsBody').innerHTML = html;
-        detailsModal.style.display = 'flex';
+                    <div style="text-align:center; margin-top: 20px;">
+                            <button type="button" onclick="document.getElementById('closeDetails').click()" style="background:none; border:none; color: #94a3b8; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Close Analysis</button>
+                    </div>
+                `;
+            } catch (err) {
+                console.error(err);
+                detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;"><i class="fa-solid fa-circle-xmark" style="font-size:3rem;margin-bottom:15px;"></i><br>Unable to load analysis. Data might be corrupted.</div>`;
+            }
+        }
     }
 
     // Download button handler for contracts
