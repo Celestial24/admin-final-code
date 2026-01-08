@@ -220,14 +220,24 @@ window.viewReservationDetails = function (data) {
     openModal('details-modal');
 };
 
-// --- MANAGEMENT CARD TOGGLES ---
+// --- MANAGEMENT CARD TOGGLES (BULLETPROOF) ---
 window.showManagementCard = function (type) {
+    console.log('Switching to management card:', type);
+
     // Hide all cards
-    document.querySelectorAll('.management-card').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.management-card').forEach(el => {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+    });
 
     // Show selected card
     const sel = document.querySelector('.management-card.management-' + type);
-    if (sel) sel.style.display = 'block';
+    if (sel) {
+        sel.style.display = 'block';
+        sel.style.visibility = 'visible';
+    } else {
+        console.warn('Management card not found for type:', type);
+    }
 
     // Update active button styling
     const btns = {
@@ -237,7 +247,17 @@ window.showManagementCard = function (type) {
     };
 
     Object.keys(btns).forEach(key => {
-        if (btns[key]) btns[key].classList.toggle('active', key === type);
+        if (btns[key]) {
+            btns[key].classList.toggle('active', key === type);
+            // Backup for CSS: manually set style if active
+            if (key === type) {
+                btns[key].style.background = '#3182ce';
+                btns[key].style.color = 'white';
+            } else {
+                btns[key].style.background = '';
+                btns[key].style.color = '';
+            }
+        }
     });
 };
 
@@ -247,10 +267,12 @@ function initializePage() {
     const activeTab = sessionStorage.getItem('activeTab') || 'dashboard';
     switchTab(activeTab);
 
-    // Initial management card
-    showManagementCard('facilities');
+    // Initial state for management
+    if (activeTab === 'management') {
+        showManagementCard('facilities');
+    }
 
-    // Nav links listeners
+    // Nav links listeners (for sidebar)
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
@@ -264,21 +286,13 @@ function initializePage() {
         });
     });
 
-    // Button click listeners for Management
-    const bf = document.getElementById('show-facilities-card');
-    const bm = document.getElementById('show-maintenance-card');
-    const br = document.getElementById('show-reports-card');
-
-    if (bf) bf.addEventListener('click', () => showManagementCard('facilities'));
-    if (bm) bm.addEventListener('click', () => showManagementCard('maintenance'));
-    if (br) br.addEventListener('click', () => showManagementCard('reports'));
-
     // Global click-to-close behavior
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) closeModal(e.target.id);
     });
 }
 
+// Ensure execution
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePage);
 } else {

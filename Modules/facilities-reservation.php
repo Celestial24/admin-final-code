@@ -907,13 +907,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="management-header">
                         <h2><span class="icon-img-placeholder">⚙️</span> Facilities Management</h2>
                         <div class="management-buttons">
-                            <button id="show-facilities-card" class="btn btn-outline management-btn">
+                            <button id="show-facilities-card" class="btn btn-outline management-btn active"
+                                onclick="showManagementCard('facilities')">
                                 <i class="fa-solid fa-building"></i> Facility Card
                             </button>
-                            <button id="show-maintenance-card" class="btn btn-outline management-btn">
+                            <button id="show-maintenance-card" class="btn btn-outline management-btn"
+                                onclick="showManagementCard('maintenance')">
                                 <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance & System
                             </button>
-                            <button id="show-reports-card" class="btn btn-outline management-btn">
+                            <button id="show-reports-card" class="btn btn-outline management-btn"
+                                onclick="showManagementCard('reports')">
                                 <i class="fa-solid fa-chart-line"></i> Reports Card
                             </button>
                         </div>
