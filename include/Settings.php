@@ -222,7 +222,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->send();
                     }
                     $pdo->commit();
-                    $message = "User created successfully!";
+                    if (!empty($password)) {
+                        $message = "User created successfully! Login details sent to <strong>" . htmlspecialchars($email) . "</strong>";
+                    } else {
+                        $message = "Invitation sent to <strong>" . htmlspecialchars($email) . "</strong>! They can now set their password.";
+                    }
                 } catch (\Exception $e) {
                     $pdo->rollBack();
                     $error = "Error: " . $e->getMessage() . (isset($mail) ? " (Mailer: " . $mail->ErrorInfo . ")" : "");
@@ -363,16 +367,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="dashboard-content">
                 <?php if ($message): ?>
-                    <div class="alert alert-success"
-                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
-                        <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
-                    </div>
+                        <div class="alert alert-success"
+                            style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
+                            <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
+                        </div>
                 <?php endif; ?>
                 <?php if ($error): ?>
-                    <div class="alert alert-error"
-                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
-                        <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
-                    </div>
+                        <div class="alert alert-error"
+                            style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
+                            <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
+                        </div>
                 <?php endif; ?>
 
                 <div class="card"
@@ -398,15 +402,15 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </thead>
                             <tbody>
                                 <?php foreach ($users as $user): ?>
-                                    <tr>
-                                        <td style="text-align: center; font-weight: 600; color: #718096;">
-                                            #<?= $user['id'] ?></td>
-                                        <td style="text-align: center; font-weight: 500;">
-                                            <?= htmlspecialchars($user['full_name']) ?>
-                                        </td>
-                                        <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
-                                        <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
-                                    </tr>
+                                        <tr>
+                                            <td style="text-align: center; font-weight: 600; color: #718096;">
+                                                #<?= $user['id'] ?></td>
+                                            <td style="text-align: center; font-weight: 500;">
+                                                <?= htmlspecialchars($user['full_name']) ?>
+                                            </td>
+                                            <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
+                                            <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
+                                        </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -439,7 +443,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email" id="userEmail" class="form-control" required
-                            placeholder="atiera41001@gmail.com">
+                            placeholder="user@example.com">
                     </div>
 
                     <div class="form-group" id="passwordGroup">
@@ -510,6 +514,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('formAction').value = 'create_user';
             document.getElementById('userId').value = '';
             document.getElementById('userForm').reset();
+            document.getElementById('userEmail').value = ''; // Ensure email is empty
             document.getElementById('passwordGroup').style.display = 'block';
 
             document.getElementById('userModal').classList.add('active');
