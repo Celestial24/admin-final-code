@@ -47,7 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Username = SMTP_USER;
                         $mail->Password = SMTP_PASS;
                         $mail->Port = SMTP_PORT;
-                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->SMTPOptions = array(
+                            'ssl' => array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)
+                        );
                         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
                         $mail->addAddress($email, $full_name);
                         $mail->isHTML(true);
@@ -59,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <p>This is a security notification to let you know that your password for the ATIERA Admin Panel has been updated by an administrator.</p>
                                 <p>If you did not authorized this change, please contact your system administrator immediately.</p>
                                 <div style=\"margin: 20px 0; text-align: center;\">
-                                    <a href=\"" . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]/admin-final-code/auth/login.php\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Go to Login</a>
+                                    <a href=\"" . getBaseUrl() . "/auth/login.php\" style=\"background: #1e40af; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Go to Login</a>
                                 </div>
                             </div>
                         ";

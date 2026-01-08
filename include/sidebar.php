@@ -63,6 +63,9 @@ function get_nav_link($tab, $is_dashboard)
             <li><a href="<?= get_nav_link('reports', $is_dashboard) ?> class=" <?= (isset($_GET['tab']) && $_GET['tab'] == 'reports') ? 'active' : '' ?>" data-tab="reports">
                     <span class="icon-img-placeholder">📈</span> Reports
                 </a></li>
+            <li><a href="../include/Account.php" class="<?= ($current_page == 'Account.php') ? 'active' : '' ?>">
+                    <span class="icon-img-placeholder">👤</span> My Account
+                </a></li>
             <li><a href="../include/Settings.php" class="<?= ($current_page == 'Settings.php') ? 'active' : '' ?>">
                     <span class="icon-img-placeholder">⚙️</span> Settings
                 </a></li>
