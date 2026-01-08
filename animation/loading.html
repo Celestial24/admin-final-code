@@ -30,55 +30,101 @@
             z-index: 10;
         }
 
-        .flame-wrapper {
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
-            animation: pulseGlow 2s infinite alternate;
+        .brand-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            /* Space between flame and text */
         }
 
-        .flame-img {
-            max-width: 100px;
-            /* Assumes logo.png is the flame icon */
-            height: auto;
+        /* Generated Fire Animation */
+        .fire {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .fire .flame {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 50% 0 50% 50%;
+            background: linear-gradient(-45deg, #d4af37, #fcf6ba, #aa771c);
+            transform: translateX(-50%) rotate(-45deg);
+            box-shadow: 0 0 10px #d4af37, 0 0 20px #aa771c;
+            animation: burn 1s infinite alternate ease-in-out;
+            opacity: 0.9;
+        }
+
+        .fire .flame:nth-child(2) {
+            width: 40px;
+            height: 40px;
+            bottom: 5px;
+            background: linear-gradient(-45deg, #fcf6ba, #fff);
+            animation: burn 1.5s infinite alternate-reverse ease-in-out;
+            box-shadow: none;
+            opacity: 0.8;
+            z-index: 2;
+        }
+
+        @keyframes burn {
+            0% {
+                transform: translateX(-50%) rotate(-45deg) scale(1);
+                border-radius: 50% 0 50% 50%;
+            }
+
+            50% {
+                transform: translateX(-50%) rotate(-45deg) scale(1.1);
+                border-radius: 40% 10% 40% 40%;
+            }
+
+            100% {
+                transform: translateX(-50%) rotate(-45deg) scale(1);
+                border-radius: 50% 0 50% 50%;
+            }
         }
 
         .brand-text {
             font-family: 'Cinzel', serif;
-            font-size: 3.5rem;
+            font-size: 4rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 8px;
+            letter-spacing: 5px;
             background: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             margin: 0;
             padding-bottom: 5px;
-            /* For descenders */
             animation: shine 5s infinite linear;
             background-size: 200%;
-            text-shadow: 0 0 20px rgba(191, 149, 63, 0.2);
+            text-shadow: 0 0 30px rgba(191, 149, 63, 0.3);
+            line-height: 1;
         }
 
         .tagline {
             font-family: 'Montserrat', sans-serif;
             color: #888;
-            letter-spacing: 4px;
-            font-size: 0.9rem;
+            letter-spacing: 6px;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            margin-top: 5px;
-            margin-bottom: 40px;
+            margin-top: 15px;
+            margin-bottom: 50px;
             opacity: 0;
             animation: fadeInUp 1s ease-out 0.5s forwards;
+            text-align: center;
         }
 
         .loading-line {
-            width: 300px;
-            height: 2px;
+            width: 320px;
+            height: 3px;
             background: rgba(255, 255, 255, 0.1);
             position: relative;
             overflow: hidden;
-            border-radius: 2px;
+            border-radius: 3px;
         }
 
         .loading-progress {
@@ -88,26 +134,13 @@
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #bf953f, #fcf6ba, #aa771c);
-            box-shadow: 0 0 10px #bf953f;
+            box-shadow: 0 0 15px #bf953f;
             animation: load 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        /* Animations */
         @keyframes shine {
             to {
                 background-position: 200% center;
-            }
-        }
-
-        @keyframes pulseGlow {
-            from {
-                transform: scale(1);
-                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-            }
-
-            to {
-                transform: scale(1.05);
-                filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
             }
         }
 
@@ -117,7 +150,7 @@
             }
 
             50% {
-                width: 70%;
+                width: 60%;
             }
 
             100% {
@@ -142,11 +175,17 @@
 <body>
 
     <div class="loader-container">
-        <!-- If logo.png has the flame, show it. If it includes text, this might look double. 
-             If user wants 'Lettering', the text below handles it. -->
 
+        <div class="brand-wrapper">
+            <!-- CSS Animated Flame -->
+            <div class="fire">
+                <div class="flame"></div>
+                <div class="flame"></div>
+            </div>
 
-        <h1 class="brand-text">ATIÉRA</h1>
+            <h1 class="brand-text">ATIÉRA</h1>
+        </div>
+
         <div class="tagline">Hotel & Restaurant</div>
 
         <div class="loading-line">
