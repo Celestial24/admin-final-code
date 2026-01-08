@@ -381,6 +381,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <th style="text-align: center;">FULL NAME</th>
                                     <th style="text-align: center;">USERNAME</th>
                                     <th style="text-align: center;">EMAIL</th>
+                                    <th style="text-align: center;">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -393,6 +394,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
                                         <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
+                                        <td style="text-align: center;">
+                                            <button class="btn btn-secondary" style="padding: 5px 10px;"
+                                                onclick="openEditModal(<?= $user['id'] ?>, '<?= addslashes($user['username']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['full_name']) ?>')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-danger" style="background: #e53e3e; padding: 5px 10px;"
+                                                onclick="openDeleteModal(<?= $user['id'] ?>)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
