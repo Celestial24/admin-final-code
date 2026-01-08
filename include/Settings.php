@@ -106,51 +106,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!empty($username) && !empty($email)) {
                 try {
-                    $pdo->beginTransaction();
+                    // Check if username or email already exists
+                    $check = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+                    $check->execute([$username, $email]);
+                    if ($check->fetch()) {
+                        $error = "Error: A user with this username or email already exists.";
+                    } else {
+                        $pdo->beginTransaction();
 
-                    // Detect Base URL dynamically
-                    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
-                    $host = $_SERVER['HTTP_HOST'];
-                    $scriptPath = $_SERVER['SCRIPT_NAME'];
-                    // Get project root (parent of 'include' dir)
-                    $projectRoot = dirname(dirname($scriptPath));
-                    if ($projectRoot === DIRECTORY_SEPARATOR || $projectRoot === '.')
-                        $projectRoot = '';
-                    $baseUrl = $protocol . "://" . $host . $projectRoot;
+                        // Detect Base URL dynamically
+                        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+                        $host = $_SERVER['HTTP_HOST'];
+                        $scriptPath = $_SERVER['SCRIPT_NAME'];
+                        // Get project root (parent of 'include' dir)
+                        $projectRoot = dirname(dirname($scriptPath));
+                        if ($projectRoot === DIRECTORY_SEPARATOR || $projectRoot === '.')
+                            $projectRoot = '';
+                        $baseUrl = $protocol . "://" . $host . $projectRoot;
 
-                    if (!empty($password)) {
-                        // 1. Insert user with manual password
-                        $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, ?)");
-                        $stmt->execute([$username, $email, $full_name, password_hash($password, PASSWORD_DEFAULT)]);
-                        $newUserId = $pdo->lastInsertId();
+                        if (!empty($password)) {
+                            // 1. Insert user with manual password
+                            $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, ?)");
+                            $stmt->execute([$username, $email, $full_name, password_hash($password, PASSWORD_DEFAULT)]);
+                            $newUserId = $pdo->lastInsertId();
 
-                        // 2. Send Direct Email with Password
-                        $mail = new PHPMailer(true);
-                        $mail->isSMTP();
-                        $mail->Host = SMTP_HOST;
-                        $mail->SMTPAuth = true;
-                        $mail->Username = SMTP_USER;
-                        $mail->Password = SMTP_PASS;
-                        $mail->Port = SMTP_PORT;
-                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            // 2. Send Direct Email with Password
+                            $mail = new PHPMailer(true);
+                            $mail->isSMTP();
+                            $mail->Host = SMTP_HOST;
+                            $mail->SMTPAuth = true;
+                            $mail->Username = SMTP_USER;
+                            $mail->Password = SMTP_PASS;
+                            $mail->Port = SMTP_PORT;
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-                        // SSL Bypass for common hosting issues
-                        $mail->SMTPOptions = array(
-                            'ssl' => array(
-                                'verify_peer' => false,
-                                'verify_peer_name' => false,
-                                'allow_self_signed' => true
-                            )
-                        );
+                            // SSL Bypass for common hosting issues
+                            $mail->SMTPOptions = array(
+                                'ssl' => array(
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                    'allow_self_signed' => true
+                                )
+                            );
 
-                        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
-                        $mail->addAddress($email, $full_name);
-                        $mail->isHTML(true);
-                        $mail->Subject = 'Welcome to ATIERA Admin Panel';
+                            $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+                            $mail->addAddress($email, $full_name);
+                            $mail->isHTML(true);
+                            $mail->Subject = 'Welcome to ATIERA Admin Panel';
 
-                        $loginUrl = $baseUrl . "/auth/login.php";
+                            $loginUrl = $baseUrl . "/auth/login.php";
 
-                        $mail->Body = "
+                            $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
                                 <h2 style=\"color: #0f172a;\">Welcome to ATIERA</h2>
                                 <p>Hello {$full_name},</p>
@@ -165,46 +171,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                         ";
-                        $mail->send();
-                    } else {
-                        // 1. Insert user (placeholder password)
-                        $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, 'PENDING_REGISTRATION')");
-                        $stmt->execute([$username, $email, $full_name]);
-                        $newUserId = $pdo->lastInsertId();
+                            $mail->send();
+                        } else {
+                            // 1. Insert user (placeholder password)
+                            $stmt = $pdo->prepare("INSERT INTO users (username, email, full_name, password_hash) VALUES (?, ?, ?, 'PENDING_REGISTRATION')");
+                            $stmt->execute([$username, $email, $full_name]);
+                            $newUserId = $pdo->lastInsertId();
 
-                        // 2. Generate Verification Code (6 digits)
-                        $code = (string) random_int(100000, 999999);
-                        $expiresAt = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
+                            // 2. Generate Verification Code (6 digits)
+                            $code = (string) random_int(100000, 999999);
+                            $expiresAt = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
 
-                        $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (?, ?, ?)');
-                        $stmt->execute([$newUserId, $code, $expiresAt]);
+                            $stmt = $pdo->prepare('INSERT INTO email_verifications (user_id, code, expires_at) VALUES (?, ?, ?)');
+                            $stmt->execute([$newUserId, $code, $expiresAt]);
 
-                        // 3. Send Invitation Email
-                        $mail = new PHPMailer(true);
-                        $mail->isSMTP();
-                        $mail->Host = SMTP_HOST;
-                        $mail->SMTPAuth = true;
-                        $mail->Username = SMTP_USER;
-                        $mail->Password = SMTP_PASS;
-                        $mail->Port = SMTP_PORT;
-                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            // 3. Send Invitation Email
+                            $mail = new PHPMailer(true);
+                            $mail->isSMTP();
+                            $mail->Host = SMTP_HOST;
+                            $mail->SMTPAuth = true;
+                            $mail->Username = SMTP_USER;
+                            $mail->Password = SMTP_PASS;
+                            $mail->Port = SMTP_PORT;
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-                        $mail->SMTPOptions = array(
-                            'ssl' => array(
-                                'verify_peer' => false,
-                                'verify_peer_name' => false,
-                                'allow_self_signed' => true
-                            )
-                        );
+                            $mail->SMTPOptions = array(
+                                'ssl' => array(
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                    'allow_self_signed' => true
+                                )
+                            );
 
-                        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
-                        $mail->addAddress($email, $full_name);
-                        $mail->isHTML(true);
-                        $mail->Subject = 'Verify Your ATIERA Account';
+                            $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+                            $mail->addAddress($email, $full_name);
+                            $mail->isHTML(true);
+                            $mail->Subject = 'Verify Your ATIERA Account';
 
-                        $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
+                            $loginUrl = $baseUrl . "/auth/login.php?verify_new=1&email=" . urlencode($email);
 
-                        $mail->Body = "
+                            $mail->Body = "
                             <div style=\"font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;\">
                                 <h2 style=\"color: #0f172a;\">Account Verification</h2>
                                 <p>Hello {$full_name},</p>
@@ -219,13 +225,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Code expires in 24 hours.</p>
                             </div>
                         ";
-                        $mail->send();
-                    }
-                    $pdo->commit();
-                    if (!empty($password)) {
-                        $message = "User created successfully! Login details sent to <strong>" . htmlspecialchars($email) . "</strong>";
-                    } else {
-                        $message = "Invitation sent to <strong>" . htmlspecialchars($email) . "</strong>! They can now set their password.";
+                            $mail->send();
+                        }
+                        $pdo->commit();
+                        if (!empty($password)) {
+                            $message = "User created successfully! Login details sent to <strong>" . htmlspecialchars($email) . "</strong>";
+                        } else {
+                            $message = "Invitation sent to <strong>" . htmlspecialchars($email) . "</strong>! They can now set their password.";
+                        }
                     }
                 } catch (\Exception $e) {
                     $pdo->rollBack();
@@ -367,16 +374,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="dashboard-content">
                 <?php if ($message): ?>
-                        <div class="alert alert-success"
-                            style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
-                        </div>
+                    <div class="alert alert-success"
+                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-img-placeholder">✅</span> <?= htmlspecialchars($message) ?>
+                    </div>
                 <?php endif; ?>
                 <?php if ($error): ?>
-                        <div class="alert alert-error"
-                            style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
-                        </div>
+                    <div class="alert alert-error"
+                        style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-img-placeholder">⚠️</span> <?= htmlspecialchars($error) ?>
+                    </div>
                 <?php endif; ?>
 
                 <div class="card"
@@ -402,15 +409,15 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </thead>
                             <tbody>
                                 <?php foreach ($users as $user): ?>
-                                        <tr>
-                                            <td style="text-align: center; font-weight: 600; color: #718096;">
-                                                #<?= $user['id'] ?></td>
-                                            <td style="text-align: center; font-weight: 500;">
-                                                <?= htmlspecialchars($user['full_name']) ?>
-                                            </td>
-                                            <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
-                                            <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
-                                        </tr>
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 600; color: #718096;">
+                                            #<?= $user['id'] ?></td>
+                                        <td style="text-align: center; font-weight: 500;">
+                                            <?= htmlspecialchars($user['full_name']) ?>
+                                        </td>
+                                        <td style="text-align: center;"><?= htmlspecialchars($user['username']) ?></td>
+                                        <td style="text-align: center;"><?= htmlspecialchars($user['email']) ?></td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
