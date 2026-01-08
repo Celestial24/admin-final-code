@@ -53,8 +53,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Successful login
             loginScreen.style.display = 'none';
             dashboard.style.display = 'block';
-            const defaultTab = document.getElementById('contracts');
-            if (defaultTab) defaultTab.classList.add('active');
+            // Activate default tab (Employees) to ensure correct visibility
+            const defaultTab = document.querySelector('.nav-tab[data-target="employees"]');
+            if (defaultTab) defaultTab.click();
 
             // Initialize dashboard data
             initializeDashboard();
