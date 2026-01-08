@@ -566,6 +566,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="../assets/image/logo2.png">
     <link rel="stylesheet" href="../assets/css/legalmanagement.css">
+
     <style>
         /* Center all table header and cell content within this module */
         .data-table th,
@@ -862,7 +863,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             </div>
 
             <!-- Contracts Section -->
-            <div class="content-section" id="contracts">
+            <div class="content-section" id="contracts" style="display:none;">
                 <div class="section-header">
                     <h2 class="section-title">Contracts <span class="ai-badge">AI-Powered Analysis</span></h2>
                     <div style="display: flex; gap: 10px;">
@@ -973,7 +974,13 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <button class="action-btn view-btn" data-type="contract-view"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
                                     <button class="action-btn analyze-btn" data-type="contract-analyze"
-                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>Analyze</button>
+                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>AI
+                                        Analyze</button>
+                                    <?php if (!empty($contract['file_path'])): ?>
+                                        <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" download
+                                            class="action-btn"
+                                            style="color: #4a6cf7; text-decoration: none; font-weight: 500; font-size: 14px;">Download</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
