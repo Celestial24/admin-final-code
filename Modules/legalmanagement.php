@@ -1657,16 +1657,25 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             }
 
             // Section display logic
-            const contentSections = document.querySelectorAll('.content-section'); // Assuming sections have this class
-            const navLinks = document.querySelectorAll('.nav-link'); // Assuming nav links have this class
+            const contentSections = document.querySelectorAll('.content-section');
+            const navLinks = document.querySelectorAll('.nav-tab'); // Corrected selector
 
             function showSection(targetId) {
+                // Update content sections
                 contentSections.forEach(section => {
                     section.classList.remove('active');
                     section.style.display = 'none';
                     if (section.id === targetId) {
                         section.classList.add('active');
                         section.style.display = 'block';
+                    }
+                });
+
+                // Update active tab visual
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-target') === targetId) {
+                        link.classList.add('active');
                     }
                 });
             }
