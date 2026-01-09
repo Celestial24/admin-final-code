@@ -193,15 +193,20 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'hover:bg-gray-50';
 
             if (type === 'document') {
+                const docData = JSON.stringify({ id: item.id || 0, name: item.name, case_id: item.case || item.case_id, file_path: item.file_path || '' }).replace(/"/g, '&quot;');
                 row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${item.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.case}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.date}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button class="action-btn view-btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded-lg text-xs">View</button>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.case || item.case_id || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.date || item.uploaded_at || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                            <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="doc-edit" data-doc="${docData}">View</button>
+                            <button class="action-btn bg-red-100 hover:bg-red-200 text-red-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="doc-delete" data-doc="${docData}">Delete</button>
                         </td>
                     `;
             } else if (type === 'billing') {
+                const invData = JSON.stringify({ id: item.id || 0, invoice_number: item.invoice, client: item.client, amount: parseFloat((item.amount || '0').replace(/[^0-9.]/g, '')), due_date: item.dueDate, status: item.status }).replace(/"/g, '&quot;');
                 const statusClass = `status-${item.status}`;
                 row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${item.invoice}</td>
@@ -210,36 +215,40 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-6 py-4 whitespace-nowrap">${item.dueDate}</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="status-badge ${statusClass}">${item.status.toUpperCase()}</span></td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button class="action-btn view-btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded-lg text-xs">View</button>
-                            <button class="action-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded-lg text-xs">Edit</button>
+                            <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="invoice-view" data-invoice="${invData}">View</button>
+                            <button class="action-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="invoice-pay" data-invoice="${invData}">Pay</button>
                         </td>
                     `;
             } else if (type === 'member') {
+                const empData = JSON.stringify({ id: item.id || 0, name: item.name, position: item.position, email: item.email, phone: item.phone }).replace(/"/g, '&quot;');
                 row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${item.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.position}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:underline">${item.email}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.phone}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button class="action-btn view-btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded-lg text-xs">View</button>
-                            <button class="action-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded-lg text-xs">Edit</button>
+                            <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="employee-view" data-emp="${empData}">View</button>
+                            <button class="action-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="employee-edit" data-emp="${empData}">Edit</button>
                         </td>
                     `;
             } else if (type === 'contract') {
                 const statusClass = `status-${item.risk_level.toLowerCase()}`;
-                // Attach the full contract object as a data attribute (JSON string) for the 'Analyze' button
-                // Reversing the quoting issue for JSON string
                 const contractDataString = JSON.stringify(item).replace(/"/g, '&quot;');
-
                 row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${item.contract_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.contract_name || item.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.case_id}</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="status-badge ${statusClass}">${item.risk_level.toUpperCase()}</span></td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.risk_score}/100</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.upload_date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.upload_date || item.created_at}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button class="action-btn analyze-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-xs" data-contract="${contractDataString}">AI Analyze</button>
-                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn download-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
+                            <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
+                                data-type="contract-view" data-contract="${contractDataString}">View</button>
+                            <button class="action-btn analyze-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-xs" 
+                                data-type="contract-analyze" data-contract="${contractDataString}">AI Analyze</button>
                         </td>
                     `;
             }
