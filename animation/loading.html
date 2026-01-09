@@ -117,7 +117,7 @@
             margin-bottom: 20px;
             /* Reduced bottom margin to fit Administrative */
             /* opacity: 0; removed to show immediately */
-            animation: textWave 3s ease-in-out infinite;
+            /* animation: textWave 3s ease-in-out infinite; REMOVED BLOCK ANIMATION */
             /* Combined animations */
             text-align: center;
         }
@@ -164,8 +164,9 @@
             margin-bottom: 30px;
             /* Adjust spacing as needed */
             /* opacity: 0; removed to show text immediately */
-            animation: textWave 3s ease-in-out infinite;
-            /* Delay to appear after tagline */
+            /* animation: textWave 3s ease-in-out infinite; REMOVED BLOCK ANIMATION */
+        }
+
         }
 
         .admin-text {
@@ -176,6 +177,28 @@
             font-weight: 700;
             text-transform: uppercase;
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            /* Ensure spans behave correctly */
+        }
+
+        /* LETTER WAVE ANIMATION */
+        .wave-text span {
+            display: inline-block;
+            animation: letterWave 2s ease-in-out infinite;
+            animation-delay: calc(0.1s * var(--i));
+        }
+
+        @keyframes letterWave {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+                /* Adjust wave height */
+            }
         }
 
         /* Center Line Wave Effect */
@@ -253,11 +276,11 @@
             <h1 class="brand-text">ATIÉRA</h1>
         </div>
 
-        <div class="tagline">Hotel & Restaurant</div>
+        <div class="tagline wave-text">Hotel & Restaurant</div>
 
         <div class="admin-wrapper">
             <div class="center-line"></div>
-            <div class="admin-text">ADMINISTRATIVE</div>
+            <div class="admin-text wave-text">ADMINISTRATIVE</div>
             <div class="center-line"></div>
         </div>
 
@@ -265,6 +288,24 @@
             <div class="loading-progress"></div>
         </div>
     </div>
+
+    <script>
+        // Select all elements with the 'wave-text' class
+        const waveTexts = document.querySelectorAll('.wave-text');
+
+        waveTexts.forEach(textContainer => {
+            const text = textContainer.textContent;
+            textContainer.innerHTML = ''; // Clear existing text
+
+            // Split text into letters and create spans
+            [...text].forEach((letter, index) => {
+                const span = document.createElement('span');
+                span.textContent = letter === ' ' ? '\u00A0' : letter; // Handle spaces
+                span.style.setProperty('--i', index); // Set custom property for delay
+                textContainer.appendChild(span);
+            });
+        });
+    </script>
 
 </body>
 
