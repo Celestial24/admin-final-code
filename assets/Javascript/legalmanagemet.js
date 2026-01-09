@@ -195,12 +195,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (type === 'document') {
                 const docData = JSON.stringify({ id: item.id || 0, name: item.name, case_id: item.case || item.case_id, file_path: item.file_path || '' }).replace(/"/g, '&quot;');
                 row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.file_path ? `<a href="${item.file_path}" target="_blank" class="text-blue-600 hover:underline">${item.name}</a>` : item.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.case || item.case_id || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.date || item.uploaded_at || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
                             <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="doc-edit" data-doc="${docData}">View</button>
+                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
                             <button class="action-btn bg-red-100 hover:bg-red-200 text-red-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="doc-delete" data-doc="${docData}">Delete</button>
                         </td>
@@ -249,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 data-type="contract-view" data-contract="${contractDataString}">View</button>
                             <button class="action-btn analyze-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-xs" 
                                 data-type="contract-analyze" data-contract="${contractDataString}">AI Analyze</button>
+                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn download-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
                         </td>
                     `;
             }
