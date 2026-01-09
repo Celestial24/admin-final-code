@@ -114,9 +114,11 @@
             font-size: 0.85rem;
             text-transform: uppercase;
             margin-top: 15px;
-            margin-bottom: 50px;
+            margin-bottom: 20px;
+            /* Reduced bottom margin to fit Administrative */
             opacity: 0;
-            animation: fadeInUp 1s ease-out 0.5s forwards;
+            animation: fadeInUp 1s ease-out 0.5s forwards, textWave 3s ease-in-out infinite 1.5s;
+            /* Combined animations */
             text-align: center;
         }
 
@@ -138,6 +140,79 @@
             background: linear-gradient(90deg, #bf953f, #fcf6ba, #aa771c);
             box-shadow: 0 0 15px #bf953f;
             animation: load 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        /* Wave Animation for Tagline */
+        @keyframes textWave {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Administrative Text Styling */
+        .admin-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            /* Adjust spacing as needed */
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1s forwards;
+            /* Delay to appear after tagline */
+        }
+
+        .admin-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: #d4af37;
+            letter-spacing: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Center Line Wave Effect */
+        .center-line {
+            height: 2px;
+            width: 50px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+            position: relative;
+        }
+
+        .center-line::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            /* Slightly thicker for wave visibility */
+            background: rgba(212, 175, 55, 0.5);
+            filter: blur(2px);
+            transform: translateY(-50%) scaleX(0.8);
+            animation: linePulse 2s infinite ease-in-out;
+            opacity: 0.7;
+        }
+
+        @keyframes linePulse {
+
+            0%,
+            100% {
+                transform: translateY(-50%) scaleX(0.8);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: translateY(-50%) scaleX(1.1);
+                opacity: 1;
+            }
         }
 
         @keyframes shine {
@@ -189,6 +264,12 @@
         </div>
 
         <div class="tagline">Hotel & Restaurant</div>
+
+        <div class="admin-wrapper">
+            <div class="center-line"></div>
+            <div class="admin-text">ADMINISTRATIVE</div>
+            <div class="center-line"></div>
+        </div>
 
         <div class="loading-line">
             <div class="loading-progress"></div>
