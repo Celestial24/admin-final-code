@@ -972,11 +972,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                 <td><?php echo htmlspecialchars($contract['risk_score']); ?>/100</td>
                                 <td><?php echo date('Y-m-d', strtotime($contract['created_at'])); ?></td>
                                 <td>
-                                    <button class="action-btn view-btn" data-type="contract-view"
-                                        data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>View</button>
                                     <button class="action-btn analyze-btn" data-type="contract-analyze"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>AI
-                                        Analyze</button>
+                                        Risk Analysis</button>
                                     <?php if (!empty($contract['file_path'])): ?>
                                         <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" download
                                             class="action-btn"
@@ -1644,10 +1642,10 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         // ... existing analysis rendering logic ...
                         // For brevity, we call a helper or re-render here.
                         // Re-pasting the rendering logic to ensure it work:
-                         detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:10px;"></i><br>Generating analysis report...</div>`;
+                        detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:10px;"></i><br>Generating analysis report...</div>`;
                         openModal(detailsModal);
                         // ... same rendering logic as before ...
-                         try {
+                        try {
                             const score = c.risk_score ?? 'N/A';
                             const level = c.risk_level ?? 'Unknown';
                             const summary = c.analysis_summary || 'No analysis summary available.';
@@ -1659,7 +1657,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             let levelText = 'Low Risk';
                             if (level === 'High') { iconClass = 'fa-triangle-exclamation'; colorClass = '#ef4444'; bgClass = '#fee2e2'; levelText = 'High Risk'; }
                             else if (level === 'Medium') { iconClass = 'fa-circle-exclamation'; colorClass = '#f59e0b'; bgClass = '#fef3c7'; levelText = 'Medium Risk'; }
-                            
+
                             detailsBody.innerHTML = `
                                 <div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
                                     <div style="width: 80px; height: 80px; background: ${bgClass}; border-radius: 50%; display: inline-grid; place-items: center; margin-bottom: 15px; margin-left: auto; margin-right: auto;">
@@ -1668,14 +1666,29 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <h2 style="margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800;">${levelText} Detected</h2>
                                     <p style="margin: 5px 0 0; color: #64748b; font-size: 1.1rem;">Risk Score: <strong style="color: ${colorClass}; font-weight: 700;">${score}/100</strong></p>
                                 </div>
+
+                                <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                                    <div><strong>Contract:</strong> ${c.contract_name || c.name || 'N/A'}</div>
+                                    <div><strong>Case ID:</strong> ${c.case_id || 'N/A'}</div>
+                                    <div><strong>Uploaded:</strong> ${c.created_at ? new Date(c.created_at).toLocaleDateString() : (c.upload_date || 'N/A')}</div>
+                                    <div style="grid-column: 1/-1;"><strong>Status:</strong> ${level.toUpperCase()} RISK</div>
+                                </div>
+
                                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 25px;">
                                     <h4 style="margin: 0 0 10px; color: #334155; font-size: 0.85rem; text-transform: uppercase;">Analysis Summary</h4>
                                     <p style="margin: 0; color: #475569;">${summary}</p>
                                 </div>
-                                <div>
-                                    <h4 style="color: #dc2626; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">Risk Factors</h4>
-                                    <ul style="list-style: none; padding: 0;">${rf.map(r => `<li style="margin-bottom: 8px; color: #4b5563;">• ${r.factor || 'Factor'}</li>`).join('')}</ul>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                    <div>
+                                        <h4 style="color: #dc2626; border-bottom: 2px solid #fee2e2; padding-bottom: 8px; margin-top: 0;">Risk Factors</h4>
+                                        <ul style="list-style: none; padding: 0;">${rf.map(r => `<li style="margin-bottom: 8px; color: #4b5563; font-size: 0.85rem;">• ${r.factor || 'Factor'}</li>`).join('') || '<li>None identified</li>'}</ul>
+                                    </div>
+                                    <div>
+                                        <h4 style="color: #059669; border-bottom: 2px solid #dcfce7; padding-bottom: 8px; margin-top: 0;">Recommendations</h4>
+                                        <ul style="list-style: none; padding: 0;">${rec.map(x => `<li style="margin-bottom: 8px; color: #4b5563; font-size: 0.85rem;">• ${x}</li>`).join('') || '<li>Standard review recommended</li>'}</ul>
+                                    </div>
                                 </div>
+                                ${c.file_path ? `<div style="text-align:center; margin-top:20px;"><a href="${c.file_path}" target="_blank" style="color:#3b82f6; text-decoration:none; font-weight:600;">📄 View Original Document</a></div>` : ''}
                             `;
                         } catch (err) {
                             detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;">Error loading analysis.</div>`;
@@ -1687,7 +1700,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             // Add Member Button Logic
             const addMemberBtn = document.getElementById('addMemberBtn');
             if (addMemberBtn) {
-                 addMemberBtn.addEventListener('click', () => {
+                addMemberBtn.addEventListener('click', () => {
                     employeeInfoTitle.textContent = 'Add Team Member';
                     infoId.value = '';
                     infoName.value = '';
@@ -1698,9 +1711,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         const actions = empInfoForm.querySelector('.form-actions');
                         if (actions) actions.style.display = '';
                         [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = false; i.disabled = false; } });
-                    } catch(e){}
+                    } catch (e) { }
                     openModal(empInfoModal);
-                 });
+                });
             }
 
             // Risk chart init (avoid loop/double init)
