@@ -789,8 +789,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                 <tr>
                                     <td>
                                         <?php if (!empty($doc['file_path'])): ?>
-                                            <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" target="_blank"
-                                                rel="noopener"><?php echo htmlspecialchars($doc['name']); ?></a>
+                                            <a href="#" class="view-pdf-link text-blue-600 hover:underline" data-pdf-type="document"
+                                                data-pdf-content='<?php echo htmlspecialchars(json_encode($doc)); ?>'><?php echo htmlspecialchars($doc['name']); ?></a>
                                         <?php else: ?>
                                             <?php echo htmlspecialchars($doc['name']); ?>
                                         <?php endif; ?>
@@ -966,8 +966,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             <tr>
                                 <td>
                                     <?php if (!empty($contract['file_path'])): ?>
-                                        <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" target="_blank"
-                                            rel="noopener"><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?></a>
+                                        <a href="#" class="view-pdf-link text-blue-600 hover:underline" data-pdf-type="contract"
+                                            data-pdf-content='<?php echo htmlspecialchars(json_encode($contract)); ?>'><?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?></a>
                                     <?php else: ?>
                                         <?php echo htmlspecialchars($contract['contract_name'] ?? $contract['name'] ?? 'N/A'); ?>
                                     <?php endif; ?>
@@ -1582,132 +1582,84 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 generatePDFFromData(title, contentHTML, filename);
             }
 
-            // Download handler
-            document.body.addEventListener('click', (e) => {
-                const btn = e.target.closest('.download-btn');
-                if (!btn) return;
+            // Consolidated Unified Event Delegation for Table Actions & PDF handling
+            document.body.addEventListener('click', function (e) {
+                const target = e.target.closest('button, a.view-pdf-link, .download-btn');
+                if (!target) return;
 
-                const dataType = btn.getAttribute('data-pdf-type');
-                const dataRaw = btn.getAttribute('data-pdf-content');
+                const type = target.getAttribute('data-type') || (target.classList.contains('download-btn') ? 'download' : (target.classList.contains('view-pdf-link') ? 'pdf-view' : ''));
+                if (!type) return;
 
-                if (dataType && dataRaw) {
-                    try {
-                        const data = JSON.parse(dataRaw);
-                        downloadRecordAsPDF(dataType, data);
-                        return;
-                    } catch (e) {
-                        console.error("PDF generation failed:", e);
+                // 1. PDF DOWNLOAD HANDLING
+                if (target.classList.contains('download-btn') || type === 'download') {
+                    const pdfType = target.getAttribute('data-pdf-type');
+                    const pdfContent = target.getAttribute('data-pdf-content');
+                    if (pdfType && pdfContent) {
+                        try {
+                            const data = JSON.parse(pdfContent);
+                            downloadRecordAsPDF(pdfType, data);
+                            e.preventDefault();
+                            return;
+                        } catch (err) { console.error("PDF generation failed:", err); }
                     }
                 }
 
-                const filePath = btn.getAttribute('data-file');
-                if (filePath) {
-                    const link = document.createElement('a');
-                    link.href = filePath;
-                    link.download = filePath.split('/').pop();
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                // 2. PDF VIEW HANDLING (Hijacked Name Links)
+                if (type === 'pdf-view') {
+                    const pdfType = target.getAttribute('data-pdf-type');
+                    const pdfContent = target.getAttribute('data-pdf-content');
+                    if (pdfType && pdfContent) {
+                        try {
+                            const data = JSON.parse(pdfContent);
+                            downloadRecordAsPDF(pdfType, data); // For now, we reuse download as "view", or we could customize
+                            e.preventDefault();
+                            return;
+                        } catch (err) { console.error("PDF view failed:", err); }
+                    }
                 }
-            });
 
-            closeDetails.addEventListener('click', () => closeModal(detailsModal));
-            // Default submit handler for generic modal content
-            document.addEventListener('submit', (e) => {
-                const t = e.target;
-                if (t && t.id === 'genericModalForm') {
-                    e.preventDefault();
-                    // Simple acknowledgement and close
-                    detailsBody.innerHTML = `<div style="padding:10px; color:#16a34a;">Submitted. Thank you!</div>`;
-                    setTimeout(() => closeModal(detailsModal), 800);
-                }
-            });
-            pwdCancel.addEventListener('click', () => closeModal(pwdModal));
-            [closeEdit, cancelEdit].forEach(b => b.addEventListener('click', () => closeModal(editModal)));
-            [closeContractFormModal].forEach(b => b.addEventListener('click', () => closeModal(contractFormModal)));
-            cancelContractBtn?.addEventListener('click', () => closeModal(contractFormModal));
-            [closeEmployeeFormModal].forEach(b => b.addEventListener('click', () => closeModal(employeeFormModal)));
-            [closeDocumentFormModal].forEach(b => b.addEventListener('click', () => closeModal(documentFormModal)));
-            cancelDocumentBtn?.addEventListener('click', () => closeModal(documentFormModal));
-            [closeEditDoc, cancelEditDoc].forEach(b => b.addEventListener('click', () => closeModal(editDocModal)));
-            [closeInvoiceFormModal].forEach(b => b.addEventListener('click', () => closeModal(invoiceFormModal)));
-            cancelInvoiceBtn?.addEventListener('click', () => closeModal(invoiceFormModal));
-            cancelPayBtn?.addEventListener('click', () => closeModal(payConfirmModal));
-            [closeEmpInfo, cancelEmpInfo].forEach(b => b.addEventListener('click', () => {
-                // reset form to editable and show actions when modal is closed
-                try {
-                    const actions = empInfoForm.querySelector('.form-actions');
-                    if (actions) actions.style.display = '';
-                    [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = false; i.disabled = false; } });
-                } catch (e) { }
-                closeModal(empInfoModal);
-            }));
-
-            // Unified Event Delegation for Table Actions (Fixes non-responsive buttons)
-            document.body.addEventListener('click', function (e) {
-                const target = e.target.closest('button');
-                if (!target) return;
-                const type = target.getAttribute('data-type');
-                if (!type) return;
-
-                // Employee/Member View
-                if (type === 'employee-view') {
-                    const emp = JSON.parse(target.getAttribute('data-emp') || '{}');
-                    withPasswordGate(() => {
-                        employeeInfoTitle.textContent = 'Employee Information';
+                // 3. TABLE ACTION MODALS (Password Protected)
+                withPasswordGate(() => {
+                    // Employee/Member View/Edit
+                    if (type === 'employee-view' || type === 'employee-edit') {
+                        const emp = JSON.parse(target.getAttribute('data-emp') || '{}');
+                        employeeInfoTitle.textContent = type === 'employee-view' ? 'Employee Information' : 'Edit Employee';
                         infoId.value = emp.id || '';
                         infoName.value = emp.name || '';
                         infoPos.value = emp.position || '';
                         infoEmail.value = emp.email || '';
                         infoPhone.value = emp.phone || '';
-                        [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = true; i.disabled = false; } });
+                        const isView = type === 'employee-view';
+                        [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = isView; i.disabled = false; } });
                         const actions = empInfoForm.querySelector('.form-actions');
-                        if (actions) actions.style.display = 'none';
+                        if (actions) actions.style.display = isView ? 'none' : '';
                         openModal(empInfoModal);
-                    });
-                }
-                // Employee/Member Edit
-                else if (type === 'employee-edit') {
-                    const emp = JSON.parse(target.getAttribute('data-emp') || '{}');
-                    withPasswordGate(() => {
-                        employeeInfoTitle.textContent = 'Edit Employee';
-                        infoId.value = emp.id || '';
-                        infoName.value = emp.name || '';
-                        infoPos.value = emp.position || '';
-                        infoEmail.value = emp.email || '';
-                        infoPhone.value = emp.phone || '';
-                        [infoName, infoPos, infoEmail, infoPhone].forEach(i => { if (i) { i.readOnly = false; i.disabled = false; } });
-                        const actions = empInfoForm.querySelector('.form-actions');
-                        if (actions) actions.style.display = '';
-                        openModal(empInfoModal);
-                    });
-                }
-                // Document Edit
-                else if (type === 'doc-edit') {
-                    const d = JSON.parse(target.getAttribute('data-doc') || '{}');
-                    withPasswordGate(() => {
+
+                        // Add PDF button if viewing
+                        if (isView) injectModalPdfButton(empInfoForm, 'employee', emp);
+                    }
+                    // Document Edit
+                    else if (type === 'doc-edit') {
+                        const d = JSON.parse(target.getAttribute('data-doc') || '{}');
                         editDocId.value = d.id || '';
                         editDocName.value = d.name || '';
                         editDocCase.value = d.case_id || '';
                         openModal(editDocModal);
-                    });
-                }
-                // Document Delete
-                else if (type === 'doc-delete') {
-                    const d = JSON.parse(target.getAttribute('data-doc') || '{}');
-                    withPasswordGate(() => {
+                        injectModalPdfButton(editDocForm, 'document', d);
+                    }
+                    // Document Delete
+                    else if (type === 'doc-delete') {
+                        const d = JSON.parse(target.getAttribute('data-doc') || '{}');
                         if (confirm('Delete document "' + (d.name || '') + '"?')) {
                             const f = document.createElement('form');
                             f.method = 'POST';
-                            f.innerHTML = '<input type="hidden" name="delete_document" value="1"><input type="hidden" name="document_id" value="' + (d.id || '') + '">';
+                            f.innerHTML = `<input type="hidden" name="delete_document" value="1"><input type="hidden" name="document_id" value="${d.id || ''}">`;
                             document.body.appendChild(f); f.submit();
                         }
-                    });
-                }
-                // Invoice View
-                else if (type === 'invoice-view') {
-                    const inv = JSON.parse(target.getAttribute('data-invoice') || '{}');
-                    withPasswordGate(() => {
+                    }
+                    // Invoice View
+                    else if (type === 'invoice-view') {
+                        const inv = JSON.parse(target.getAttribute('data-invoice') || '{}');
                         detailsTitle.textContent = 'Invoice Details';
                         detailsBody.innerHTML = `
                           <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; line-height:1.8;">
@@ -1718,160 +1670,91 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                             <div><strong>Status</strong></div><div>${(inv.status || '').toString().toUpperCase()}</div>
                           </div>`;
                         openModal(detailsModal);
-                    });
-                }
-                // Invoice Pay
-                else if (type === 'invoice-pay') {
-                    const inv = JSON.parse(target.getAttribute('data-invoice') || '{}');
-                    withPasswordGate(() => {
+                        injectModalPdfButton(detailsBody, 'billing', inv);
+                    }
+                    // Invoice Pay
+                    else if (type === 'invoice-pay') {
+                        const inv = JSON.parse(target.getAttribute('data-invoice') || '{}');
                         payInvoiceId.value = inv.id || '';
                         payConfirmText.textContent = `Do you want to pay invoice ${inv.invoice_number || inv.id || ''} for ₱${Number(inv.amount || 0).toFixed(2)}?`;
                         openModal(payConfirmModal);
-                    });
-                }
-                // Contract View
-                else if (type === 'contract-view') {
-                    const c = JSON.parse(target.getAttribute('data-contract') || '{}');
-                    withPasswordGate(() => {
+                    }
+                    // Contract View
+                    else if (type === 'contract-view') {
+                        const c = JSON.parse(target.getAttribute('data-contract') || '{}');
                         detailsTitle.textContent = 'Contract Details';
                         detailsBody.innerHTML = `<div style="padding:10px;color:#64748b;">Loading details…</div>`;
                         openModal(detailsModal);
-                        try {
-                            const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
-                            const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
-                            const uploaded = (c.created_at ? new Date(c.created_at).toLocaleDateString() : '');
-                            detailsBody.innerHTML = `
-                                <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; line-height:1.8;">
-                                    <div><strong>Contract</strong></div><div>${c.contract_name || ''}</div>
-                                    <div><strong>Case</strong></div><div>${c.case_id || ''}</div>
-                                    <div><strong>Risk</strong></div><div>${(c.risk_level || 'N/A')} — ${c.risk_score || 'N/A'}/100</div>
-                                    <div><strong>Uploaded</strong></div><div>${uploaded}</div>
-                                    ${c.file_path ? `<div style="grid-column:1/-1; margin-top:10px;"><a href="${c.file_path}" target="_blank" style="color:#4a6cf7; text-decoration:none; font-weight:600;">📄 View Original Contract</a></div>` : ''}
-                                    <div style="grid-column:1/-1"><strong>Risk Factors</strong><ul style="margin:.4rem 0 0 1rem;">${rf.map(r => `<li>${(r.factor || '')}</li>`).join('') || '<li>None</li>'}</ul></div>
-                                    <div style="grid-column:1/-1"><strong>Recommendations</strong><ul style="margin:.4rem 0 0 1rem;">${rec.map(x => `<li>${x}</li>`).join('') || '<li>None</li>'}</ul></div>
-                                </div>`;
-                        } catch (err) {
-                            detailsBody.innerHTML = `<div style="padding:10px;color:#b91c1c;">Unable to load details. Please try again.</div>`;
-                        }
-                    });
-                }
-                // Contract Analyze
-                else if (type === 'contract-analyze') {
-                    const c = JSON.parse(target.getAttribute('data-contract') || '{}');
-                    withPasswordGate(() => {
+                        const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
+                        const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
+                        detailsBody.innerHTML = `
+                            <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; line-height:1.8;">
+                                <div><strong>Contract</strong></div><div>${c.contract_name || c.name || ''}</div>
+                                <div><strong>Case</strong></div><div>${c.case_id || ''}</div>
+                                <div><strong>Risk</strong></div><div>${(c.risk_level || 'N/A')} — ${c.risk_score || 'N/A'}/100</div>
+                                <div><strong>Uploaded</strong></div><div>${c.created_at || c.upload_date || ''}</div>
+                                <div style="grid-column:1/-1"><strong>Risk Factors</strong><ul style="margin:.4rem 0 0 1rem;">${rf.map(r => `<li>${(r.factor || '')}</li>`).join('') || '<li>None</li>'}</ul></div>
+                                <div style="grid-column:1/-1"><strong>Recommendations</strong><ul style="margin:.4rem 0 0 1rem;">${rec.map(x => `<li>${x}</li>`).join('') || '<li>None</li>'}</ul></div>
+                            </div>`;
+                        injectModalPdfButton(detailsBody, 'contract', c);
+                    }
+                    // Contract Analyze
+                    else if (type === 'contract-analyze') {
+                        const c = JSON.parse(target.getAttribute('data-contract') || '{}');
                         detailsTitle.textContent = 'AI Risk Analysis';
-                        // ... existing analysis rendering logic ...
-                        // For brevity, we call a helper or re-render here.
-                        // Re-pasting the rendering logic to ensure it work:
                         detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:10px;"></i><br>Generating analysis report...</div>`;
                         openModal(detailsModal);
-                        // ... same rendering logic as before ...
-                        try {
-                            const score = c.risk_score ?? 'N/A';
-                            const level = c.risk_level ?? 'Unknown';
-                            const summary = c.analysis_summary || 'No analysis summary available.';
-                            const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
-                            const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
-                            let iconClass = 'fa-check-circle';
-                            let colorClass = '#22c55e';
-                            let bgClass = '#dcfce7';
-                            let levelText = 'Low Risk';
-                            if (level === 'High') { iconClass = 'fa-triangle-exclamation'; colorClass = '#ef4444'; bgClass = '#fee2e2'; levelText = 'High Risk'; }
-                            else if (level === 'Medium') { iconClass = 'fa-circle-exclamation'; colorClass = '#f59e0b'; bgClass = '#fef3c7'; levelText = 'Medium Risk'; }
+                        setTimeout(() => {
+                            try {
+                                const score = c.risk_score ?? 'N/A';
+                                const level = c.risk_level ?? 'Unknown';
+                                const rf = (() => { try { return JSON.parse(c.risk_factors || '[]'); } catch { return []; } })();
+                                const rec = (() => { try { return JSON.parse(c.recommendations || '[]'); } catch { return []; } })();
+                                let color = level === 'High' ? '#ef4444' : (level === 'Medium' ? '#f59e0b' : '#22c55e');
 
-                            detailsBody.innerHTML = `
-                                <div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
-                                    <div style="width: 80px; height: 80px; background: ${bgClass}; border-radius: 50%; display: inline-grid; place-items: center; margin-bottom: 15px; margin-left: auto; margin-right: auto;">
-                                        <i class="fa-solid ${iconClass}" style="font-size: 36px; color: ${colorClass};"></i>
+                                detailsBody.innerHTML = `
+                                    <div style="text-align: center; margin-bottom: 20px;">
+                                        <h2 style="margin: 0; color: ${color};">${level} Risk Contract</h2>
+                                        <p>Risk Score: <strong>${score}/100</strong></p>
                                     </div>
-                                    <h2 style="margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800;">${levelText} Detected</h2>
-                                    <p style="margin: 5px 0 0; color: #64748b; font-size: 1.1rem;">Risk Score: <strong style="color: ${colorClass}; font-weight: 700;">${score}/100</strong></p>
-                                </div>
-
-                                <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
-                                    <div><strong>Contract:</strong> ${c.contract_name || c.name || 'N/A'}</div>
-                                    <div><strong>Case ID:</strong> ${c.case_id || 'N/A'}</div>
-                                    <div><strong>Uploaded:</strong> ${c.created_at ? new Date(c.created_at).toLocaleDateString() : (c.upload_date || 'N/A')}</div>
-                                    <div style="grid-column: 1/-1;"><strong>Status:</strong> ${level.toUpperCase()} RISK</div>
-                                </div>
-
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 25px;">
-                                    <h4 style="margin: 0 0 10px; color: #334155; font-size: 0.85rem; text-transform: uppercase;">Analysis Summary</h4>
-                                    <p style="margin: 0; color: #475569;">${summary}</p>
-                                </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                                    <div>
-                                        <h4 style="color: #dc2626; border-bottom: 2px solid #fee2e2; padding-bottom: 8px; margin-top: 0;">Risk Factors</h4>
-                                        <ul style="list-style: none; padding: 0;">${rf.map(r => `<li style="margin-bottom: 8px; color: #4b5563; font-size: 0.85rem;">• ${r.factor || 'Factor'}</li>`).join('') || '<li>None identified</li>'}</ul>
+                                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                                        <p><strong>Summary:</strong> ${c.analysis_summary || 'No summary available.'}</p>
                                     </div>
-                                    <div>
-                                        <h4 style="color: #059669; border-bottom: 2px solid #dcfce7; padding-bottom: 8px; margin-top: 0;">Recommendations</h4>
-                                        <ul style="list-style: none; padding: 0;">${rec.map(x => `<li style="margin-bottom: 8px; color: #4b5563; font-size: 0.85rem;">• ${x}</li>`).join('') || '<li>Standard review recommended</li>'}</ul>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div><strong>Risk Factors:</strong><ul>${rf.map(f => `<li>${f.factor}</li>`).join('') || '<li>None</li>'}</ul></div>
+                                        <div><strong>Recommendations:</strong><ul>${rec.map(r => `<li>${r}</li>`).join('') || '<li>Regular review</li>'}</ul></div>
                                     </div>
-                                </div>
-                                ${c.file_path ? `<div style="text-align:center; margin-top:20px;"><a href="${c.file_path}" target="_blank" style="color:#3b82f6; text-decoration:none; font-weight:600;">📄 View Original Document</a></div>` : ''}
-                                <div style="text-align: center; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                                    <button type="button" class="save-btn" onclick='window.downloadRecordAsPDF("contract", ${JSON.stringify(c).replace(/'/g, "&apos;")})' style="background: #3b82f6; width: auto; display: inline-flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid fa-file-pdf"></i> Download AI Analysis (PDF)
-                                    </button>
-                                </div>
-                            `;
-                        } catch (err) {
-                            detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;">Error loading analysis.</div>`;
-                        }
-                    });
-                }
-
-                // Add a "Download PDF" button to the details modal if it's a view action
-                if (type && type.includes('view') || type === 'doc-edit') {
-                    setTimeout(() => {
-                        if (detailsModal.style.display !== 'none' || (type === 'doc-edit' && editDocModal.style.display !== 'none')) {
-                            let pdfType = '';
-                            let pdfData = null;
-                            let targetContainer = detailsBody;
-
-                            if (type === 'invoice-view') { pdfType = 'billing'; pdfData = JSON.parse(target.getAttribute('data-invoice')); }
-                            else if (type === 'employee-view') { pdfType = 'employee'; pdfData = JSON.parse(target.getAttribute('data-emp')); }
-                            else if (type === 'doc-edit') { pdfType = 'document'; pdfData = JSON.parse(target.getAttribute('data-doc')); targetContainer = editDocForm; }
-                            else if (type === 'contract-view') { pdfType = 'contract'; pdfData = JSON.parse(target.getAttribute('data-contract')); }
-
-                            if (pdfData) {
-                                let downloadBtn = document.getElementById('modalDownloadPdf');
-                                if (downloadBtn) downloadBtn.remove();
-
-                                downloadBtn = document.createElement('button');
-                                downloadBtn.id = 'modalDownloadPdf';
-                                downloadBtn.type = 'button';
-                                downloadBtn.className = 'save-btn';
-                                downloadBtn.style.cssText = `
-                                    width: auto; 
-                                    margin-top: 25px; 
-                                    background: linear-gradient(135deg, #059669 0%, #10b981 100%); 
-                                    border: none;
-                                    padding: 12px 24px;
-                                    border-radius: 12px;
-                                    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
-                                    display: inline-flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                    font-weight: 700;
-                                    transition: all 0.3s ease;
+                                    <div style="text-align: center; margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">
+                                        <button type="button" class="save-btn" onclick='window.downloadRecordAsPDF("contract", ${JSON.stringify(c).replace(/'/g, "&apos;")})' style="background: #3b82f6; width: auto;">
+                                            <i class="fa-solid fa-file-pdf"></i> Download Risk Report (PDF)
+                                        </button>
+                                    </div>
                                 `;
-                                downloadBtn.innerHTML = '<i class="fa-solid fa-file-pdf" style="font-size: 1.2rem;"></i> Convert & Download PDF';
-                                downloadBtn.onmouseover = () => downloadBtn.style.transform = 'translateY(-2px)';
-                                downloadBtn.onmouseout = () => downloadBtn.style.transform = 'translateY(0)';
-                                downloadBtn.onclick = () => {
-                                    const originalHTML = downloadBtn.innerHTML;
-                                    downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
-                                    downloadRecordAsPDF(pdfType, pdfData);
-                                    setTimeout(() => { downloadBtn.innerHTML = originalHTML; }, 2000);
-                                };
-                                targetContainer.appendChild(downloadBtn);
-                            }
-                        }
-                    }, 150);
-                }
+                            } catch (e) { detailsBody.innerHTML = "Error rendering analysis."; }
+                        }, 500);
+                    }
+                });
             });
+
+            function injectModalPdfButton(container, pdfType, pdfData) {
+                let downloadBtn = document.getElementById('modalDownloadPdf');
+                if (downloadBtn) downloadBtn.remove();
+
+                downloadBtn = document.createElement('button');
+                downloadBtn.id = 'modalDownloadPdf';
+                downloadBtn.type = 'button';
+                downloadBtn.className = 'save-btn';
+                downloadBtn.style.cssText = `width:auto; margin-top:25px; background:linear-gradient(135deg, #059669 0%, #10b981 100%); border:none; padding:12px 24px; border-radius:12px; box-shadow:0 4px 12px rgba(5,150,105,0.2); display:inline-flex; align-items:center; gap:10px; font-weight:700; cursor:pointer;`;
+                downloadBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Convert & Download PDF';
+                downloadBtn.onclick = () => {
+                    const originalHTML = downloadBtn.innerHTML;
+                    downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+                    window.downloadRecordAsPDF(pdfType, pdfData);
+                    setTimeout(() => { downloadBtn.innerHTML = originalHTML; }, 2000);
+                };
+                container.appendChild(downloadBtn);
+            }
+
 
             // Add Member Button Logic
             const addMemberBtn = document.getElementById('addMemberBtn');
@@ -1910,10 +1793,44 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             }
             document.addEventListener('DOMContentLoaded', initRiskChart);
 
-            // Generate Secured PDF (password-gated)
-            exportPdfBtn?.addEventListener('click', () => {
+            // Generate Secured PDF (password-gated) - Real PDF Implementation
+            exportPdfBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
                 withPasswordGate(() => {
-                    exportPdfForm?.submit();
+                    // Data is injected from PHP
+                    const data = <?php echo json_encode($contracts); ?>;
+
+                    let contentHTML = `
+                        <div style="margin-top: 20px;">
+                            <p>This is a secured legal report containing sensitive contract risk information.</p>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt;">
+                                <thead>
+                                    <tr style="background-color: #f1f5f9; text-align: left;">
+                                        <th style="border: 1px solid #cbd5e1; padding: 12px;">Contract Name</th>
+                                        <th style="border: 1px solid #cbd5e1; padding: 12px;">Case ID</th>
+                                        <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center;">Risk Level</th>
+                                        <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center;">Risk Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.map(c => `
+                                        <tr>
+                                            <td style="border: 1px solid #cbd5e1; padding: 10px;">${c.contract_name || c.name || 'N/A'}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 10px;">${c.case_id || 'N/A'}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">
+                                                <span style="color: ${c.risk_level === 'High' ? '#ef4444' : (c.risk_level === 'Medium' ? '#f59e0b' : '#22c55e')}; font-weight: bold;">
+                                                    ${c.risk_level || 'Low'}
+                                                </span>
+                                            </td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${c.risk_score || 0}/100</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    generatePDFFromData('Secured Legal Contracts Report', contentHTML, 'Legal_Contracts_Report_Secured.pdf');
                 });
             });
 

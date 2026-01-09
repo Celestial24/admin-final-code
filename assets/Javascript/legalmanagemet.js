@@ -193,15 +193,16 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'hover:bg-gray-50';
 
             if (type === 'document') {
-                const docData = JSON.stringify({ id: item.id || 0, name: item.name, case_id: item.case || item.case_id, file_path: item.file_path || '' }).replace(/"/g, '&quot;');
+                const docData = JSON.stringify({ id: item.id || 0, name: item.name, case_id: item.case || item.case_id, file_path: item.file_path || '', uploaded_at: item.date || item.uploaded_at || '' }).replace(/"/g, '&quot;');
                 row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${item.file_path ? `<a href="${item.file_path}" target="_blank" class="text-blue-600 hover:underline">${item.name}</a>` : item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.file_path ? `<a href="#" class="view-pdf-link text-blue-600 hover:underline" data-pdf-type="document" data-pdf-content="${docData}">${item.name}</a>` : item.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.case || item.case_id || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.date || item.uploaded_at || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
                             <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="doc-edit" data-doc="${docData}">View</button>
-                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
+                            <button class="action-btn download-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" 
+                                data-pdf-type="document" data-pdf-content="${docData}">Download PDF</button>
                             <button class="action-btn bg-red-100 hover:bg-red-200 text-red-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="doc-delete" data-doc="${docData}">Delete</button>
                         </td>
@@ -212,14 +213,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${item.invoice}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.client}</td>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${item.amount}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.dueDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap"><span class="status-badge ${statusClass}">${item.status.toUpperCase()}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-center">${item.amount}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">${item.dueDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><span class="status-badge ${statusClass}">${item.status.toUpperCase()}</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2 text-center">
                             <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="invoice-view" data-invoice="${invData}">View</button>
-                            <button class="action-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" 
-                                data-type="invoice-pay" data-invoice="${invData}">Pay</button>
+                            <button class="action-btn download-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-xs" 
+                                data-pdf-type="billing" data-pdf-content="${invData}">Download PDF</button>
                         </td>
                     `;
             } else if (type === 'member') {
@@ -229,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.position}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:underline">${item.email}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.phone}</td>
-                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2 text-center">
                             <button class="action-btn view-btn bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-3 rounded-lg text-xs" 
                                 data-type="employee-view" data-emp="${empData}">View</button>
                             <button class="action-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-700 py-1 px-3 rounded-lg text-xs" 
@@ -240,15 +241,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 const statusClass = `status-${item.risk_level.toLowerCase()}`;
                 const contractDataString = JSON.stringify(item).replace(/"/g, '&quot;');
                 row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${item.contract_name || item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${item.file_path ? `<a href="#" class="view-pdf-link text-blue-600 hover:underline" data-pdf-type="contract" data-pdf-content="${contractDataString}">${item.contract_name || item.name}</a>` : (item.contract_name || item.name)}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${item.case_id}</td>
-                        <td class="px-6 py-4 whitespace-nowrap"><span class="status-badge ${statusClass}">${item.risk_level.toUpperCase()}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.risk_score}/100</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.upload_date || item.created_at}</td>
-                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><span class="status-badge ${statusClass}">${item.risk_level.toUpperCase()}</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">${item.risk_score}/100</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${item.upload_date || item.created_at}</td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2 text-center">
                             <button class="action-btn analyze-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-xs" 
                                 data-type="contract-analyze" data-contract="${contractDataString}">AI Risk Analysis</button>
-                            ${item.file_path ? `<a href="${item.file_path}" download class="action-btn download-btn bg-green-100 hover:bg-green-200 text-green-700 py-1 px-3 rounded-lg text-xs" style="text-decoration:none; display:inline-block; text-align:center;">Download</a>` : ''}
+                            <button class="action-btn download-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-xs" 
+                                data-pdf-type="contract" data-pdf-content="${contractDataString}">Download PDF</button>
                         </td>
                     `;
             }
@@ -698,24 +700,7 @@ document.addEventListener('click', function (e) {
         }
     }
 
-    // Download button handler for contracts
-    if (e.target && e.target.classList.contains('download-btn')) {
-        const filePath = e.target.getAttribute('data-file');
-        console.log(`SIMULATION: Initiating download for file path: ${filePath}`);
 
-        // Simulation: create a dummy link to show the file name
-        if (filePath) {
-            const tempLink = document.createElement('a');
-            tempLink.href = '#'; // Use dummy link
-            tempLink.textContent = `Downloading ${filePath}... (Check console)`;
-            tempLink.className = 'text-green-600 text-sm block mt-2';
-            e.target.parentNode.appendChild(tempLink);
-
-            setTimeout(() => {
-                tempLink.remove();
-            }, 2000);
-        }
-    }
 });
 
 // Real-time AI analysis preview
