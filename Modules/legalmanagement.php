@@ -800,7 +800,11 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     </td>
                                     <td>
                                         <button class="action-btn view-btn" data-type="doc-edit"
-                                            data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Edit</button>
+                                            data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>View</button>
+                                        <button class="action-btn download-btn" data-type="doc-download"
+                                            data-pdf-type="document"
+                                            data-pdf-content='<?php echo htmlspecialchars(json_encode($doc)); ?>'
+                                            style="background:#059669;color:#fff;">Download PDF</button>
                                         <button class="action-btn" data-type="doc-delete"
                                             data-doc='<?php echo htmlspecialchars(json_encode($doc)); ?>'>Delete</button>
                                     </td>
@@ -846,6 +850,11 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <td>
                                         <button class="action-btn view-btn" data-type="invoice-view"
                                             data-invoice='<?php echo htmlspecialchars(json_encode($b)); ?>'>View</button>
+                                        <button class="action-btn download-btn" data-type="invoice-download"
+                                            data-pdf-type="billing"
+                                            data-pdf-content='<?php echo htmlspecialchars(json_encode($b)); ?>'
+                                            style="background:#0284c7;color:#fff;border-radius:8px;padding:6px 10px;border:none;cursor:pointer;font-size:12px;">Download
+                                            PDF</button>
                                         <button class="action-btn"
                                             style="background:#16a34a;color:#fff;border-radius:8px;padding:6px 10px;"
                                             data-type="invoice-pay"
@@ -975,11 +984,12 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     <button class="action-btn analyze-btn" data-type="contract-analyze"
                                         data-contract='<?php echo htmlspecialchars(json_encode($contract)); ?>'>AI
                                         Risk Analysis</button>
-                                    <?php if (!empty($contract['file_path'])): ?>
-                                        <a href="<?php echo htmlspecialchars($contract['file_path']); ?>" download
-                                            class="action-btn"
-                                            style="color: #4a6cf7; text-decoration: none; font-weight: 500; font-size: 14px;">Download</a>
-                                    <?php endif; ?>
+                                    <button class="action-btn download-btn" data-type="contract-download"
+                                        data-pdf-type="contract"
+                                        data-pdf-content='<?php echo htmlspecialchars(json_encode($contract)); ?>'
+                                        style="background: #059669; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 500; font-size: 13px; cursor: pointer;">
+                                        Download PDF
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -1475,19 +1485,130 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
             function openModal(el) { el.style.display = 'flex'; }
             function closeModal(el) { el.style.display = 'none'; }
 
+            // PDF Generation Utility
+            function generatePDFFromData(title, contentHTML, filename) {
+                const element = document.createElement('div');
+                element.style.padding = '20px';
+                element.style.fontFamily = 'Arial, sans-serif';
+                element.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                        <h1 style="color: #2c3e50; margin: 0;">Legal Management System</h1>
+                        <h2 style="color: #3498db; margin: 5px 0 0;">${title}</h2>
+                        <p style="color: #7f8c8d; font-size: 0.9rem;">Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <div style="color: #334155; line-height: 1.6;">
+                        ${contentHTML}
+                    </div>
+                    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; text-align: center; color: #94a3b8;">
+                        © ${new Date().getFullYear()} Hotel & Restaurant Legal Management System. All rights reserved.
+                    </div>
+                `;
+
+                const opt = {
+                    margin: 15,
+                    filename: filename || 'Legal_Document.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(element).save();
+            }
+
+            // Universal PDF Download Handler for various data types
+            window.downloadRecordAsPDF = function (type, data) {
+                let title = '';
+                let contentHTML = '';
+                let filename = '';
+
+                switch (type) {
+                    case 'employee':
+                        title = 'Employee Profile';
+                        contentHTML = `
+                            <div style="margin-bottom: 20px;">
+                                <p><strong>Name:</strong> ${data.name || 'N/A'}</p>
+                                <p><strong>Position:</strong> ${data.position || 'N/A'}</p>
+                                <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                                <p><strong>Phone:</strong> ${data.phone || 'N/A'}</p>
+                            </div>
+                        `;
+                        filename = `Employee_${(data.name || 'Profile').replace(/\s+/g, '_')}.pdf`;
+                        break;
+                    case 'document':
+                        title = 'Document Details';
+                        contentHTML = `
+                            <div style="margin-bottom: 20px;">
+                                <p><strong>Document Name:</strong> ${data.name || 'N/A'}</p>
+                                <p><strong>Case ID:</strong> ${data.case_id || 'N/A'}</p>
+                                <p><strong>Date Uploaded:</strong> ${data.uploaded_at || 'N/A'}</p>
+                            </div>
+                        `;
+                        filename = `Document_${(data.name || 'File').replace(/\s+/g, '_')}.pdf`;
+                        break;
+                    case 'billing':
+                        title = 'Invoice Summary';
+                        contentHTML = `
+                            <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px;">
+                                <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Invoice #${data.invoice_number || data.id}</h3>
+                                <p><strong>Client:</strong> ${data.client || 'N/A'}</p>
+                                <p><strong>Amount:</strong> ₱${Number(data.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                <p><strong>Due Date:</strong> ${data.due_date || 'N/A'}</p>
+                                <p><strong>Status:</strong> <span style="color: ${data.status === 'paid' ? '#059669' : '#dc2626'}; font-weight: bold;">${data.status.toUpperCase()}</span></p>
+                            </div>
+                        `;
+                        filename = `Invoice_${data.invoice_number || data.id}.pdf`;
+                        break;
+                    case 'contract':
+                        title = 'Contract Risk Analysis';
+                        const rf = (() => { try { return typeof data.risk_factors === 'string' ? JSON.parse(data.risk_factors || '[]') : data.risk_factors; } catch { return []; } })();
+                        const rec = (() => { try { return typeof data.recommendations === 'string' ? JSON.parse(data.recommendations || '[]') : data.recommendations; } catch { return []; } })();
+                        contentHTML = `
+                            <div style="margin-bottom: 20px;">
+                                <p><strong>Contract Name:</strong> ${data.contract_name || data.name || 'N/A'}</p>
+                                <p><strong>Case ID:</strong> ${data.case_id || 'N/A'}</p>
+                                <p><strong>Risk Level:</strong> <span style="color: ${data.risk_level === 'High' ? '#ef4444' : (data.risk_level === 'Medium' ? '#f59e0b' : '#22c55e')};">${data.risk_level || 'N/A'}</span></p>
+                                <p><strong>Risk Score:</strong> ${data.risk_score || 0}/100</p>
+                                <p><strong>Summary:</strong> ${data.analysis_summary || 'N/A'}</p>
+                                <h4 style="margin-top: 20px; color: #dc2626;">Risk Factors</h4>
+                                <ul>${rf.map(r => `<li>${r.factor || 'Unknown Factor'}</li>`).join('') || '<li>None</li>'}</ul>
+                                <h4 style="margin-top: 20px; color: #059669;">Recommendations</h4>
+                                <ul>${rec.map(x => `<li>${x}</li>`).join('') || '<li>Standard review</li>'}</ul>
+                            </div>
+                        `;
+                        filename = `Contract_Analysis_${(data.contract_name || 'Contract').replace(/\s+/g, '_')}.pdf`;
+                        break;
+                }
+
+                generatePDFFromData(title, contentHTML, filename);
+            }
+
             // Download handler
-            document.querySelectorAll('.download-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const filePath = btn.getAttribute('data-file');
-                    if (filePath) {
-                        const link = document.createElement('a');
-                        link.href = filePath;
-                        link.download = filePath.split('/').pop();
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+            document.body.addEventListener('click', (e) => {
+                const btn = e.target.closest('.download-btn');
+                if (!btn) return;
+
+                const dataType = btn.getAttribute('data-pdf-type');
+                const dataRaw = btn.getAttribute('data-pdf-content');
+
+                if (dataType && dataRaw) {
+                    try {
+                        const data = JSON.parse(dataRaw);
+                        downloadRecordAsPDF(dataType, data);
+                        return;
+                    } catch (e) {
+                        console.error("PDF generation failed:", e);
                     }
-                });
+                }
+
+                const filePath = btn.getAttribute('data-file');
+                if (filePath) {
+                    const link = document.createElement('a');
+                    link.href = filePath;
+                    link.download = filePath.split('/').pop();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             });
 
             closeDetails.addEventListener('click', () => closeModal(detailsModal));
@@ -1689,11 +1810,66 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                                     </div>
                                 </div>
                                 ${c.file_path ? `<div style="text-align:center; margin-top:20px;"><a href="${c.file_path}" target="_blank" style="color:#3b82f6; text-decoration:none; font-weight:600;">📄 View Original Document</a></div>` : ''}
+                                <div style="text-align: center; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                                    <button type="button" class="save-btn" onclick='window.downloadRecordAsPDF("contract", ${JSON.stringify(c).replace(/'/g, "&apos;")})' style="background: #3b82f6; width: auto; display: inline-flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-file-pdf"></i> Download AI Analysis (PDF)
+                                    </button>
+                                </div>
                             `;
                         } catch (err) {
                             detailsBody.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;">Error loading analysis.</div>`;
                         }
                     });
+                }
+
+                // Add a "Download PDF" button to the details modal if it's a view action
+                if (type && type.includes('view') || type === 'doc-edit') {
+                    setTimeout(() => {
+                        if (detailsModal.style.display !== 'none' || (type === 'doc-edit' && editDocModal.style.display !== 'none')) {
+                            let pdfType = '';
+                            let pdfData = null;
+                            let targetContainer = detailsBody;
+
+                            if (type === 'invoice-view') { pdfType = 'billing'; pdfData = JSON.parse(target.getAttribute('data-invoice')); }
+                            else if (type === 'employee-view') { pdfType = 'employee'; pdfData = JSON.parse(target.getAttribute('data-emp')); }
+                            else if (type === 'doc-edit') { pdfType = 'document'; pdfData = JSON.parse(target.getAttribute('data-doc')); targetContainer = editDocForm; }
+                            else if (type === 'contract-view') { pdfType = 'contract'; pdfData = JSON.parse(target.getAttribute('data-contract')); }
+
+                            if (pdfData) {
+                                let downloadBtn = document.getElementById('modalDownloadPdf');
+                                if (downloadBtn) downloadBtn.remove();
+
+                                downloadBtn = document.createElement('button');
+                                downloadBtn.id = 'modalDownloadPdf';
+                                downloadBtn.type = 'button';
+                                downloadBtn.className = 'save-btn';
+                                downloadBtn.style.cssText = `
+                                    width: auto; 
+                                    margin-top: 25px; 
+                                    background: linear-gradient(135deg, #059669 0%, #10b981 100%); 
+                                    border: none;
+                                    padding: 12px 24px;
+                                    border-radius: 12px;
+                                    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    font-weight: 700;
+                                    transition: all 0.3s ease;
+                                `;
+                                downloadBtn.innerHTML = '<i class="fa-solid fa-file-pdf" style="font-size: 1.2rem;"></i> Convert & Download PDF';
+                                downloadBtn.onmouseover = () => downloadBtn.style.transform = 'translateY(-2px)';
+                                downloadBtn.onmouseout = () => downloadBtn.style.transform = 'translateY(0)';
+                                downloadBtn.onclick = () => {
+                                    const originalHTML = downloadBtn.innerHTML;
+                                    downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+                                    downloadRecordAsPDF(pdfType, pdfData);
+                                    setTimeout(() => { downloadBtn.innerHTML = originalHTML; }, 2000);
+                                };
+                                targetContainer.appendChild(downloadBtn);
+                            }
+                        }
+                    }, 150);
                 }
             });
 
