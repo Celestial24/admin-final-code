@@ -472,8 +472,8 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
+    <!-- Invitation Loading Overlay -->
+    <div id="inviteLoadingOverlay" class="loading-overlay">
         <div class="spinner"></div>
         <h3 style="margin: 0; font-weight: 600; letter-spacing: 0.5px;">Sending Invitation...</h3>
         <p style="opacity: 0.8; margin-top: 10px;">Please wait while we set up the account.</p>
@@ -485,7 +485,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.getElementById('userForm').addEventListener('submit', function (e) {
             const action = document.getElementById('formAction').value;
             if (action === 'create_user') {
-                document.getElementById('loadingOverlay').style.display = 'flex';
+                document.getElementById('inviteLoadingOverlay').style.display = 'flex';
             }
         });
         function openEditModal(user) {
