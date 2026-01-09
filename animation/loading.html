@@ -163,8 +163,9 @@
             gap: 15px;
             margin-bottom: 30px;
             /* Adjust spacing as needed */
+            /* Adjust spacing as needed */
             opacity: 0;
-            animation: fadeInUp 1s ease-out 1s forwards;
+            animation: fadeIn 1s ease-out 1s forwards, textWave 3s ease-in-out infinite 2s;
             /* Delay to appear after tagline */
         }
 
@@ -232,6 +233,12 @@
 
             100% {
                 width: 100%;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
             }
         }
 
