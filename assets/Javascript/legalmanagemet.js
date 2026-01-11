@@ -150,8 +150,8 @@ document.addEventListener('DOMContentLoaded', function () {
         populateTable('documentsTableBody', documents, 'document');
         populateTable('billingTableBody', billing, 'billing');
         populateTable('membersTableBody', members, 'member');
-        // Contracts table uses the mock data
-        populateTable('contractsTableBody', MOCK_CONTRACTS_DATA, 'contract');
+        // Contracts table uses the mock data - REMOVED
+        // populateTable('contractsTableBody', MOCK_CONTRACTS_DATA, 'contract');
 
         // Find the logout button handler and update it:
         const backBtn = document.getElementById('backDashboardBtn');
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
-        // Initialize risk analysis chart
-        initializeRiskChart();
+        // Initialize risk analysis chart - REMOVED (Handled by PHP inline script)
+        // initializeRiskChart();
 
         // Set up form handlers
         setupFormHandlers();
@@ -357,23 +357,27 @@ document.addEventListener('DOMContentLoaded', function () {
         const cancelContractBtn = document.getElementById('cancelContractBtn');
         const contractFormData = document.getElementById('contractFormData');
 
+        /*
         if (addContractBtn && contractForm) {
             addContractBtn.addEventListener('click', function () {
                 contractForm.style.display = 'block';
                 contractForm.scrollIntoView({ behavior: 'smooth' });
             });
         }
+        */
 
+        /*
         if (cancelContractBtn && contractForm) {
             cancelContractBtn.addEventListener('click', function () {
                 contractForm.style.display = 'none';
                 resetContractForm();
             });
         }
+        */
 
         if (contractFormData) {
             contractFormData.addEventListener('submit', function (e) {
-                e.preventDefault();
+                // e.preventDefault(); // Removed to allow PHP submission
                 if (validateContractForm()) {
                     console.log('SUCCESS: Form submitted with data:', new FormData(this));
                     // In a real app, this would send data to the server and re-initialize the dashboard

@@ -1775,21 +1775,59 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 });
             }
 
+            // ADDED: Contract Upload Modal Logic
+            if (addContractBtn) {
+                addContractBtn.addEventListener('click', () => {
+                    // Move the form into the modal container if not already there
+                    if (contractForm && contractFormContainer && !contractFormContainer.contains(contractForm)) {
+                        contractFormContainer.appendChild(contractForm);
+                        contractForm.style.display = 'block';
+                    }
+                    openModal(contractFormModal);
+                });
+            }
+            if (closeContractFormModal) {
+                closeContractFormModal.addEventListener('click', () => closeModal(contractFormModal));
+            }
+            if (cancelContractBtn) {
+                cancelContractBtn.addEventListener('click', () => {
+                    closeModal(contractFormModal);
+                    // Optional: trim form inputs
+                    if (contractForm) contractForm.reset();
+                });
+            }
+
             // Risk chart init (avoid loop/double init)
             let riskChartRef = null;
             function initRiskChart() {
                 const ctx = document.getElementById('riskChart');
                 if (!ctx) return;
                 const data = {
-                    labels: ['High', 'Medium', 'Low'],
+                    labels: ['High Risk', 'Medium Risk', 'Low Risk'], // Updated labels to match picture
                     datasets: [{
                         label: 'Contracts',
                         data: [<?php echo $riskCounts['High']; ?>, <?php echo $riskCounts['Medium']; ?>, <?php echo $riskCounts['Low']; ?>],
-                        backgroundColor: ['#ef4444', '#f59e0b', '#22c55e']
+                        backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        maxBarThickness: 60 // Make bars wider/capped like the image
                     }]
                 };
                 if (riskChartRef) { riskChartRef.destroy(); }
-                riskChartRef = new Chart(ctx, { type: 'bar', data, options: { responsive: true, plugins: { legend: { display: false } } } });
+                // Added scales config to match picture (0, 1, 2 integers)
+                riskChartRef = new Chart(ctx, {
+                    type: 'bar',
+                    data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
             }
             document.addEventListener('DOMContentLoaded', initRiskChart);
 
