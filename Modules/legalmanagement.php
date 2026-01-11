@@ -1570,17 +1570,36 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         title = 'Contract Risk Analysis';
                         const rf = (() => { try { return typeof data.risk_factors === 'string' ? JSON.parse(data.risk_factors || '[]') : data.risk_factors; } catch { return []; } })();
                         const rec = (() => { try { return typeof data.recommendations === 'string' ? JSON.parse(data.recommendations || '[]') : data.recommendations; } catch { return []; } })();
+                        const isImage = data.file_path && /\.(jpg|jpeg|png|webp|gif)$/i.test(data.file_path);
+                        const imageHTML = isImage ? `
+                            <div style="margin-top: 30px; border-top: 2px solid #f1f5f9; pt: 20px;">
+                                <h4 style="margin-bottom: 15px; color: #1e293b;">Contract Image Attachment</h4>
+                                <div style="text-align: center; background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                                    <img src="${data.file_path}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+                                </div>
+                            </div>
+                        ` : '';
+
                         contentHTML = `
                             <div style="margin-bottom: 20px;">
                                 <p><strong>Contract Name:</strong> ${data.contract_name || data.name || 'N/A'}</p>
                                 <p><strong>Case ID:</strong> ${data.case_id || 'N/A'}</p>
-                                <p><strong>Risk Level:</strong> <span style="color: ${data.risk_level === 'High' ? '#ef4444' : (data.risk_level === 'Medium' ? '#f59e0b' : '#22c55e')};">${data.risk_level || 'N/A'}</span></p>
+                                <p><strong>Risk Level:</strong> <span style="color: ${data.risk_level === 'High' ? '#ef4444' : (data.risk_level === 'Medium' ? '#f59e0b' : '#22c55e')}; font-weight: bold;">${data.risk_level || 'N/A'}</span></p>
                                 <p><strong>Risk Score:</strong> ${data.risk_score || 0}/100</p>
-                                <p><strong>Summary:</strong> ${data.analysis_summary || 'N/A'}</p>
-                                <h4 style="margin-top: 20px; color: #dc2626;">Risk Factors</h4>
-                                <ul>${rf.map(r => `<li>${r.factor || 'Unknown Factor'}</li>`).join('') || '<li>None</li>'}</ul>
-                                <h4 style="margin-top: 20px; color: #059669;">Recommendations</h4>
-                                <ul>${rec.map(x => `<li>${x}</li>`).join('') || '<li>Standard review</li>'}</ul>
+                                <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                    <p style="margin: 0;"><strong>Summary:</strong> ${data.analysis_summary || 'N/A'}</p>
+                                </div>
+                                <div style="display: flex; gap: 20px; margin-top: 20px;">
+                                    <div style="flex: 1;">
+                                        <h4 style="color: #ef4444; margin-bottom: 8px;">Risk Factors</h4>
+                                        <ul style="margin: 0; padding-left: 20px;">${rf.map(r => `<li>${r.factor || 'Unknown Factor'}</li>`).join('') || '<li>None</li>'}</ul>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="color: #059669; margin-bottom: 8px;">Recommendations</h4>
+                                        <ul style="margin: 0; padding-left: 20px;">${rec.map(x => `<li>${x}</li>`).join('') || '<li>Standard review</li>'}</ul>
+                                    </div>
+                                </div>
+                                ${imageHTML}
                             </div>
                         `;
                         filename = `Contract_Analysis_${(data.contract_name || 'Contract').replace(/\s+/g, '_')}.pdf`;
