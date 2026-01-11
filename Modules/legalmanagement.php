@@ -926,15 +926,23 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         </div>
 
                         <div class="ai-analysis-section">
-                            <h4>､AI Risk Assessment</h4>
-                            <p><strong>Note:</strong> Our AI system will automatically analyze your contract for:</p>
-                            <ul>
-                                <li>Financial risk factors (lease terms, rent structure)</li>
-                                <li>Operational restrictions (hours, suppliers, staffing)</li>
-                                <li>Legal protection issues (liability, guarantees)</li>
-                                <li>Flexibility and exit concerns</li>
+                            <h4><i class="fa-solid fa-wand-magic-sparkles"
+                                    style="color: #4a6cf7; margin-right: 8px;"></i> AI Risk Assessment</h4>
+                            <p style="margin-bottom:10px; color:#475569;"><strong>Note:</strong> Our AI system will
+                                automatically analyze your contract for:</p>
+                            <ul class="ai-features-list">
+                                <li><i class="fa-solid fa-check-circle"></i> Financial risk factors (lease terms, rent
+                                    structure)</li>
+                                <li><i class="fa-solid fa-check-circle"></i> Operational restrictions (hours, suppliers,
+                                    staffing)</li>
+                                <li><i class="fa-solid fa-check-circle"></i> Legal protection issues (liability,
+                                    guarantees)</li>
+                                <li><i class="fa-solid fa-check-circle"></i> Flexibility and exit concerns</li>
                             </ul>
-                            <p><em>Risk score and level will be automatically calculated</em></p>
+                            <div class="ai-note">
+                                <i class="fa-solid fa-circle-info"></i> Risk score and level will be automatically
+                                calculated
+                            </div>
                         </div>
 
                         <div class="form-actions">
@@ -1797,6 +1805,13 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                 });
             }
 
+            // ADDED: Fix for AI Risk Analysis / Details Modal Close Button
+            if (closeDetails) {
+                closeDetails.addEventListener('click', () => {
+                    closeModal(detailsModal);
+                });
+            }
+
             // Risk chart init (avoid loop/double init)
             let riskChartRef = null;
             function initRiskChart() {
@@ -1809,8 +1824,9 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         data: [<?php echo $riskCounts['High']; ?>, <?php echo $riskCounts['Medium']; ?>, <?php echo $riskCounts['Low']; ?>],
                         backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
                         borderWidth: 0,
-                        borderRadius: 4,
-                        maxBarThickness: 60 // Make bars wider/capped like the image
+                        borderRadius: 6,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.8
                     }]
                 };
                 if (riskChartRef) { riskChartRef.destroy(); }

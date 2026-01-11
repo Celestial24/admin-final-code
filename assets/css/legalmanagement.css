@@ -194,8 +194,21 @@
   }
 
   .section-title {
-      font-size: 22px;
-      color: #333;
+      font-size: 24px;
+      color: #1e293b;
+      font-weight: 700;
+      position: relative;
+      display: inline-block;
+  }
+
+  .section-title::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 4px;
+      background: #4a6cf7;
+      margin-top: 8px;
+      border-radius: 2px;
   }
 
   .add-btn {
@@ -383,11 +396,58 @@
 
   /* AI Analysis Styles */
   .ai-analysis-section {
-      background: #f8f9fa;
-      border-left: 4px solid #4a6cf7;
-      padding: 15px;
+      background: linear-gradient(to right, #f0f9ff, #e0f2fe);
+      border-left: 5px solid #4a6cf7;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  .ai-analysis-section h4 {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      color: #1e293b;
+  }
+
+  .ai-features-list {
+      list-style: none;
+      padding: 0;
       margin: 15px 0;
-      border-radius: 5px;
+  }
+
+  .ai-features-list li {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #334155;
+      font-size: 0.95rem;
+  }
+
+  .ai-features-list li i {
+      color: #10b981;
+      margin-top: 4px;
+      font-size: 0.9rem;
+  }
+
+  .ai-note {
+      background: rgba(255, 255, 255, 0.6);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-style: italic;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(74, 108, 247, 0.1);
+  }
+
+  .ai-note i {
+      color: #4a6cf7;
   }
 
   .risk-factors {
