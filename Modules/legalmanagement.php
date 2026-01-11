@@ -915,8 +915,8 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
                         <div class="form-group">
                             <label for="contractFile">Contract File</label>
                             <input type="file" id="contractFile" name="contract_file" class="form-control"
-                                accept=".pdf,.doc,.docx" required>
-                            <div class="file-info">Accepted formats: PDF, DOC, DOCX (Max: 10MB)</div>
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                            <div class="file-info">Accepted formats: PDF, DOC, DOCX, JPG, PNG (Max: 10MB)</div>
                         </div>
                         <div class="form-group">
                             <label for="contractImage">Larawang Pang-cover (opsyonal)</label>
