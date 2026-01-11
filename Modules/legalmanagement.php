@@ -1174,7 +1174,7 @@ $lowPct = $totalContracts ? round(($riskCounts['Low'] / $totalContracts) * 100, 
     <div id="contractFormModal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter: blur(6px); align-items:center; justify-content:center; z-index:1150;">
         <div
-            style="background:rgba(255,255,255,0.9); backdrop-filter: blur(20px); width:94%; max-width:720px; border-radius:20px; padding:30px; position:relative; box-shadow:0 30px 70px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.5);">
+            style="background:rgba(255,255,255,0.95); backdrop-filter: blur(20px); width:94%; max-width:500px; border-radius:16px; padding:20px; position:relative; box-shadow:0 30px 70px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.5); max-height: 90vh; overflow-y: auto;">
             <button type="button" id="closeContractFormModal"
                 style="position:absolute; right:12px; top:12px; background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Close</button>
             <div id="contractFormContainer">
